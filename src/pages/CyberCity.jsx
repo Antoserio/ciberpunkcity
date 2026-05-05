@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import CityWorld from '../components/city/CityWorld';
+import CityWorld from '../components/city/CityWorld.jsx';
 import HUD from '../components/city/HUD';
 import ZonePanel from '../components/city/ZonePanel';
 import AvatarAssistant from '../components/city/AvatarAssistant';

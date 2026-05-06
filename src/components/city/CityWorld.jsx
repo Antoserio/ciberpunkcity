@@ -87,67 +87,183 @@ function makeVideoCanvasTexture(label, accentColor) {
   return { canvas, tex, draw };
 }
 
-// Building wall branding texture — grey metallic with AGENCY360 neon text on each face
-function makeBuildingWallTexture(accentColor) {
-  accentColor = accentColor || '#00ffff';
+// Building wall texture — Cyberpunk style, each face unique (seed-based)
+const KANJI = ['声','石','山','テレビ','ゲーム','電子','未来','空間','光','都市','次元','波','夢','速','力'];
+const WALL_TEXTS = [
+  ['AGENCY360','SOFTWARE','12/20/2021','◆ XR'],
+  ['VIRTUAL','CREATIVE','VIDEO 360°','METAVERSE'],
+  ['STREAMING','AVATARES','EVENTOS','DIGITAL'],
+  ['◉ SPORT','◉ TECH','◉ ART','◉ XR'],
+  ['360°','3D','AR/VR','LIVE'],
+];
+const WALL_PALETTES = [
+  ['#ff0044','#ff4488','#ffffff'],
+  ['#00ffff','#0088ff','#ffffff'],
+  ['#ff00ff','#ff44cc','#ffffff'],
+  ['#ffff00','#ffaa00','#ffffff'],
+  ['#ff6600','#ff9900','#ffffff'],
+  ['#00ff88','#00ffcc','#ffffff'],
+];
+
+function makeBuildingWallTexture(accentColor, seed) {
+  seed = seed || 0;
   const W = 512, H = 512;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Metallic grey base
-  const grd = ctx.createLinearGradient(0, 0, W, H);
-  grd.addColorStop(0, '#1a1a22');
-  grd.addColorStop(0.4, '#2a2a35');
-  grd.addColorStop(0.7, '#1e1e28');
-  grd.addColorStop(1, '#141420');
+  // seeded pseudo-random
+  let s = seed * 9301 + 49297;
+  const rng = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+
+  const palette = WALL_PALETTES[seed % WALL_PALETTES.length];
+  const c1 = palette[0], c2 = palette[1], cw = palette[2];
+
+  // Dark base gradient
+  const grd = ctx.createLinearGradient(0, 0, 0, H);
+  grd.addColorStop(0, '#060008');
+  grd.addColorStop(0.5, '#0a000f');
+  grd.addColorStop(1, '#020005');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, W, H);
 
-  // Subtle panel lines
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-  ctx.lineWidth = 1;
-  for (let y = 0; y < H; y += 64) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  // Random colored panels / blocks — like the billboard image
+  const panelCount = 4 + Math.floor(rng() * 5);
+  for (let i = 0; i < panelCount; i++) {
+    const px = Math.floor(rng() * W * 0.8);
+    const py = Math.floor(rng() * H * 0.7);
+    const pw = 60 + Math.floor(rng() * 180);
+    const ph = 40 + Math.floor(rng() * 120);
+    const alpha = 0.08 + rng() * 0.18;
+    ctx.fillStyle = i % 2 === 0 ? c1 : c2;
+    ctx.globalAlpha = alpha;
+    ctx.fillRect(px, py, pw, ph);
+    ctx.globalAlpha = 1;
+    // panel border
+    ctx.strokeStyle = i % 2 === 0 ? c1 : c2;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.4 + rng() * 0.4;
+    ctx.strokeRect(px, py, pw, ph);
+    ctx.globalAlpha = 1;
   }
-  for (let x = 0; x < W; x += 64) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+
+  // Horizontal neon divider lines
+  const lineCount = 3 + Math.floor(rng() * 4);
+  for (let i = 0; i < lineCount; i++) {
+    const ly = Math.floor(rng() * H);
+    const lw = rng() > 0.5 ? W : W * (0.3 + rng() * 0.6);
+    const lx = rng() > 0.5 ? 0 : Math.floor(rng() * (W - lw));
+    ctx.strokeStyle = rng() > 0.5 ? c1 : c2;
+    ctx.lineWidth = 1 + Math.floor(rng() * 2);
+    ctx.shadowBlur = 8 + rng() * 10;
+    ctx.shadowColor = rng() > 0.5 ? c1 : c2;
+    ctx.globalAlpha = 0.6 + rng() * 0.4;
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + lw, ly); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
   }
 
-  // Metallic sheen strip
-  const shine = ctx.createLinearGradient(0, 0, W, 0);
-  shine.addColorStop(0, 'rgba(255,255,255,0)');
-  shine.addColorStop(0.35, 'rgba(255,255,255,0.07)');
-  shine.addColorStop(0.5, 'rgba(255,255,255,0.13)');
-  shine.addColorStop(0.65, 'rgba(255,255,255,0.07)');
-  shine.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = shine;
-  ctx.fillRect(0, 0, W, H);
+  // Vertical neon strips
+  for (let i = 0; i < 2; i++) {
+    const vx = Math.floor(rng() * W);
+    ctx.strokeStyle = rng() > 0.5 ? c1 : c2;
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = rng() > 0.5 ? c1 : c2;
+    ctx.globalAlpha = 0.5 + rng() * 0.4;
+    ctx.beginPath(); ctx.moveTo(vx, 0); ctx.lineTo(vx, H); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
 
-  // Neon horizontal accent line
-  ctx.strokeStyle = accentColor;
-  ctx.lineWidth = 2;
-  ctx.shadowBlur = 14;
-  ctx.shadowColor = accentColor;
-  ctx.beginPath(); ctx.moveTo(30, H * 0.28); ctx.lineTo(W - 30, H * 0.28); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(30, H * 0.72); ctx.lineTo(W - 30, H * 0.72); ctx.stroke();
-  ctx.shadowBlur = 0;
+  // Big KANJI characters (like the screenshot)
+  const kanjiCount = 2 + Math.floor(rng() * 3);
+  for (let i = 0; i < kanjiCount; i++) {
+    const kj = KANJI[Math.floor(rng() * KANJI.length)];
+    const kx = 40 + Math.floor(rng() * (W - 80));
+    const ky = 60 + Math.floor(rng() * (H - 120));
+    const ks = 60 + Math.floor(rng() * 80);
+    ctx.shadowBlur = 20 + rng() * 20;
+    ctx.shadowColor = rng() > 0.5 ? c1 : c2;
+    ctx.fillStyle = rng() > 0.3 ? cw : (rng() > 0.5 ? c1 : c2);
+    ctx.globalAlpha = 0.7 + rng() * 0.3;
+    ctx.font = `bold ${ks}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(kj, kx, ky);
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
 
-  // AGENCY360 text
-  ctx.shadowBlur = 22;
-  ctx.shadowColor = accentColor;
-  ctx.fillStyle = accentColor;
-  ctx.font = 'bold 48px monospace';
+  // Main brand text block — varies per seed
+  const texts = WALL_TEXTS[seed % WALL_TEXTS.length];
+  const mainText = texts[0];
+  const subText = texts[1 + (seed % (texts.length - 1))];
+
+  // Big main label
+  ctx.shadowBlur = 30;
+  ctx.shadowColor = c1;
+  ctx.fillStyle = c1;
+  ctx.globalAlpha = 0.95;
+  ctx.font = `bold ${38 + Math.floor(rng() * 18)}px monospace`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('AGENCY360', W / 2, H / 2 - 16);
+  ctx.fillText(mainText, W / 2, H * 0.38);
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
 
-  ctx.shadowColor = '#ffffff';
+  // Sub label
+  ctx.shadowBlur = 14;
+  ctx.shadowColor = c2;
+  ctx.fillStyle = c2;
+  ctx.globalAlpha = 0.85;
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText(subText, W / 2, H * 0.38 + 50);
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+  // Date / number block (like "12/20/2021" in screenshot)
+  if (rng() > 0.4) {
+    const dateStr = `${Math.floor(rng()*12+1).toString().padStart(2,'0')}/${Math.floor(rng()*28+1).toString().padStart(2,'0')}/202${Math.floor(rng()*5)}`;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = cw;
+    ctx.fillStyle = cw;
+    ctx.globalAlpha = 0.6;
+    ctx.font = 'bold 28px monospace';
+    ctx.fillText(dateStr, W / 2, H * 0.62);
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  // Circle / globe element (like the world map circle in the screenshot)
+  if (rng() > 0.5) {
+    const cx2 = 60 + Math.floor(rng() * (W - 120));
+    const cy2 = H * 0.72 + Math.floor(rng() * 60);
+    const cr = 28 + Math.floor(rng() * 30);
+    ctx.strokeStyle = rng() > 0.5 ? c1 : c2;
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = rng() > 0.5 ? c1 : c2;
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath(); ctx.arc(cx2, cy2, cr, 0, Math.PI * 2); ctx.stroke();
+    // inner cross
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath(); ctx.moveTo(cx2 - cr, cy2); ctx.lineTo(cx2 + cr, cy2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx2, cy2 - cr); ctx.lineTo(cx2, cy2 + cr); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  // Bottom ticker text
+  const tickerTexts = ['◆ SOFTWARE  ◆ VIDEO 360°  ', '◆ AVATARES 3D  ◆ EVENTOS XR  ', '◆ METAVERSO  ◆ STREAMING  ', '◆ AR/VR  ◆ MAPPING  ◆ XR  '];
   ctx.shadowBlur = 8;
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.font = '20px monospace';
-  ctx.fillText('CREATIVE · XR · METAVERSE', W / 2, H / 2 + 26);
-  ctx.shadowBlur = 0;
+  ctx.shadowColor = c2;
+  ctx.fillStyle = c2;
+  ctx.globalAlpha = 0.8;
+  ctx.font = '14px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(tickerTexts[seed % tickerTexts.length], 10, H - 14);
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+  // Scanlines overlay
+  for (let y = 0; y < H; y += 4) {
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.fillRect(0, y, W, 2);
+  }
 
   return new THREE.CanvasTexture(canvas);
 }
@@ -566,15 +682,16 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
   const color = zone.color;
   const isHQ = zone.isHQ;
 
-  // Body — metallic grey with AGENCY360 branding on all 4 faces
-  const wallTex = makeBuildingWallTexture(zone.colorHex);
+  // Body — each face gets a unique cyberpunk panel texture
+  const baseSeed = Math.abs(Math.round(x * 7 + z * 13)) % 100;
+  const makeWall = (s) => new THREE.MeshStandardMaterial({ map: makeBuildingWallTexture(zone.colorHex, s), roughness: 0.25, metalness: 0.8 });
   const bodyMats = [
-    new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.3, metalness: 0.85 }), // right
-    new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.3, metalness: 0.85 }), // left
-    new THREE.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.2, metalness: 0.95 }), // top
-    new THREE.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.2, metalness: 0.95 }), // bottom
-    new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.3, metalness: 0.85 }), // front
-    new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.3, metalness: 0.85 }), // back
+    makeWall(baseSeed),           // right
+    makeWall(baseSeed + 1),       // left
+    new THREE.MeshStandardMaterial({ color: 0x0a000f, roughness: 0.2, metalness: 0.95 }), // top
+    new THREE.MeshStandardMaterial({ color: 0x0a000f, roughness: 0.2, metalness: 0.95 }), // bottom
+    makeWall(baseSeed + 2),       // front
+    makeWall(baseSeed + 3),       // back
   ];
   const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), bodyMats);
   body.position.set(x, h / 2, z);
@@ -704,11 +821,13 @@ function addExtraScreen(scene, x, y, z, w, h, canvasTex, flicker, rotY = 0) {
 // ─── Mid building ─────────────────────────────────────────────────────────────
 
 function createMidBuilding(scene, x, z, w, h, nc, flicker) {
-  // Body — metallic grey with branding
-  const wallTex = makeBuildingWallTexture('#' + nc.toString(16).padStart(6, '0'));
+  // Body — each face gets a unique cyberpunk panel texture
+  const baseSeed = Math.abs(Math.round(x * 5 + z * 11)) % 100;
+  const hexColor = '#' + nc.toString(16).padStart(6, '0');
+  const makeMidWall = (s) => new THREE.MeshStandardMaterial({ map: makeBuildingWallTexture(hexColor, s), roughness: 0.25, metalness: 0.8 });
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(w, h, w * 0.9),
-    new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.3, metalness: 0.85 })
+    [makeMidWall(baseSeed), makeMidWall(baseSeed+1), new THREE.MeshStandardMaterial({color:0x0a000f}), new THREE.MeshStandardMaterial({color:0x0a000f}), makeMidWall(baseSeed+2), makeMidWall(baseSeed+3)]
   );
   body.position.set(x, h / 2, z);
   scene.add(body);

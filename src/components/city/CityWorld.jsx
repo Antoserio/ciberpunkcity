@@ -2,23 +2,122 @@ import { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { ZONES } from './cityData';
 
-// Sprite texture for glow halos
-function makeGlowTexture(color) {
+// Radial glow sprite texture
+function makeGlowTexture(hex) {
   const size = 128;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
   const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-  grad.addColorStop(0, color + 'ff');
-  grad.addColorStop(0.2, color + 'aa');
-  grad.addColorStop(0.5, color + '44');
-  grad.addColorStop(1, color + '00');
+  grad.addColorStop(0, hex + 'ff');
+  grad.addColorStop(0.25, hex + 'bb');
+  grad.addColorStop(0.6, hex + '44');
+  grad.addColorStop(1, hex + '00');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
   return new THREE.CanvasTexture(canvas);
 }
 
-const MOVE_SPEED = 8;
+// Animated canvas texture for the "video screen" billboard
+function makeVideoCanvasTexture() {
+  const W = 512, H = 288;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const tex = new THREE.CanvasTexture(canvas);
+
+  // Scanline noise
+  function draw(t) {
+    // Dark base
+    ctx.fillStyle = '#050010';
+    ctx.fillRect(0, 0, W, H);
+
+    // Magenta/cyan gradient wash
+    const grd = ctx.createLinearGradient(0, 0, W, H);
+    grd.addColorStop(0, `hsla(280,100%,${20 + 10 * Math.sin(t * 0.3)}%,0.9)`);
+    grd.addColorStop(0.5, `hsla(200,100%,${15 + 8 * Math.cos(t * 0.5)}%,0.7)`);
+    grd.addColorStop(1, `hsla(320,100%,${18 + 6 * Math.sin(t * 0.7)}%,0.8)`);
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+
+    // Glitch horizontal bars
+    for (let i = 0; i < 4; i++) {
+      const y = (Math.sin(t * 2.1 + i * 1.3) * 0.5 + 0.5) * H;
+      const alpha = 0.08 + 0.05 * Math.sin(t * 3 + i);
+      ctx.fillStyle = `rgba(0,255,255,${alpha})`;
+      ctx.fillRect(0, y, W, 2 + Math.random() * 4);
+    }
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(0,255,255,0.12)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < W; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 18) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+    // Main text: AGENCY360
+    const pulse = 0.8 + 0.2 * Math.sin(t * 1.5);
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = '#ff00ff';
+    ctx.fillStyle = `rgba(255,0,255,${pulse})`;
+    ctx.font = 'bold 52px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('AGENCY 360', W / 2, H / 2 - 18);
+
+    ctx.shadowColor = '#00ffff';
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = `rgba(0,255,255,${0.6 + 0.3 * Math.sin(t * 2)})`;
+    ctx.font = '18px monospace';
+    ctx.fillText('CREATIVE · DIGITAL · XR', W / 2, H / 2 + 18);
+
+    // Bottom ticker
+    const tickerOffset = (t * 60) % (W + 800);
+    ctx.shadowColor = '#ffff00';
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = 'rgba(255,255,0,0.9)';
+    ctx.font = '13px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('◆ SOFTWARE  ◆ VIDEO 360°  ◆ AVATARES 3D  ◆ EVENTOS XR  ◆ METAVERSO  ◆ STREAMING  ', W - tickerOffset, H - 14);
+
+    // Corner brackets
+    ctx.strokeStyle = 'rgba(0,255,255,0.7)';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 0;
+    const bsize = 18;
+    [[0,0],[W,0],[0,H],[W,H]].forEach(([cx, cy]) => {
+      const sx = cx === 0 ? 1 : -1, sy = cy === 0 ? 1 : -1;
+      ctx.beginPath(); ctx.moveTo(cx + sx * bsize, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + sy * bsize); ctx.stroke();
+    });
+
+    // Scanlines
+    for (let y = 0; y < H; y += 3) {
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fillRect(0, y, W, 1.5);
+    }
+
+    tex.needsUpdate = true;
+  }
+
+  return { canvas, tex, draw };
+}
+
+// Neon sign canvas texture
+function makeNeonSignTexture(text, color) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#020008';
+  ctx.fillRect(0, 0, 256, 64);
+  ctx.shadowBlur = 18;
+  ctx.shadowColor = color;
+  ctx.fillStyle = color;
+  ctx.font = 'bold 28px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 128, 32);
+  return new THREE.CanvasTexture(canvas);
+}
+
+const MOVE_SPEED = 14;
 const LOOK_SPEED = 0.002;
 
 export default function CityWorld({ onEnterZone, onExitZone }) {
@@ -31,6 +130,7 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
   const activeZoneRef = useRef(null);
   const clockRef = useRef(new THREE.Clock());
   const flickerObjectsRef = useRef([]);
+  const videoScreenRef = useRef(null);
 
   const checkZoneProximity = useCallback((pos) => {
     for (const zone of ZONES) {
@@ -57,84 +157,64 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
 
     // Scene
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x000208, 0.018);
-    scene.background = new THREE.Color(0x000208);
+    scene.fog = new THREE.FogExp2(0x06000f, 0.016);
+    scene.background = new THREE.Color(0x06000f);
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(72, W / H, 0.1, 160);
-    camera.position.set(0, 1.7, 12);
+    const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
+    camera.position.set(0, 1.7, 14);
 
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: false,
-      powerPreference: 'high-performance',
-    });
+    // Renderer — NO shadows for performance
+    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
     renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.VSMShadowMap;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.0));
+    renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
+    renderer.toneMappingExposure = 1.4;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
 
-    // ── Lighting ─────────────────────────────────────────────────────────────
-    // Extremely dark ambient so neons dominate
-    scene.add(new THREE.AmbientLight(0x040816, 1.5));
-
-    // Soft fill from above — very dim blue moonlight
-    const hemi = new THREE.HemisphereLight(0x001830, 0x000408, 0.4);
+    // ── Minimal lighting (just 2 lights for perf) ──────────────────────────
+    scene.add(new THREE.AmbientLight(0x080415, 2.0));
+    const hemi = new THREE.HemisphereLight(0x1a0040, 0x000210, 0.6);
     scene.add(hemi);
 
-    // One directional "moon" light for subtle shadow volume
-    const moon = new THREE.DirectionalLight(0x102040, 0.5);
-    moon.position.set(-20, 40, -20);
-    moon.castShadow = true;
-    moon.shadow.mapSize.set(1024, 1024);
-    moon.shadow.camera.near = 0.5;
-    moon.shadow.camera.far = 120;
-    moon.shadow.camera.left = moon.shadow.camera.bottom = -60;
-    moon.shadow.camera.right = moon.shadow.camera.top = 60;
-    moon.shadow.bias = -0.001;
-    scene.add(moon);
-
     // Glow textures
-    const glowTextures = {
+    const gt = {
       cyan: makeGlowTexture('#00ffff'),
       magenta: makeGlowTexture('#ff00ff'),
       yellow: makeGlowTexture('#ffff00'),
-      blue: makeGlowTexture('#0088ff'),
+      blue: makeGlowTexture('#4488ff'),
       orange: makeGlowTexture('#ff6600'),
-      white: makeGlowTexture('#aaccff'),
+      pink: makeGlowTexture('#ff44aa'),
     };
 
-    // Build city
-    buildCity(scene, flickerObjectsRef.current, glowTextures);
+    // Video screen animated canvas
+    const videoScreen = makeVideoCanvasTexture();
+    videoScreenRef.current = videoScreen;
 
-    // Pointer lock — request on canvas, also allow movement without lock (arrow keys always work)
+    buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
+
+    // Controls
     const handleClick = () => { canvas.requestPointerLock(); };
     const handlePointerLockChange = () => {
-      isLockedRef.current = !!(document.pointerLockElement === canvas || document.pointerLockElement === mount);
+      isLockedRef.current = document.pointerLockElement === canvas;
     };
     const handleMouseMove = (e) => {
       if (!isLockedRef.current) return;
       yawRef.current -= e.movementX * LOOK_SPEED;
       pitchRef.current -= e.movementY * LOOK_SPEED;
-      pitchRef.current = Math.max(-Math.PI / 3, Math.min(Math.PI / 6, pitchRef.current));
+      pitchRef.current = Math.max(-Math.PI / 3, Math.min(Math.PI / 5, pitchRef.current));
     };
     const handleKeyDown = (e) => {
       keysRef.current[e.code] = true;
-      // Allow movement even without pointer lock
       if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
         e.preventDefault();
-        isLockedRef.current = true; // allow movement on keypress
+        isLockedRef.current = true;
       }
     };
-    const handleKeyUp = (e) => {
-      keysRef.current[e.code] = false;
-    };
+    const handleKeyUp = (e) => { keysRef.current[e.code] = false; };
 
     canvas.addEventListener('click', handleClick);
     document.addEventListener('pointerlockchange', handlePointerLockChange);
@@ -144,11 +224,14 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
 
     const dir = new THREE.Vector3();
     const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+    let frameCount = 0;
 
     const animate = () => {
       animFrameRef.current = requestAnimationFrame(animate);
       const delta = Math.min(clockRef.current.getDelta(), 0.05);
+      frameCount++;
 
+      // Movement
       if (isLockedRef.current) {
         dir.set(0, 0, 0);
         const k = keysRef.current;
@@ -161,8 +244,8 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
           euler.set(0, yawRef.current, 0);
           dir.applyEuler(euler);
           camera.position.addScaledVector(dir, MOVE_SPEED * delta);
-          camera.position.x = Math.max(-80, Math.min(80, camera.position.x));
-          camera.position.z = Math.max(-80, Math.min(80, camera.position.z));
+          camera.position.x = Math.max(-90, Math.min(90, camera.position.x));
+          camera.position.z = Math.max(-90, Math.min(90, camera.position.z));
           camera.position.y = 1.7;
         }
       }
@@ -171,13 +254,20 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
       camera.quaternion.setFromEuler(euler);
       checkZoneProximity(camera.position);
 
-      const t = Date.now() * 0.001;
-      for (let i = 0; i < flickerObjectsRef.current.length; i++) {
-        const o = flickerObjectsRef.current[i];
-        o.material.emissiveIntensity = o.baseIntensity + Math.sin(t * o.flickerSpeed + o.flickerOffset) * 0.18;
+      // Flicker — update every 3rd frame for perf
+      if (frameCount % 3 === 0) {
+        const t = frameCount * 0.016;
+        for (let i = 0; i < flickerObjectsRef.current.length; i++) {
+          const o = flickerObjectsRef.current[i];
+          o.material.emissiveIntensity = o.baseIntensity + Math.sin(t * o.flickerSpeed + o.flickerOffset) * 0.2;
+        }
+        // Update video screen canvas
+        if (videoScreenRef.current) {
+          videoScreenRef.current.draw(frameCount * 0.016);
+        }
       }
 
-        renderer.render(scene, camera);
+      renderer.render(scene, camera);
     };
     animate();
 
@@ -204,303 +294,321 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
   return <div ref={mountRef} className="w-full h-full cursor-crosshair" />;
 }
 
-// ─── Material helpers ────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function stdMat(params) {
-  return new THREE.MeshStandardMaterial(params);
+function basicMat(params) {
+  return new THREE.MeshBasicMaterial(params);
+}
+
+function emissiveMat(color, intensity = 1.0) {
+  return new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity, roughness: 0.1, metalness: 0 });
 }
 
 function addGlowSprite(scene, x, y, z, texture, size = 6) {
-  const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending });
+  const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending });
   const sprite = new THREE.Sprite(mat);
   sprite.scale.setScalar(size);
   sprite.position.set(x, y, z);
   scene.add(sprite);
+  return sprite;
 }
 
 function colorToGlowKey(color) {
-  const map = { 0x00ffff: 'cyan', 0xff00ff: 'magenta', 0xffff00: 'yellow', 0x0088ff: 'blue', 0xff6600: 'orange', 0xffffff: 'white' };
-  return map[color] || 'cyan';
+  const map = { 0x00ffff: 'cyan', 0xff00ff: 'magenta', 0xffff00: 'yellow', 0x4488ff: 'blue', 0x0088ff: 'blue', 0xff6600: 'orange', 0xff44aa: 'pink' };
+  return map[color] || 'magenta';
 }
 
-function buildCity(scene, flickerObjects, gt) {
-  // ── Ground — dark, slightly reflective wet asphalt ──────────────────────
+// ─── Main city builder ────────────────────────────────────────────────────────
+
+function buildCity(scene, flicker, gt, videoTex) {
+  // Ground — wet purple-dark asphalt
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(200, 200),
-    stdMat({ color: 0x020508, roughness: 0.25, metalness: 0.6 })
+    new THREE.PlaneGeometry(220, 220),
+    new THREE.MeshStandardMaterial({ color: 0x03000a, roughness: 0.15, metalness: 0.7 })
   );
   ground.rotation.x = -Math.PI / 2;
-  ground.receiveShadow = true;
   scene.add(ground);
 
-  // Grid overlay — subtle
-  const grid = new THREE.GridHelper(200, 60, 0x00ffff, 0x001520);
-  grid.material.opacity = 0.08;
+  // Grid
+  const grid = new THREE.GridHelper(220, 80, 0xff00ff, 0x0a0020);
+  grid.material.opacity = 0.1;
   grid.material.transparent = true;
   scene.add(grid);
 
-  // ── Roads ────────────────────────────────────────────────────────────────
-  const roadMat = stdMat({ color: 0x04080f, roughness: 0.35, metalness: 0.5 });
-  const hRoad = new THREE.Mesh(new THREE.PlaneGeometry(200, 10), roadMat);
+  // Roads
+  const roadMat = new THREE.MeshStandardMaterial({ color: 0x04010a, roughness: 0.3, metalness: 0.6 });
+  const hRoad = new THREE.Mesh(new THREE.PlaneGeometry(220, 12), roadMat);
   hRoad.rotation.x = -Math.PI / 2; hRoad.position.y = 0.01; scene.add(hRoad);
-  const vRoad = new THREE.Mesh(new THREE.PlaneGeometry(10, 200), roadMat);
+  const vRoad = new THREE.Mesh(new THREE.PlaneGeometry(12, 220), roadMat);
   vRoad.rotation.x = -Math.PI / 2; vRoad.position.y = 0.01; scene.add(vRoad);
 
+  // Neon road edge strips
+  [[7, 0, 220, 0.12], [-7, 0, 220, 0.12], [0, 7, 0.12, 220], [0, -7, 0.12, 220]].forEach(([x, z, w, d]) => {
+    const mat = emissiveMat(0xff00ff, 0.6);
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(x, 0.015, z);
+    scene.add(mesh);
+    flicker.push({ material: mat, baseIntensity: 0.6, flickerSpeed: 0.4, flickerOffset: Math.random() * Math.PI * 2 });
+  });
+
   // Road dashes
-  const dashMat = stdMat({ color: 0xcccc00, emissive: 0x888800, emissiveIntensity: 0.4, roughness: 0.8 });
-  const dashGeo = new THREE.PlaneGeometry(2.5, 0.1);
-  for (let i = -88; i <= 88; i += 10) {
+  const dashMat = emissiveMat(0xaaaa00, 0.5);
+  const dashGeo = new THREE.PlaneGeometry(3, 0.12);
+  for (let i = -100; i <= 100; i += 12) {
     const dH = new THREE.Mesh(dashGeo, dashMat); dH.rotation.x = -Math.PI / 2; dH.position.set(i, 0.02, 0); scene.add(dH);
     const dV = new THREE.Mesh(dashGeo, dashMat); dV.rotation.x = -Math.PI / 2; dV.rotation.z = Math.PI / 2; dV.position.set(0, 0.02, i); scene.add(dV);
   }
 
-  // ── Street lights — fewer, but proper ───────────────────────────────────
-  const poleGeo = new THREE.CylinderGeometry(0.06, 0.06, 6, 6);
-  const poleMat = stdMat({ color: 0x1a2a3a, roughness: 0.5, metalness: 0.9 });
-  const armGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.5, 6);
-  const headGeo = new THREE.SphereGeometry(0.18, 8, 6);
+  // Zone buildings
+  ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex));
 
-  for (let i = -45; i <= 45; i += 22) {
-    addStreetLight(scene, i, 7, 0x00ffff, poleGeo, poleMat, armGeo, headGeo, flickerObjects);
-    addStreetLight(scene, i, -7, 0xff00ff, poleGeo, poleMat, armGeo, headGeo, flickerObjects);
-    addStreetLight(scene, 7, i, 0x00ffff, poleGeo, poleMat, armGeo, headGeo, flickerObjects);
-    addStreetLight(scene, -7, i, 0xff00ff, poleGeo, poleMat, armGeo, headGeo, flickerObjects);
-  }
-
-  // ── Zone buildings ───────────────────────────────────────────────────────
-  ZONES.forEach(zone => createZoneBuilding(scene, zone, flickerObjects, gt));
-
-  // ── Background buildings ─────────────────────────────────────────────────
-  const bgPositions = [
-    [-30, -30], [30, -30], [-30, 30], [30, 30],
-    [-50, 5], [50, -5], [5, -50], [-5, 50],
-    [-40, -15], [40, 15], [-15, -40], [15, 40],
-    [-35, 20], [35, -20],
+  // Dense mid-range buildings
+  const midPositions = [
+    [-18,-22],[18,-22],[-22,-18],[22,-18],
+    [-18,22],[18,22],[-22,18],[22,18],
+    [-32,-8],[32,8],[-8,-32],[8,32],
+    [-28,-28],[28,-28],[-28,28],[28,28],
+    [-38,0],[38,0],[0,-38],[0,38],
   ];
-  const neonColors = [0x00ffff, 0xff00ff, 0xffff00, 0x0088ff];
-  bgPositions.forEach(([x, z], i) => {
-    const h = 9 + (i * 3.7 % 18);
-    const w = 5 + (i * 1.3 % 5);
-    const nc = neonColors[i % 4];
-    createDetailBuilding(scene, x, z, w, h, nc, flickerObjects, gt);
+  const neonPalette = [0x00ffff, 0xff00ff, 0xffff00, 0x4488ff, 0xff44aa];
+  midPositions.forEach(([x, z], i) => {
+    const h = 10 + (i * 4.1 % 22);
+    const w = 4 + (i * 1.7 % 6);
+    const nc = neonPalette[i % neonPalette.length];
+    createMidBuilding(scene, x, z, w, h, nc, flicker, gt);
   });
 
-  // ── Distant backdrop ─────────────────────────────────────────────────────
-  for (let i = 0; i < 28; i++) {
-    const angle = (i / 28) * Math.PI * 2;
-    const dist = 76 + (i % 5) * 7;
-    const h = 14 + (i % 8) * 6;
-    const w = 5 + (i % 4) * 2;
-    const nc = neonColors[i % 4];
+  // Billboard signs along street
+  const signs = [
+    { x: 14, z: -3, text: '◆ SOFTWARE', color: '#00ffff' },
+    { x: -14, z: 3, text: '◆ VIDEO 360', color: '#ff00ff' },
+    { x: 3, z: -14, text: '◆ AVATARES XR', color: '#ffff00' },
+    { x: -3, z: 14, text: '◆ EVENTOS', color: '#ff6600' },
+  ];
+  signs.forEach(s => addBillboard(scene, s.x, 5, s.z, s.text, s.color, flicker));
+
+  // Distant skyline (simple boxes, no lights)
+  for (let i = 0; i < 40; i++) {
+    const angle = (i / 40) * Math.PI * 2;
+    const dist = 70 + (i % 6) * 10;
+    const h = 12 + (i % 9) * 7;
+    const w = 4 + (i % 5) * 2;
+    const nc = neonPalette[i % neonPalette.length];
     const bx = Math.cos(angle) * dist;
     const bz = Math.sin(angle) * dist;
-    const geo = new THREE.BoxGeometry(w, h, w * 0.9);
-    const mat = stdMat({ color: 0x010306, emissive: nc, emissiveIntensity: 0.12, roughness: 0.6, metalness: 0.5 });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(bx, h / 2, bz);
-    scene.add(mesh);
-    // Top beacon
-    const beaconMat = stdMat({ color: nc, emissive: nc, emissiveIntensity: 1.2, roughness: 0.3 });
-    const beacon = new THREE.Mesh(new THREE.BoxGeometry(w + 0.1, 0.35, w * 0.9 + 0.1), beaconMat);
-    beacon.position.set(bx, h + 0.17, bz);
-    scene.add(beacon);
-    // Glow halo on top
+
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(w, h, w * 0.85),
+      new THREE.MeshBasicMaterial({ color: 0x04010e })
+    );
+    body.position.set(bx, h / 2, bz);
+    scene.add(body);
+
+    const capMat = emissiveMat(nc, 1.0);
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.2, 0.3, w * 0.85 + 0.2), capMat);
+    cap.position.set(bx, h + 0.15, bz);
+    scene.add(cap);
+    flicker.push({ material: capMat, baseIntensity: 1.0, flickerSpeed: 0.4 + Math.random(), flickerOffset: Math.random() * Math.PI * 2 });
+
     const gKey = colorToGlowKey(nc);
-    addGlowSprite(scene, bx, h + 2, bz, gt[gKey], 10 + (i % 4) * 3);
+    addGlowSprite(scene, bx, h + 2.5, bz, gt[gKey], 12 + (i % 4) * 4);
   }
 
-  // ── Particles ─────────────────────────────────────────────────────────────
-  const count = 350;
+  // Floating particles
+  const count = 500;
   const pos = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
+  const particleColors = [[0,1,1],[1,0,1],[1,0.8,0],[0.3,0.5,1]];
   for (let i = 0; i < count; i++) {
-    pos[i * 3] = (Math.random() - 0.5) * 140;
-    pos[i * 3 + 1] = Math.random() * 28 + 3;
-    pos[i * 3 + 2] = (Math.random() - 0.5) * 140;
+    pos[i*3] = (Math.random() - 0.5) * 160;
+    pos[i*3+1] = Math.random() * 35 + 1;
+    pos[i*3+2] = (Math.random() - 0.5) * 160;
+    const c = particleColors[i % 4];
+    colors[i*3] = c[0]; colors[i*3+1] = c[1]; colors[i*3+2] = c[2];
   }
   const pGeo = new THREE.BufferGeometry();
   pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({ color: 0x00ffff, size: 0.06, transparent: true, opacity: 0.55 })));
+  pGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 0.07, vertexColors: true, transparent: true, opacity: 0.7 })));
 }
 
-// ─── Zone building — detailed with ledges, windows, volumetric light ────────
-function createZoneBuilding(scene, zone, flickerObjects, gt) {
+// ─── Zone building ────────────────────────────────────────────────────────────
+
+function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
   const [x, , z] = zone.position;
-  const h = zone.buildingHeight || 15;
+  const h = zone.buildingHeight || 16;
   const w = zone.buildingWidth || 8;
   const color = zone.color;
+  const isHQ = zone.isHQ;
 
-  // Main body
-  const bodyMat = stdMat({ color: 0x060c18, roughness: 0.4, metalness: 0.85, envMapIntensity: 1 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), bodyMat);
+  // Body — dark
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, w),
+    new THREE.MeshStandardMaterial({ color: 0x04010c, roughness: 0.35, metalness: 0.9 })
+  );
   body.position.set(x, h / 2, z);
-  body.castShadow = true;
-  body.receiveShadow = true;
   scene.add(body);
 
-  // Mid ledge
-  const ledge = new THREE.Mesh(
-    new THREE.BoxGeometry(w + 0.8, 0.35, w + 0.8),
-    stdMat({ color: 0x0a1422, roughness: 0.3, metalness: 0.9 })
-  );
-  ledge.position.set(x, h * 0.5, z);
-  ledge.castShadow = true;
-  scene.add(ledge);
+  // Ledges
+  [0.4, 0.7, 1.0].forEach(frac => {
+    const lMat = emissiveMat(color, frac === 1.0 ? 0.9 : 0.5);
+    const ledge = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.18, w + 0.6), lMat);
+    ledge.position.set(x, h * frac, z);
+    scene.add(ledge);
+    flicker.push({ material: lMat, baseIntensity: frac === 1.0 ? 0.9 : 0.5, flickerSpeed: 0.3 + Math.random() * 0.6, flickerOffset: Math.random() * Math.PI * 2 });
+  });
 
-  // Top ledge / crown
-  const crown = new THREE.Mesh(
-    new THREE.BoxGeometry(w + 1.2, 0.5, w + 1.2),
-    stdMat({ color: 0x0a1422, roughness: 0.3, metalness: 0.9 })
-  );
-  crown.position.set(x, h + 0.25, z);
-  crown.castShadow = true;
-  scene.add(crown);
-
-  // Neon vertical corner strips (4 corners)
-  const stripMat = stdMat({ color, emissive: color, emissiveIntensity: 1.2, roughness: 0.1, metalness: 0.0 });
-  [[-w/2, -w/2], [w/2, -w/2], [-w/2, w/2], [w/2, w/2]].forEach(([ox, oz]) => {
-    const strip = new THREE.Mesh(
-      new THREE.BoxGeometry(0.15, h, 0.15),
-      stripMat.clone()
-    );
-    strip.position.set(x + ox, h / 2, z + oz);
+  // Corner strips
+  [[-w/2,-w/2],[w/2,-w/2],[-w/2,w/2],[w/2,w/2]].forEach(([ox, oz]) => {
+    const mat = emissiveMat(color, 1.3);
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(0.12, h, 0.12), mat);
+    strip.position.set(x + ox, h/2, z + oz);
     scene.add(strip);
-    flickerObjects.push({ material: strip.material, baseIntensity: 1.2, flickerSpeed: 0.6 + Math.random() * 0.8, flickerOffset: Math.random() * Math.PI * 2 });
+    flicker.push({ material: mat, baseIntensity: 1.3, flickerSpeed: 0.5 + Math.random(), flickerOffset: Math.random() * Math.PI * 2 });
   });
 
-  // Horizontal neon bands (3 levels)
-  [0.25, 0.5, 1.0].forEach(frac => {
-    const bandMat = stdMat({ color, emissive: color, emissiveIntensity: 0.8, roughness: 0.1 });
-    const band = new THREE.Mesh(new THREE.BoxGeometry(w + 0.05, 0.12, w + 0.05), bandMat);
-    band.position.set(x, h * frac, z);
-    scene.add(band);
-    flickerObjects.push({ material: bandMat, baseIntensity: 0.8, flickerSpeed: 0.3 + Math.random() * 0.5, flickerOffset: Math.random() * Math.PI * 2 });
-  });
-
-  // Emissive window grid (front face)
-  const winColors = [color, 0xffffff, 0x88aaff];
-  for (let floor = 1; floor < Math.floor(h / 2.5); floor++) {
+  // Window grid (all 4 faces)
+  const winColors = [color, 0xffffff, 0xaa88ff];
+  const offsets = [[0, w/2+0.02, 0, 0], [0, -w/2-0.02, Math.PI, 0], [-w/2-0.02, 0, 0, Math.PI/2], [w/2+0.02, 0, 0, -Math.PI/2]];
+  for (let floor = 1; floor < Math.floor(h / 2.2); floor++) {
     for (let col = 0; col < 3; col++) {
-      if (Math.random() > 0.35) {
-        const wc = winColors[Math.floor(Math.random() * 3)];
-        const winMat = stdMat({ color: wc, emissive: wc, emissiveIntensity: 0.6 + Math.random() * 0.6, roughness: 0.5 });
-        const win = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.9), winMat);
-        win.position.set(x + (col - 1) * 2, floor * 2.5, z + w / 2 + 0.02);
-        scene.add(win);
-        flickerObjects.push({ material: winMat, baseIntensity: 0.6 + Math.random() * 0.4, flickerSpeed: 0.2 + Math.random() * 2, flickerOffset: Math.random() * Math.PI * 2 });
-      }
+      offsets.forEach(([ox, oz, , ry]) => {
+        if (Math.random() > 0.4) {
+          const wc = winColors[Math.floor(Math.random() * 3)];
+          const mat = emissiveMat(wc, 0.5 + Math.random() * 0.7);
+          const win = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.85), mat);
+          win.rotation.y = ry;
+          win.position.set(x + ox + (col - 1) * 2, floor * 2.2, z + oz);
+          scene.add(win);
+          flicker.push({ material: mat, baseIntensity: 0.5 + Math.random() * 0.4, flickerSpeed: 0.2 + Math.random() * 3, flickerOffset: Math.random() * Math.PI * 2 });
+        }
+      });
     }
   }
 
-  // Hologram platform
-  const platMat = stdMat({ color, emissive: color, emissiveIntensity: 0.6, transparent: true, opacity: 0.55, roughness: 0.1 });
-  const platform = new THREE.Mesh(new THREE.BoxGeometry(w, 0.12, 1.5), platMat);
-  platform.position.set(x, h + 1.2, z);
-  scene.add(platform);
+  // HQ gets the big video screen billboard
+  if (isHQ && videoTex) {
+    addVideoScreen(scene, x, z, w, h, videoTex, flicker);
+  }
 
-  // Light cone under hologram
-  const coneGeo = new THREE.CylinderGeometry(0.05, w * 0.6, 4, 8, 1, true);
-  const coneMat = stdMat({ color, emissive: color, emissiveIntensity: 0.15, transparent: true, opacity: 0.07, side: THREE.BackSide });
-  const cone = new THREE.Mesh(coneGeo, coneMat);
-  cone.position.set(x, h - 0.8, z);
-  scene.add(cone);
+  // Zone billboard name above building
+  const signTex = makeNeonSignTexture(zone.label || zone.id.toUpperCase(), zone.colorHex);
+  const signMat = new THREE.MeshBasicMaterial({ map: signTex, transparent: true, depthWrite: false });
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.2, w * 0.3), signMat);
+  sign.position.set(x, h + 1.8, z + w / 2 + 0.05);
+  scene.add(sign);
 
-  // Ground ring
-  const ringMat = stdMat({ color, emissive: color, emissiveIntensity: 0.7, side: THREE.DoubleSide, transparent: true, opacity: 0.4, roughness: 0.1 });
-  const ring = new THREE.Mesh(new THREE.RingGeometry(zone.radius - 0.25, zone.radius, 64), ringMat);
+  // Ground zone ring
+  const ringMat = emissiveMat(color, 0.7);
+  ringMat.transparent = true; ringMat.opacity = 0.45; ringMat.side = THREE.DoubleSide;
+  const ring = new THREE.Mesh(new THREE.RingGeometry(zone.radius - 0.3, zone.radius, 64), ringMat);
   ring.rotation.x = -Math.PI / 2;
   ring.position.set(x, 0.04, z);
   scene.add(ring);
-  flickerObjects.push({ material: ringMat, baseIntensity: 0.7, flickerSpeed: 0.4, flickerOffset: Math.random() * Math.PI * 2 });
+  flicker.push({ material: ringMat, baseIntensity: 0.7, flickerSpeed: 0.4, flickerOffset: Math.random() * Math.PI * 2 });
 
-  // Volumetric zone light (strong, colored)
-  const zoneLight = new THREE.PointLight(color, 3.5, 28);
-  zoneLight.position.set(x, h + 3, z);
-  scene.add(zoneLight);
+  // Only 2 point lights per zone (not per detail building)
+  const topLight = new THREE.PointLight(color, 3.0, 30);
+  topLight.position.set(x, h + 2, z);
+  scene.add(topLight);
 
-  // Ground-level color wash
-  const groundLight = new THREE.PointLight(color, 1.2, 14);
-  groundLight.position.set(x, 0.5, z);
-  scene.add(groundLight);
-
-  // Glow halos — large atmospheric bloom around building top
-  if (gt) {
-    const gKey = colorToGlowKey(color);
-    addGlowSprite(scene, x, h + 4, z, gt[gKey], 22); // big halo
-    addGlowSprite(scene, x, h + 1, z, gt[gKey], 10); // tighter core
-    addGlowSprite(scene, x, 0.5, z, gt[gKey], 8);    // ground wash
-  }
+  // Glow halos
+  const gKey = colorToGlowKey(color);
+  addGlowSprite(scene, x, h + 4, z, gt[gKey], 26);
+  addGlowSprite(scene, x, h + 1, z, gt[gKey], 12);
+  addGlowSprite(scene, x, 0.6, z, gt[gKey], 10);
 }
 
-// ─── Background building with detail ────────────────────────────────────────
-function createDetailBuilding(scene, x, z, w, h, nc, flickerObjects, gt) {
+// ─── Video screen for HQ building ────────────────────────────────────────────
+
+function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
+  // Big screen on front face
+  const screenW = bw * 1.6;
+  const screenH = screenW * (9 / 16);
+  const screenMat = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.FrontSide });
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(screenW, screenH), screenMat);
+  screen.position.set(bx, bh * 0.55, bz + bw / 2 + 0.08);
+  scene.add(screen);
+
+  // Neon border around screen
+  const borderMat = emissiveMat(0xff00ff, 1.2);
+  const borderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(screenW + 0.2, screenH + 0.2, 0.05));
+  const borderLine = new THREE.LineSegments(borderGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
+  borderLine.position.set(bx, bh * 0.55, bz + bw / 2 + 0.1);
+  scene.add(borderLine);
+
+  // Glow around screen
+  const sprMat = new THREE.SpriteMaterial({ color: 0xff00ff, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending });
+  const spr = new THREE.Sprite(sprMat);
+  spr.scale.set(screenW * 1.5, screenH * 1.5, 1);
+  spr.position.set(bx, bh * 0.55, bz + bw / 2 + 0.5);
+  scene.add(spr);
+  flicker.push({ material: spr.material, baseIntensity: 0.25, flickerSpeed: 0.8, flickerOffset: 0 });
+
+  // Side panel screen (smaller)
+  const sideMat = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.FrontSide });
+  const side = new THREE.Mesh(new THREE.PlaneGeometry(screenW * 0.6, screenH * 0.6), sideMat);
+  side.rotation.y = -Math.PI / 2;
+  side.position.set(bx + bw / 2 + 0.08, bh * 0.6, bz);
+  scene.add(side);
+}
+
+// ─── Mid building ─────────────────────────────────────────────────────────────
+
+function createMidBuilding(scene, x, z, w, h, nc, flicker, gt) {
+  // Body
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(w, h, w * 0.9),
-    stdMat({ color: 0x050810, roughness: 0.45, metalness: 0.75 })
+    new THREE.MeshBasicMaterial({ color: 0x04010c })
   );
   body.position.set(x, h / 2, z);
-  body.castShadow = true;
-  body.receiveShadow = true;
   scene.add(body);
 
-  // Top neon cap
-  const capMat = stdMat({ color: nc, emissive: nc, emissiveIntensity: 1.0, roughness: 0.1 });
-  const cap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.2, 0.25, w * 0.9 + 0.2), capMat);
-  cap.position.set(x, h + 0.12, z);
+  // Top cap
+  const capMat = emissiveMat(nc, 1.0);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.2, 0.2, w * 0.9 + 0.2), capMat);
+  cap.position.set(x, h + 0.1, z);
   scene.add(cap);
-  flickerObjects.push({ material: capMat, baseIntensity: 1.0, flickerSpeed: 0.5 + Math.random(), flickerOffset: Math.random() * Math.PI * 2 });
+  flicker.push({ material: capMat, baseIntensity: 1.0, flickerSpeed: 0.5 + Math.random(), flickerOffset: Math.random() * Math.PI * 2 });
 
-  // A couple of windows
-  for (let f = 1; f < Math.floor(h / 3); f++) {
-    if (Math.random() > 0.5) {
-      const wMat = stdMat({ color: nc, emissive: nc, emissiveIntensity: 0.5 + Math.random() * 0.5, roughness: 0.5 });
-      const win = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.8), wMat);
-      win.position.set(x + (Math.random() - 0.5) * (w - 1), f * 3, z + w * 0.45 + 0.02);
+  // Side neon strip
+  const stripMat = emissiveMat(nc, 0.8);
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(0.1, h * 0.6, 0.1), stripMat);
+  strip.position.set(x + w/2, h * 0.5, z + w * 0.45);
+  scene.add(strip);
+  flicker.push({ material: stripMat, baseIntensity: 0.8, flickerSpeed: 0.6 + Math.random() * 0.8, flickerOffset: Math.random() * Math.PI * 2 });
+
+  // Windows
+  for (let f = 1; f < Math.floor(h / 3.5); f++) {
+    if (Math.random() > 0.45) {
+      const mat = emissiveMat(nc, 0.4 + Math.random() * 0.6);
+      const win = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.9), mat);
+      win.position.set(x + (Math.random() - 0.5) * (w - 1.2), f * 3.5, z + w * 0.45 + 0.02);
       scene.add(win);
-      flickerObjects.push({ material: wMat, baseIntensity: 0.5 + Math.random() * 0.4, flickerSpeed: 0.3 + Math.random() * 2.5, flickerOffset: Math.random() * Math.PI * 2 });
+      flicker.push({ material: mat, baseIntensity: 0.4 + Math.random() * 0.4, flickerSpeed: 0.3 + Math.random() * 3, flickerOffset: Math.random() * Math.PI * 2 });
     }
   }
 
-  // Small rooftop light
-  const rLight = new THREE.PointLight(nc, 0.8, 10);
-  rLight.position.set(x, h + 1.5, z);
-  scene.add(rLight);
-
-  // Glow halo
-  if (gt) {
-    const gKey = colorToGlowKey(nc);
-    addGlowSprite(scene, x, h + 2, z, gt[gKey], 8);
-  }
+  // Glow sprite
+  const gKey = colorToGlowKey(nc);
+  addGlowSprite(scene, x, h + 2, z, gt[gKey], 8 + (h % 4) * 2);
 }
 
-// ─── Street light ────────────────────────────────────────────────────────────
-function addStreetLight(scene, x, z, color, poleGeo, poleMat, armGeo, headGeo, flickerObjects) {
-  const pole = new THREE.Mesh(poleGeo, poleMat);
-  pole.position.set(x, 3, z);
-  pole.castShadow = true;
+// ─── Billboard sign ───────────────────────────────────────────────────────────
+
+function addBillboard(scene, x, y, z, text, colorHex, flicker) {
+  const tex = makeNeonSignTexture(text, colorHex);
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(5.5, 1.3), mat);
+  mesh.position.set(x, y, z);
+  scene.add(mesh);
+
+  // Support pole
+  const pole = new THREE.Mesh(
+    new THREE.BoxGeometry(0.1, y, 0.1),
+    new THREE.MeshBasicMaterial({ color: 0x111122 })
+  );
+  pole.position.set(x, y / 2, z);
   scene.add(pole);
-
-  // Arm
-  const arm = new THREE.Mesh(armGeo, poleMat);
-  arm.rotation.z = Math.PI / 2;
-  arm.position.set(x + 0.75, 6.1, z);
-  scene.add(arm);
-
-  // Bulb
-  const bulbMat = stdMat({ color, emissive: color, emissiveIntensity: 2.0, roughness: 0.0, metalness: 0.0 });
-  const bulb = new THREE.Mesh(headGeo, bulbMat);
-  bulb.position.set(x + 1.3, 6.1, z);
-  scene.add(bulb);
-  flickerObjects.push({ material: bulbMat, baseIntensity: 2.0, flickerSpeed: 1.5 + Math.random() * 2, flickerOffset: Math.random() * Math.PI * 2 });
-
-  // Cone of light downward
-  const coneGeo = new THREE.CylinderGeometry(0.02, 2.5, 5, 8, 1, true);
-  const coneMat = stdMat({ color, emissive: color, emissiveIntensity: 0.12, transparent: true, opacity: 0.06, side: THREE.BackSide });
-  const cone = new THREE.Mesh(coneGeo, coneMat);
-  cone.position.set(x + 1.3, 3.6, z);
-  scene.add(cone);
-
-  // Point light
-  const light = new THREE.PointLight(color, 1.5, 14);
-  light.position.set(x + 1.3, 6, z);
-  scene.add(light);
 }

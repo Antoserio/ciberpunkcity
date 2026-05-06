@@ -86,7 +86,7 @@ export default function HUD({ isLocked, activeZone }) {
               CLICK PARA INICIAR EXPLORACIÓN
             </p>
             <p className="text-xs font-rajdhani text-gray-500">
-              WASD / ↑↓←→ para mover · Mouse para girar · ESC para salir
+              WASD / ↑↓←→ mover · Mouse girar · ESC salir · Acércate a edificios para explorar
             </p>
           </div>
         </motion.div>

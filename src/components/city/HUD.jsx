@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ZONES } from './cityData';
 
-export default function HUD({ isLocked, activeZone }) {
+export default function HUD({ isLocked, activeZone, nearStand }) {
   return (
     <>
       {/* Crosshair */}
@@ -88,6 +88,36 @@ export default function HUD({ isLocked, activeZone }) {
             <p className="text-xs font-rajdhani text-gray-500">
               WASD / ↑↓←→ mover · Mouse girar · ESC salir · Acércate a edificios para explorar
             </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Stand proximity key prompt */}
+      {nearStand && (
+        <motion.div
+          key={nearStand.id}
+          initial={{ opacity: 0, scale: 0.85, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          className="fixed bottom-36 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+        >
+          <div
+            className="px-6 py-3 rounded text-center flex items-center gap-3"
+            style={{
+              background: `${nearStand.color}18`,
+              border: `1px solid ${nearStand.color}60`,
+              boxShadow: `0 0 24px ${nearStand.color}30`,
+            }}
+          >
+            <span
+              className="font-orbitron text-xl font-black px-2 py-1 rounded border animate-pulse"
+              style={{ color: nearStand.color, borderColor: nearStand.color, boxShadow: `0 0 12px ${nearStand.color}` }}
+            >
+              {nearStand.key}
+            </span>
+            <span className="font-orbitron text-xs tracking-widest" style={{ color: nearStand.color }}>
+              {nearStand.title}
+            </span>
           </div>
         </motion.div>
       )}

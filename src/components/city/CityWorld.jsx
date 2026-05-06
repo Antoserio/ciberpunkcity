@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { ZONES } from './cityData';
+import { STANDS } from './standsData';
 
 // Radial glow sprite texture
 function makeGlowTexture(hex) {
@@ -125,7 +126,9 @@ const MOVE_SPEED = 16;
 const LOOK_SPEED = 0.0018;
 const LOOK_SMOOTH = 0.18;
 
-export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef }) {
+const STAND_RADIUS = 5;
+
+export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, onNearStand, onLeaveStand }) {
   const mountRef = useRef(null);
   const keysRef = useRef({});
   const yawRef = useRef(0);
@@ -136,6 +139,7 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef }) {
   const isLockedRef = useRef(false);
   const animFrameRef = useRef(null);
   const activeZoneRef = useRef(null);
+  const nearStandRef = useRef(null);
   const clockRef = useRef(new THREE.Clock());
   const flickerObjectsRef = useRef([]);
   const videoScreenRef = useRef(null);
@@ -158,7 +162,29 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef }) {
       activeZoneRef.current = null;
       onExitZone();
     }
-  }, [onEnterZone, onExitZone]);
+
+    // Stand proximity
+    let foundStand = null;
+    for (const stand of STANDS) {
+      const dx = pos.x - stand.position[0];
+      const dz = pos.z - stand.position[2];
+      if (dx * dx + dz * dz < STAND_RADIUS * STAND_RADIUS) {
+        foundStand = stand;
+        break;
+      }
+    }
+    if (foundStand) {
+      if (nearStandRef.current?.id !== foundStand.id) {
+        nearStandRef.current = foundStand;
+        onNearStand && onNearStand(foundStand);
+      }
+    } else {
+      if (nearStandRef.current !== null) {
+        nearStandRef.current = null;
+        onLeaveStand && onLeaveStand();
+      }
+    }
+  }, [onEnterZone, onExitZone, onNearStand, onLeaveStand]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -423,6 +449,9 @@ function buildCity(scene, flicker, gt, videoTex) {
   addBillboard(scene, 14, 5, -3, '◆ SOFTWARE', '#00ffff');
   addBillboard(scene, -14, 5, 3, '◆ VIDEO 360', '#ff00ff');
 
+  // Interactive stands
+  STANDS.forEach(stand => addStandBooth(scene, stand));
+
   // Extra animated canvas screens on zone buildings
   const screenDefs = [
     // [x, y, z, w, h, rotY, label, color]
@@ -675,6 +704,92 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker) {
   }
 
   // No glow sprite for mid buildings — perf
+}
+
+// ─── Interactive stand booth ─────────────────────────────────────────────────
+
+function makeKeyPromptTexture(key, color) {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  // transparent bg
+  ctx.clearRect(0, 0, size, size);
+  // outer glow circle
+  const grad = ctx.createRadialGradient(64, 64, 10, 64, 64, 60);
+  grad.addColorStop(0, color + 'cc');
+  grad.addColorStop(0.5, color + '44');
+  grad.addColorStop(1, color + '00');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  // letter
+  ctx.shadowBlur = 24;
+  ctx.shadowColor = color;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 72px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(key, 64, 64);
+  return new THREE.CanvasTexture(canvas);
+}
+
+function addStandBooth(scene, stand) {
+  const [x, , z] = stand.position;
+  const c = stand.colorInt;
+  const ch = stand.color;
+
+  // Base platform
+  const platMat = new THREE.MeshStandardMaterial({ color: 0x06020e, roughness: 0.3, metalness: 0.8 });
+  const plat = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.5, 0.25, 16), platMat);
+  plat.position.set(x, 0.12, z);
+  scene.add(plat);
+
+  // Neon ring on platform
+  const ringMat = new THREE.MeshBasicMaterial({ color: c });
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.07, 8, 32), ringMat);
+  ring.rotation.x = Math.PI / 2;
+  ring.position.set(x, 0.28, z);
+  scene.add(ring);
+
+  // Kiosk column
+  const colMat = new THREE.MeshStandardMaterial({ color: 0x08021a, roughness: 0.2, metalness: 0.9 });
+  const col = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 2.8, 8), colMat);
+  col.position.set(x, 1.65, z);
+  scene.add(col);
+
+  // Column neon strip
+  const stripMat = new THREE.MeshBasicMaterial({ color: c });
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.8, 0.05), stripMat);
+  strip.position.set(x + 0.32, 1.65, z);
+  scene.add(strip);
+
+  // Top cap disc
+  const capMat = emissiveMat(c, 1.2);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.3, 0.18, 8), capMat);
+  cap.position.set(x, 3.15, z);
+  scene.add(cap);
+
+  // Floating key prompt sprite (above booth)
+  const keyTex = makeKeyPromptTexture(stand.key, ch);
+  const keyMat = new THREE.SpriteMaterial({ map: keyTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const keySprite = new THREE.Sprite(keyMat);
+  keySprite.scale.setScalar(2.0);
+  keySprite.position.set(x, 4.4, z);
+  scene.add(keySprite);
+
+  // Glow halo
+  const glowMat = new THREE.SpriteMaterial({ color: c, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending });
+  const glow = new THREE.Sprite(glowMat);
+  glow.scale.setScalar(6);
+  glow.position.set(x, 2.0, z);
+  scene.add(glow);
+
+  // Small title sign
+  const signTex = makeNeonSignTexture(stand.id === 'back_to_life' ? 'BACK TO LIFE' : stand.title.substring(0, 12), ch);
+  const signMat = new THREE.MeshBasicMaterial({ map: signTex, transparent: true, depthWrite: false });
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 0.8), signMat);
+  sign.position.set(x, 3.7, z + 0.4);
+  scene.add(sign);
 }
 
 // ─── Billboard sign ───────────────────────────────────────────────────────────

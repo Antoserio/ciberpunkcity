@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import CityWorld from '../components/city/CityWorld.jsx';
 import HUD from '../components/city/HUD';
@@ -6,12 +6,33 @@ import ZonePanel from '../components/city/ZonePanel';
 import AvatarAssistant from '../components/city/AvatarAssistant';
 import SplashScreen from '../components/city/SplashScreen';
 import MiniMap from '../components/city/MiniMap';
+import StandModal from '../components/city/StandModal';
 
 export default function CyberCity() {
   const [started, setStarted] = useState(false);
   const [activeZone, setActiveZone] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
+  const [nearStand, setNearStand] = useState(null);
+  const [openStand, setOpenStand] = useState(null);
+  const nearStandStateRef = useRef(null);
   const vimeoIframeRef = useRef(null);
+
+  // Keep a ref in sync so keydown handler can read the latest value
+  useEffect(() => { nearStandStateRef.current = nearStand; }, [nearStand]);
+
+  // Listen for the stand key press
+  useEffect(() => {
+    if (!started) return;
+    const onKey = (e) => {
+      const stand = nearStandStateRef.current;
+      if (stand && e.key.toUpperCase() === stand.key.toUpperCase()) {
+        setOpenStand(stand);
+      }
+      if (e.key === 'Escape') setOpenStand(null);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [started]);
 
   const handleEnterZone = (zone) => setActiveZone(zone);
   const handleExitZone = () => setActiveZone(null);
@@ -33,6 +54,8 @@ export default function CyberCity() {
             onEnterZone={handleEnterZone}
             onExitZone={handleExitZone}
             vimeoIframeRef={vimeoIframeRef}
+            onNearStand={setNearStand}
+            onLeaveStand={() => setNearStand(null)}
           />
           {/* Vimeo video overlay - projected onto 3D screen position */}
           <iframe
@@ -61,7 +84,7 @@ export default function CyberCity() {
 
       {/* HUD overlay */}
       {started && (
-        <HUD isLocked={isLocked} activeZone={activeZone} />
+        <HUD isLocked={isLocked} activeZone={activeZone} nearStand={nearStand} />
       )}
 
       {/* Zone info panel */}
@@ -81,6 +104,9 @@ export default function CyberCity() {
       {started && (
         <MiniMap activeZone={activeZone} />
       )}
+
+      {/* Stand modal */}
+      {openStand && <StandModal stand={openStand} onClose={() => setOpenStand(null)} />}
 
       {/* Avatar AI Assistant */}
       {started && <AvatarAssistant />}

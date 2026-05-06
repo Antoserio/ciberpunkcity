@@ -434,17 +434,21 @@ function buildCity(scene, flicker, gt, videoTex) {
   // Interactive stands
   STANDS.forEach(stand => addStandBooth(scene, stand));
 
-  // Extra animated canvas screens on zone buildings
+  // Animated canvas screens on ALL zone buildings — each with zone label & color
   const screenDefs = [
-    // [x, y, z, w, h, rotY, label, color]
-    [20 + 4.1, 10, -20, 6, 3.4, -Math.PI/2, 'TECH HUB', '#00ffff'],
+    [20 + 4.1, 10, -20, 6, 3.4, -Math.PI/2, 'SOFTWARE HUB', '#00ffff'],
     [-20, 12, -20 - 4.6, 7, 3.9, Math.PI, 'STUDIO 360', '#ff00ff'],
     [20 - 4.1, 8, 20, 5.5, 3.1, Math.PI/2, 'AVATAR LAB', '#ffff00'],
     [-20 + 4.6, 9, 20, 5, 2.8, 0, 'EVENT DOME', '#ff6600'],
-    // Extra floating screens near center
-    [8, 7, -2, 4.5, 2.5, -Math.PI/6, 'LIVE XR', '#ff44aa'],
-    [-8, 6, -2, 4, 2.2, Math.PI/6, 'METAVERSE', '#4488ff'],
-    [0, 14, -10, 5.5, 3.1, 0, 'NEXUS FEED', '#00ffff'],
+    // Extra screens center/HQ area
+    [8, 7, -2, 4.5, 2.5, -Math.PI/6, 'AGENCY360', '#ff44aa'],
+    [-8, 6, -2, 4, 2.2, Math.PI/6, 'AGENCY360', '#4488ff'],
+    [0, 14, -10, 5.5, 3.1, 0, 'AGENCY360', '#00ffff'],
+    // More screens on side buildings for video everywhere feel
+    [-18, 8, -22, 5, 2.8, Math.PI/4, 'AGENCY360', '#ff00ff'],
+    [18, 7, -22, 5, 2.8, -Math.PI/4, 'AGENCY360', '#00ffff'],
+    [-22, 9, 18, 4.5, 2.5, Math.PI/3, 'AGENCY360', '#ffff00'],
+    [22, 8, 18, 4.5, 2.5, -Math.PI/3, 'AGENCY360', '#ff6600'],
   ];
   screenDefs.forEach(([x, y, z, w, h, rotY, label, color]) => {
     const cv = makeVideoCanvasTexture(label, color);
@@ -526,36 +530,29 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
     flicker.push({ material: mat, baseIntensity: 1.3, flickerSpeed: 0.5 + Math.random(), flickerOffset: Math.random() * Math.PI * 2 });
   });
 
-  // Window grid — instanced for performance
-  const winGeo = new THREE.PlaneGeometry(0.6, 0.8);
-  const winColors = [color, 0xaaaaff, 0xff88ff];
-  const offsets4 = [
-    [0,  w/2+0.02, 0],
-    [0, -w/2-0.02, Math.PI],
-    [-w/2-0.02, 0, Math.PI/2],
-    [w/2+0.02,  0, -Math.PI/2],
-  ];
-  offsets4.forEach(([ox, oz, ry]) => {
-    const wc = winColors[Math.floor(Math.random() * winColors.length)];
-    const mat = emissiveMat(wc, 0.7);
-    flicker.push({ material: mat, baseIntensity: 0.7, flickerSpeed: 0.3 + Math.random(), flickerOffset: Math.random() * Math.PI * 2 });
-    const floors = Math.floor(h / 2.2);
-    const count = floors * 3;
-    const inst = new THREE.InstancedMesh(winGeo, mat, count);
+  // Small window dots — tiny squares only on front face, not floating planes
+  const winGeo = new THREE.PlaneGeometry(0.4, 0.55);
+  const winMat = emissiveMat(color, 0.5);
+  flicker.push({ material: winMat, baseIntensity: 0.5, flickerSpeed: 0.4 + Math.random() * 0.4, flickerOffset: Math.random() * Math.PI * 2 });
+  const floors = Math.floor(h / 2.5);
+  const cols = 3;
+  const winCount = floors * cols;
+  if (winCount > 0) {
+    const inst = new THREE.InstancedMesh(winGeo, winMat, winCount);
     inst.frustumCulled = true;
     const dummy = new THREE.Object3D();
     let idx = 0;
     for (let floor = 1; floor <= floors; floor++) {
-      for (let col = 0; col < 3; col++) {
-        dummy.position.set(x + ox + (col - 1) * 2, floor * 2.2, z + oz);
-        dummy.rotation.y = ry;
+      for (let col = 0; col < cols; col++) {
+        dummy.position.set(x + (col - 1) * (w / 3.5), floor * 2.5, z + w / 2 + 0.02);
+        dummy.rotation.y = 0;
         dummy.updateMatrix();
         inst.setMatrixAt(idx++, dummy.matrix);
       }
     }
     inst.instanceMatrix.needsUpdate = true;
     scene.add(inst);
-  });
+  }
 
   // HQ gets the big video screen billboard
   if (isHQ && videoTex) {
@@ -670,16 +667,19 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker) {
   scene.add(strip);
   flicker.push({ material: stripMat, baseIntensity: 0.8, flickerSpeed: 0.6 + Math.random() * 0.8, flickerOffset: Math.random() * Math.PI * 2 });
 
-  // Windows — single instanced mesh for perf
+  // Simple window dots — only front face, small and tight
   const floors = Math.floor(h / 3.5);
   if (floors > 0) {
-    const wMat = emissiveMat(nc, 0.6);
-    const wInst = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.7, 0.9), wMat, floors);
+    const wMat = emissiveMat(nc, 0.45);
+    const wInst = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.35, 0.45), wMat, floors * 2);
     const dum = new THREE.Object3D();
+    let widx = 0;
     for (let f = 1; f <= floors; f++) {
-      dum.position.set(x, f * 3.5, z + w * 0.45 + 0.02);
-      dum.updateMatrix();
-      wInst.setMatrixAt(f - 1, dum.matrix);
+      for (let c = 0; c < 2; c++) {
+        dum.position.set(x + (c - 0.5) * (w * 0.4), f * 3.5, z + w * 0.45 + 0.02);
+        dum.updateMatrix();
+        wInst.setMatrixAt(widx++, dum.matrix);
+      }
     }
     wInst.instanceMatrix.needsUpdate = true;
     scene.add(wInst);

@@ -95,44 +95,69 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand }
         </motion.div>
       )}
 
-      {/* Stand proximity key prompt */}
+      {/* Stand proximity — BIG letter popup */}
       {nearStand && (
         <motion.div
           key={nearStand.id}
-          initial={{ opacity: 0, scale: 0.8, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: 10 }}
-          className="fixed bottom-36 left-1/2 -translate-x-1/2 z-30"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.5 }}
+          transition={{ type: 'spring', damping: 16, stiffness: 300 }}
+          className="fixed inset-0 z-30 flex items-center justify-center pointer-events-none"
         >
-          <button
-            onClick={() => onActivateStand && onActivateStand(nearStand)}
-            className="px-8 py-4 rounded-lg text-center flex flex-col items-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
-            style={{
-              background: `linear-gradient(135deg, rgba(0,0,0,0.88), ${nearStand.color}22)`,
-              border: `2px solid ${nearStand.color}`,
-              boxShadow: `0 0 40px ${nearStand.color}60, 0 0 80px ${nearStand.color}20, inset 0 0 20px ${nearStand.color}10`,
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{nearStand.icon}</span>
-              <div>
-                <span className="font-orbitron text-base font-black tracking-widest" style={{ color: nearStand.color, textShadow: `0 0 15px ${nearStand.color}` }}>
-                  {nearStand.title}
-                </span>
-                <p className="font-rajdhani text-xs text-gray-400 mt-0.5">{nearStand.subtitle}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="font-orbitron text-xs text-gray-400 tracking-widest">PULSA</span>
+          {/* Giant letter */}
+          <div className="flex flex-col items-center gap-6">
+            <motion.div
+              animate={{ scale: [1, 1.08, 1] }}
+              transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+              className="relative flex items-center justify-center"
+              style={{ width: 160, height: 160 }}
+            >
+              {/* Glow ring */}
+              <div className="absolute inset-0 rounded-full" style={{
+                background: `radial-gradient(circle, ${nearStand.color}40 0%, ${nearStand.color}10 60%, transparent 100%)`,
+                boxShadow: `0 0 60px ${nearStand.color}80, 0 0 120px ${nearStand.color}30`,
+              }} />
+              {/* Border circle */}
+              <div className="absolute inset-2 rounded-full border-4" style={{ borderColor: nearStand.color, boxShadow: `0 0 30px ${nearStand.color}` }} />
+              {/* The letter */}
               <span
-                className="font-orbitron text-2xl font-black px-3 py-1 rounded border-2 animate-pulse"
-                style={{ color: nearStand.color, borderColor: nearStand.color, boxShadow: `0 0 20px ${nearStand.color}`, background: `${nearStand.color}15` }}
+                className="font-orbitron font-black relative z-10"
+                style={{
+                  fontSize: 90,
+                  color: nearStand.color,
+                  textShadow: `0 0 30px ${nearStand.color}, 0 0 60px ${nearStand.color}`,
+                  lineHeight: 1,
+                }}
               >
                 {nearStand.key}
               </span>
-              <span className="font-orbitron text-xs text-gray-400 tracking-widest">O CLICK AQUÍ</span>
-            </div>
-          </button>
+            </motion.div>
+
+            {/* Info card below */}
+            <button
+              className="pointer-events-auto px-8 py-4 rounded-lg text-center flex flex-col items-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+              onClick={() => onActivateStand && onActivateStand(nearStand)}
+              style={{
+                background: `linear-gradient(135deg, rgba(0,0,0,0.92), ${nearStand.color}20)`,
+                border: `2px solid ${nearStand.color}`,
+                boxShadow: `0 0 40px ${nearStand.color}50, inset 0 0 20px ${nearStand.color}08`,
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{nearStand.icon}</span>
+                <div className="text-left">
+                  <p className="font-orbitron text-lg font-black tracking-widest" style={{ color: nearStand.color, textShadow: `0 0 15px ${nearStand.color}` }}>
+                    {nearStand.title}
+                  </p>
+                  <p className="font-rajdhani text-sm text-gray-400">{nearStand.subtitle}</p>
+                </div>
+              </div>
+              <p className="font-orbitron text-xs tracking-widest mt-1" style={{ color: `${nearStand.color}90` }}>
+                PULSA <b style={{ color: nearStand.color }}>{nearStand.key}</b> O CLICK AQUÍ →
+              </p>
+            </button>
+          </div>
         </motion.div>
       )}
 

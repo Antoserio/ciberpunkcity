@@ -128,7 +128,7 @@ const LOOK_SMOOTH = 0.18;
 
 const STAND_RADIUS = 5;
 
-export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, onNearStand, onLeaveStand }) {
+export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, yt1IframeRef, yt2IframeRef, onNearStand, onLeaveStand }) {
   const mountRef = useRef(null);
   const keysRef = useRef({});
   const yawRef = useRef(0);
@@ -144,7 +144,9 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, onN
   const flickerObjectsRef = useRef([]);
   const videoScreenRef = useRef(null);
   const extraCanvasesRef = useRef([]);
-  const vimeoScreenWorldPos = useRef(null); // { x, y, z } world position of vimeo screen
+  const vimeoScreenWorldPos = useRef(null);
+  const yt1ScreenWorldPos = useRef(null);
+  const yt2ScreenWorldPos = useRef(null);
 
   const checkZoneProximity = useCallback((pos) => {
     // Zone check
@@ -234,6 +236,9 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, onN
     extraCanvasesRef.current = extraCanvases;
     // Store vimeo screen world position for overlay
     vimeoScreenWorldPos.current = { x: -20, y: 14, z: -20 + 4.6 };
+    // YouTube screens world positions — on the TECH HUB and AVATAR LAB buildings
+    yt1ScreenWorldPos.current = { x: 20 + 4.1, y: 10, z: -20 }; // TECH HUB side
+    yt2ScreenWorldPos.current = { x: 20 - 4.1, y: 8, z: 20 };   // AVATAR LAB side
 
     // Controls
     const handleClick = () => { canvas.requestPointerLock(); };
@@ -325,30 +330,32 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, onN
 
       renderer.render(scene, camera);
 
-      // Project vimeo screen world pos to screen coords for overlay iframe
-      if (vimeoIframeRef && vimeoIframeRef.current && vimeoScreenWorldPos.current) {
-        const wp = vimeoScreenWorldPos.current;
-        const vec = new THREE.Vector3(wp.x, wp.y, wp.z);
+      // Helper to project a world pos onto an iframe
+      const projectToIframe = (iframeRef, worldPos, maxDist = 30) => {
+        if (!iframeRef?.current || !worldPos) return;
+        const vec = new THREE.Vector3(worldPos.x, worldPos.y, worldPos.z);
         vec.project(camera);
         const hw = mount.clientWidth / 2;
         const hh = mount.clientHeight / 2;
         const sx = (vec.x * hw) + hw;
         const sy = -(vec.y * hh) + hh;
-        // Scale factor based on distance
-        const dist = camera.position.distanceTo(new THREE.Vector3(wp.x, wp.y, wp.z));
-        const scale = Math.max(0, Math.min(1, 30 / dist));
+        const dist = camera.position.distanceTo(new THREE.Vector3(worldPos.x, worldPos.y, worldPos.z));
+        const scale = Math.max(0, Math.min(1, maxDist / dist));
         const iw = 320 * scale;
         const ih = 180 * scale;
         if (vec.z < 1 && scale > 0.05) {
-          vimeoIframeRef.current.style.display = 'block';
-          vimeoIframeRef.current.style.left = `${sx - iw / 2}px`;
-          vimeoIframeRef.current.style.top = `${sy - ih / 2}px`;
-          vimeoIframeRef.current.style.width = `${iw}px`;
-          vimeoIframeRef.current.style.height = `${ih}px`;
+          iframeRef.current.style.display = 'block';
+          iframeRef.current.style.left = `${sx - iw / 2}px`;
+          iframeRef.current.style.top = `${sy - ih / 2}px`;
+          iframeRef.current.style.width = `${iw}px`;
+          iframeRef.current.style.height = `${ih}px`;
         } else {
-          vimeoIframeRef.current.style.display = 'none';
+          iframeRef.current.style.display = 'none';
         }
-      }
+      };
+      projectToIframe(vimeoIframeRef, vimeoScreenWorldPos.current);
+      projectToIframe(yt1IframeRef, yt1ScreenWorldPos.current);
+      projectToIframe(yt2IframeRef, yt2ScreenWorldPos.current);
     };
     animate();
 

@@ -17,6 +17,8 @@ export default function CyberCity() {
   const nearStandStateRef = useRef(null);
   const openStandRef = useRef(null);
   const vimeoIframeRef = useRef(null);
+  const yt1IframeRef = useRef(null);
+  const yt2IframeRef = useRef(null);
 
   // Keep refs in sync so keydown handler can read the latest values
   useEffect(() => { nearStandStateRef.current = nearStand; }, [nearStand]);
@@ -60,23 +62,34 @@ export default function CyberCity() {
             onEnterZone={handleEnterZone}
             onExitZone={handleExitZone}
             vimeoIframeRef={vimeoIframeRef}
+            yt1IframeRef={yt1IframeRef}
+            yt2IframeRef={yt2IframeRef}
             onNearStand={setNearStand}
             onLeaveStand={() => setNearStand(null)}
           />
-          {/* Vimeo video overlay - projected onto 3D screen position */}
+          {/* Vimeo video overlay */}
           <iframe
             ref={vimeoIframeRef}
             src="https://player.vimeo.com/video/641418395?autoplay=1&muted=1&loop=1&background=1"
-            style={{
-              position: 'absolute',
-              display: 'none',
-              border: '2px solid #ff00ff',
-              boxShadow: '0 0 20px #ff00ff80, 0 0 40px #ff00ff40',
-              pointerEvents: 'none',
-              borderRadius: '2px',
-            }}
+            style={{ position: 'absolute', display: 'none', border: '2px solid #ff00ff', boxShadow: '0 0 20px #ff00ff80, 0 0 40px #ff00ff40', pointerEvents: 'none', borderRadius: '2px' }}
             allow="autoplay; fullscreen"
             title="Vimeo Screen"
+          />
+          {/* YouTube 1 overlay */}
+          <iframe
+            ref={yt1IframeRef}
+            src="https://www.youtube.com/embed/h7LhhrhjvAE?autoplay=1&mute=1&loop=1&playlist=h7LhhrhjvAE&controls=0&modestbranding=1"
+            style={{ position: 'absolute', display: 'none', border: '2px solid #00ffff', boxShadow: '0 0 20px #00ffff80, 0 0 40px #00ffff40', pointerEvents: 'none', borderRadius: '2px' }}
+            allow="autoplay; fullscreen"
+            title="YouTube Screen 1"
+          />
+          {/* YouTube 2 overlay */}
+          <iframe
+            ref={yt2IframeRef}
+            src="https://www.youtube.com/embed/yXmNSxb25DU?autoplay=1&mute=1&loop=1&playlist=yXmNSxb25DU&controls=0&modestbranding=1"
+            style={{ position: 'absolute', display: 'none', border: '2px solid #ffff00', boxShadow: '0 0 20px #ffff0080, 0 0 40px #ffff0040', pointerEvents: 'none', borderRadius: '2px' }}
+            allow="autoplay; fullscreen"
+            title="YouTube Screen 2"
           />
         </div>
       )}

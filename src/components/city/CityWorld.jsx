@@ -128,7 +128,7 @@ const LOOK_SMOOTH = 0.10;
 
 const STAND_RADIUS = 9;
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen }) {
   const mountRef = useRef(null);
   const keysRef = useRef({});
   const yawRef = useRef(0);
@@ -144,8 +144,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const flickerObjectsRef = useRef([]);
   const videoScreenRef = useRef(null);
   const extraCanvasesRef = useRef([]);
+  const modalOpenRef = useRef(false);
+
+  // Keep modalOpenRef in sync so the animate loop can read it without re-creating listeners
+  useEffect(() => { modalOpenRef.current = modalOpen; }, [modalOpen]);
 
   const checkZoneProximity = useCallback((pos) => {
+    // Don't update proximity state while a modal is open
+    if (modalOpenRef.current) return;
     // Zone check
     let inZone = false;
     for (const zone of ZONES) {
@@ -434,21 +440,13 @@ function buildCity(scene, flicker, gt, videoTex) {
   // Interactive stands
   STANDS.forEach(stand => addStandBooth(scene, stand));
 
-  // Animated canvas screens on ALL zone buildings — each with zone label & color
+  // Canvas screens — only on zone building faces, flat against the wall, no floating angle screens
+  // [x, y, z, w, h, rotY, label, color]
   const screenDefs = [
-    [20 + 4.1, 10, -20, 6, 3.4, -Math.PI/2, 'SOFTWARE HUB', '#00ffff'],
-    [-20, 12, -20 - 4.6, 7, 3.9, Math.PI, 'STUDIO 360', '#ff00ff'],
-    [20 - 4.1, 8, 20, 5.5, 3.1, Math.PI/2, 'AVATAR LAB', '#ffff00'],
-    [-20 + 4.6, 9, 20, 5, 2.8, 0, 'EVENT DOME', '#ff6600'],
-    // Extra screens center/HQ area
-    [8, 7, -2, 4.5, 2.5, -Math.PI/6, 'AGENCY360', '#ff44aa'],
-    [-8, 6, -2, 4, 2.2, Math.PI/6, 'AGENCY360', '#4488ff'],
-    [0, 14, -10, 5.5, 3.1, 0, 'AGENCY360', '#00ffff'],
-    // More screens on side buildings for video everywhere feel
-    [-18, 8, -22, 5, 2.8, Math.PI/4, 'AGENCY360', '#ff00ff'],
-    [18, 7, -22, 5, 2.8, -Math.PI/4, 'AGENCY360', '#00ffff'],
-    [-22, 9, 18, 4.5, 2.5, Math.PI/3, 'AGENCY360', '#ffff00'],
-    [22, 8, 18, 4.5, 2.5, -Math.PI/3, 'AGENCY360', '#ff6600'],
+    [20 + 4.05, 10, -20, 5.5, 3.1, -Math.PI/2, 'SOFTWARE HUB', '#00ffff'],
+    [-20, 12, -20 - 4.65, 6.5, 3.7, Math.PI, 'STUDIO 360', '#ff00ff'],
+    [20 - 4.05, 8, 20, 5, 2.8, Math.PI/2, 'AVATAR LAB', '#ffff00'],
+    [-20 + 4.65, 9, 20, 4.5, 2.5, 0, 'EVENT DOME', '#ff6600'],
   ];
   screenDefs.forEach(([x, y, z, w, h, rotY, label, color]) => {
     const cv = makeVideoCanvasTexture(label, color);

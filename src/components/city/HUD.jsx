@@ -137,7 +137,7 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand }
             {/* Info card below */}
             <button
               className="pointer-events-auto px-8 py-4 rounded-lg text-center flex flex-col items-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
-              onClick={() => onActivateStand && onActivateStand(nearStand)}
+              onClick={(e) => { e.stopPropagation(); onActivateStand && onActivateStand(nearStand); }}
               style={{
                 background: `linear-gradient(135deg, rgba(0,0,0,0.92), ${nearStand.color}20)`,
                 border: `2px solid ${nearStand.color}`,

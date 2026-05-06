@@ -22,16 +22,20 @@ export default function CyberCity() {
   useEffect(() => { nearStandStateRef.current = nearStand; }, [nearStand]);
   useEffect(() => { openStandRef.current = openStand; }, [openStand]);
 
-  // Escape closes the stand modal and re-locks pointer
+  // Escape closes the stand modal only (browser also fires Escape to exit pointer lock)
   useEffect(() => {
     if (!started) return;
     const onKey = (e) => {
       if (e.key === 'Escape' && openStandRef.current) {
-        setOpenStand(null);
+        // Let the modal close, then re-request pointer lock after a brief delay
+        // so the browser's built-in pointer lock exit completes first
         setTimeout(() => {
-          const canvas = document.querySelector('canvas');
-          if (canvas) canvas.requestPointerLock();
-        }, 200);
+          setOpenStand(null);
+          setTimeout(() => {
+            const canvas = document.querySelector('canvas');
+            if (canvas) canvas.requestPointerLock();
+          }, 300);
+        }, 50);
       }
     };
     document.addEventListener('keydown', onKey);
@@ -62,6 +66,7 @@ export default function CyberCity() {
             onNearStand={setNearStand}
             onLeaveStand={() => setNearStand(null)}
             onActivateStand={(stand) => setOpenStand(stand)}
+            modalOpen={!!openStand}
           />
           </div>
         </div>
@@ -74,9 +79,9 @@ export default function CyberCity() {
         )}
       </AnimatePresence>
 
-      {/* HUD overlay */}
+      {/* HUD overlay — hide nearStand popup when modal is open */}
       {started && (
-        <HUD isLocked={isLocked || hasClickedOnce} activeZone={activeZone} nearStand={nearStand} onActivateStand={(stand) => setOpenStand(stand)} />
+        <HUD isLocked={isLocked || hasClickedOnce} activeZone={activeZone} nearStand={openStand ? null : nearStand} onActivateStand={(stand) => setOpenStand(stand)} />
       )}
 
       {/* Zone info panel */}

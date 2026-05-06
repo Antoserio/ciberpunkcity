@@ -118,13 +118,17 @@ function makeNeonSignTexture(text, color) {
 }
 
 const MOVE_SPEED = 16;
-const LOOK_SPEED = 0.0022;
+const LOOK_SPEED = 0.0018;
+const LOOK_SMOOTH = 0.18;
 
 export default function CityWorld({ onEnterZone, onExitZone }) {
   const mountRef = useRef(null);
   const keysRef = useRef({});
   const yawRef = useRef(0);
   const pitchRef = useRef(-0.1);
+  const targetYawRef = useRef(0);
+  const targetPitchRef = useRef(-0.1);
+  const mouseDeltaRef = useRef({ x: 0, y: 0 });
   const isLockedRef = useRef(false);
   const animFrameRef = useRef(null);
   const activeZoneRef = useRef(null);
@@ -200,9 +204,8 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
     };
     const handleMouseMove = (e) => {
       if (!isLockedRef.current) return;
-      yawRef.current -= e.movementX * LOOK_SPEED;
-      pitchRef.current -= e.movementY * LOOK_SPEED;
-      pitchRef.current = Math.max(-Math.PI / 3, Math.min(Math.PI / 5, pitchRef.current));
+      mouseDeltaRef.current.x += e.movementX;
+      mouseDeltaRef.current.y += e.movementY;
     };
     const handleKeyDown = (e) => {
       keysRef.current[e.code] = true;
@@ -228,23 +231,33 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
       const delta = Math.min(clockRef.current.getDelta(), 0.05);
       frameCount++;
 
+      // Smooth mouse look — accumulate deltas then lerp
+      if (isLockedRef.current && (mouseDeltaRef.current.x !== 0 || mouseDeltaRef.current.y !== 0)) {
+        targetYawRef.current -= mouseDeltaRef.current.x * LOOK_SPEED;
+        targetPitchRef.current -= mouseDeltaRef.current.y * LOOK_SPEED;
+        targetPitchRef.current = Math.max(-Math.PI / 3, Math.min(Math.PI / 5, targetPitchRef.current));
+        mouseDeltaRef.current.x = 0;
+        mouseDeltaRef.current.y = 0;
+      }
+      yawRef.current += (targetYawRef.current - yawRef.current) * LOOK_SMOOTH;
+      pitchRef.current += (targetPitchRef.current - pitchRef.current) * LOOK_SMOOTH;
+
       // Movement
-      if (isLockedRef.current) {
+      const k = keysRef.current;
+      const moving = k['KeyW'] || k['ArrowUp'] || k['KeyS'] || k['ArrowDown'] || k['KeyA'] || k['ArrowLeft'] || k['KeyD'] || k['ArrowRight'];
+      if (isLockedRef.current && moving) {
         dir.set(0, 0, 0);
-        const k = keysRef.current;
         if (k['KeyW'] || k['ArrowUp']) dir.z -= 1;
         if (k['KeyS'] || k['ArrowDown']) dir.z += 1;
         if (k['KeyA'] || k['ArrowLeft']) dir.x -= 1;
         if (k['KeyD'] || k['ArrowRight']) dir.x += 1;
-        if (dir.lengthSq() > 0) {
-          dir.normalize();
-          euler.set(0, yawRef.current, 0);
-          dir.applyEuler(euler);
-          camera.position.addScaledVector(dir, MOVE_SPEED * delta);
-          camera.position.x = Math.max(-90, Math.min(90, camera.position.x));
-          camera.position.z = Math.max(-90, Math.min(90, camera.position.z));
-          camera.position.y = 1.7;
-        }
+        dir.normalize();
+        euler.set(0, yawRef.current, 0);
+        dir.applyEuler(euler);
+        camera.position.addScaledVector(dir, MOVE_SPEED * delta);
+        camera.position.x = Math.max(-90, Math.min(90, camera.position.x));
+        camera.position.z = Math.max(-90, Math.min(90, camera.position.z));
+        camera.position.y = 1.7;
       }
 
       euler.set(pitchRef.current, yawRef.current, 0);
@@ -339,77 +352,52 @@ function buildCity(scene, flicker, gt, videoTex) {
   const vRoad = new THREE.Mesh(new THREE.PlaneGeometry(12, 220), roadMat);
   vRoad.rotation.x = -Math.PI / 2; vRoad.position.y = 0.01; scene.add(vRoad);
 
-  // Neon road edge strips
-  [[7, 0, 220, 0.12], [-7, 0, 220, 0.12], [0, 7, 0.12, 220], [0, -7, 0.12, 220]].forEach(([x, z, w, d]) => {
-    const mat = emissiveMat(0xff00ff, 0.6);
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
+  // Neon road edge strips — single emissive plane each
+  [[7, 0, 220, 0.3], [-7, 0, 220, 0.3], [0, 7, 0.3, 220], [0, -7, 0.3, 220]].forEach(([x, z, w, d]) => {
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ color: 0xff00ff }));
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(x, 0.015, z);
     scene.add(mesh);
-    flicker.push({ material: mat, baseIntensity: 0.6, flickerSpeed: 0.4, flickerOffset: Math.random() * Math.PI * 2 });
   });
-
-  // Road dashes
-  const dashMat = emissiveMat(0xaaaa00, 0.5);
-  const dashGeo = new THREE.PlaneGeometry(3, 0.12);
-  for (let i = -100; i <= 100; i += 12) {
-    const dH = new THREE.Mesh(dashGeo, dashMat); dH.rotation.x = -Math.PI / 2; dH.position.set(i, 0.02, 0); scene.add(dH);
-    const dV = new THREE.Mesh(dashGeo, dashMat); dV.rotation.x = -Math.PI / 2; dV.rotation.z = Math.PI / 2; dV.position.set(0, 0.02, i); scene.add(dV);
-  }
 
   // Zone buildings
   ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex));
 
-  // Dense mid-range buildings
+  // Mid-range buildings — reduced to 10, no glow sprites
   const midPositions = [
-    [-18,-22],[18,-22],[-22,-18],[22,-18],
-    [-18,22],[18,22],[-22,18],[22,18],
-    [-32,-8],[32,8],[-8,-32],[8,32],
+    [-18,-22],[18,-22],[-22,18],[22,18],
     [-28,-28],[28,-28],[-28,28],[28,28],
-    [-38,0],[38,0],[0,-38],[0,38],
+    [-38,0],[38,0],
   ];
   const neonPalette = [0x00ffff, 0xff00ff, 0xffff00, 0x4488ff, 0xff44aa];
   midPositions.forEach(([x, z], i) => {
     const h = 10 + (i * 4.1 % 22);
     const w = 4 + (i * 1.7 % 6);
     const nc = neonPalette[i % neonPalette.length];
-    createMidBuilding(scene, x, z, w, h, nc, flicker, gt);
+    createMidBuilding(scene, x, z, w, h, nc, flicker);
   });
 
-  // Billboard signs along street
-  const signs = [
-    { x: 14, z: -3, text: '◆ SOFTWARE', color: '#00ffff' },
-    { x: -14, z: 3, text: '◆ VIDEO 360', color: '#ff00ff' },
-    { x: 3, z: -14, text: '◆ AVATARES XR', color: '#ffff00' },
-    { x: -3, z: 14, text: '◆ EVENTOS', color: '#ff6600' },
-  ];
-  signs.forEach(s => addBillboard(scene, s.x, 5, s.z, s.text, s.color, flicker));
+  // Billboard signs — 2 only
+  addBillboard(scene, 14, 5, -3, '◆ SOFTWARE', '#00ffff');
+  addBillboard(scene, -14, 5, 3, '◆ VIDEO 360', '#ff00ff');
 
-  // Distant skyline — reduced to 20 for perf
-  for (let i = 0; i < 20; i++) {
-    const angle = (i / 40) * Math.PI * 2;
-    const dist = 70 + (i % 6) * 10;
-    const h = 12 + (i % 9) * 7;
-    const w = 4 + (i % 5) * 2;
-    const nc = neonPalette[i % neonPalette.length];
+  // Distant skyline — 16 simple boxes, no glow sprites
+  const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });
+  for (let i = 0; i < 16; i++) {
+    const angle = (i / 16) * Math.PI * 2;
+    const dist = 75 + (i % 4) * 8;
+    const h = 14 + (i % 8) * 6;
+    const w = 5 + (i % 4) * 2;
     const bx = Math.cos(angle) * dist;
     const bz = Math.sin(angle) * dist;
-
-    const body = new THREE.Mesh(
-      new THREE.BoxGeometry(w, h, w * 0.85),
-      new THREE.MeshBasicMaterial({ color: 0x04010e })
-    );
+    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), skyMat);
     body.position.set(bx, h / 2, bz);
     scene.add(body);
-
-    const capMat = emissiveMat(nc, 1.0);
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.2, 0.3, w * 0.85 + 0.2), capMat);
-    cap.position.set(bx, h + 0.15, bz);
+    // Colored cap
+    const nc = neonPalette[i % neonPalette.length];
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(w, 0.4, w), new THREE.MeshBasicMaterial({ color: nc }));
+    cap.position.set(bx, h + 0.2, bz);
     scene.add(cap);
-    flicker.push({ material: capMat, baseIntensity: 1.0, flickerSpeed: 0.4 + Math.random(), flickerOffset: Math.random() * Math.PI * 2 });
-
-    const gKey = colorToGlowKey(nc);
-    addGlowSprite(scene, bx, h + 2.5, bz, gt[gKey], 12 + (i % 4) * 4);
   }
 
   // Floating particles — reduced count
@@ -562,7 +550,7 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
 
 // ─── Mid building ─────────────────────────────────────────────────────────────
 
-function createMidBuilding(scene, x, z, w, h, nc, flicker, gt) {
+function createMidBuilding(scene, x, z, w, h, nc, flicker) {
   // Body
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(w, h, w * 0.9),
@@ -600,14 +588,12 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker, gt) {
     scene.add(wInst);
   }
 
-  // Glow sprite
-  const gKey = colorToGlowKey(nc);
-  addGlowSprite(scene, x, h + 2, z, gt[gKey], 8 + (h % 4) * 2);
+  // No glow sprite for mid buildings — perf
 }
 
 // ─── Billboard sign ───────────────────────────────────────────────────────────
 
-function addBillboard(scene, x, y, z, text, colorHex, flicker) {
+function addBillboard(scene, x, y, z, text, colorHex) {
   const tex = makeNeonSignTexture(text, colorHex);
   const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(5.5, 1.3), mat);

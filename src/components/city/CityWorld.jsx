@@ -163,7 +163,7 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, onN
       onExitZone();
     }
 
-    // Stand proximity
+    // Stand proximity — always check, independent of zones
     let foundStand = null;
     for (const stand of STANDS) {
       const dx = pos.x - stand.position[0];
@@ -244,7 +244,8 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, onN
     };
     const handleKeyDown = (e) => {
       keysRef.current[e.code] = true;
-      if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
+      // Only prevent default for movement keys, not interaction keys like B/A
+      if (['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
         e.preventDefault();
         isLockedRef.current = true;
       }

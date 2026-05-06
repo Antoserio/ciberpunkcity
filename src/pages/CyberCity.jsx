@@ -26,6 +26,8 @@ export default function CyberCity() {
     const onKey = (e) => {
       const stand = nearStandStateRef.current;
       if (stand && e.key.toUpperCase() === stand.key.toUpperCase()) {
+        // Exit pointer lock so cursor is free for the modal
+        if (document.pointerLockElement) document.exitPointerLock();
         setOpenStand(stand);
       }
       if (e.key === 'Escape') setOpenStand(null);

@@ -684,7 +684,7 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
 
   // Body — each face gets a unique cyberpunk panel texture
   const baseSeed = Math.abs(Math.round(x * 7 + z * 13)) % 100;
-  const makeWall = (s) => new THREE.MeshStandardMaterial({ map: makeBuildingWallTexture(zone.colorHex, s), roughness: 0.25, metalness: 0.8 });
+  const makeWall = (s) => new THREE.MeshBasicMaterial({ map: makeBuildingWallTexture(zone.colorHex, s) });
   const bodyMats = [
     makeWall(baseSeed),           // right
     makeWall(baseSeed + 1),       // left
@@ -824,10 +824,10 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker) {
   // Body — each face gets a unique cyberpunk panel texture
   const baseSeed = Math.abs(Math.round(x * 5 + z * 11)) % 100;
   const hexColor = '#' + nc.toString(16).padStart(6, '0');
-  const makeMidWall = (s) => new THREE.MeshStandardMaterial({ map: makeBuildingWallTexture(hexColor, s), roughness: 0.25, metalness: 0.8 });
+  const makeMidWall = (s) => new THREE.MeshBasicMaterial({ map: makeBuildingWallTexture(hexColor, s) });
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(w, h, w * 0.9),
-    [makeMidWall(baseSeed), makeMidWall(baseSeed+1), new THREE.MeshStandardMaterial({color:0x0a000f}), new THREE.MeshStandardMaterial({color:0x0a000f}), makeMidWall(baseSeed+2), makeMidWall(baseSeed+3)]
+    [makeMidWall(baseSeed), makeMidWall(baseSeed+1), new THREE.MeshBasicMaterial({color:0x0a000f}), new THREE.MeshBasicMaterial({color:0x0a000f}), makeMidWall(baseSeed+2), makeMidWall(baseSeed+3)]
   );
   body.position.set(x, h / 2, z);
   scene.add(body);

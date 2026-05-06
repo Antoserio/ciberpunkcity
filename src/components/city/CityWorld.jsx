@@ -29,13 +29,10 @@ function makeVideoCanvasTexture(label, accentColor) {
   const ctx = canvas.getContext('2d');
   const tex = new THREE.CanvasTexture(canvas);
 
-  // Scanline noise
   function draw(t) {
-    // Dark base
     ctx.fillStyle = '#050010';
     ctx.fillRect(0, 0, W, H);
 
-    // Magenta/cyan gradient wash
     const grd = ctx.createLinearGradient(0, 0, W, H);
     grd.addColorStop(0, `hsla(280,100%,${20 + 10 * Math.sin(t * 0.3)}%,0.9)`);
     grd.addColorStop(0.5, `hsla(200,100%,${15 + 8 * Math.cos(t * 0.5)}%,0.7)`);
@@ -43,7 +40,6 @@ function makeVideoCanvasTexture(label, accentColor) {
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
 
-    // Glitch horizontal bars
     for (let i = 0; i < 4; i++) {
       const y = (Math.sin(t * 2.1 + i * 1.3) * 0.5 + 0.5) * H;
       const alpha = 0.08 + 0.05 * Math.sin(t * 3 + i);
@@ -51,13 +47,11 @@ function makeVideoCanvasTexture(label, accentColor) {
       ctx.fillRect(0, y, W, 2 + Math.random() * 4);
     }
 
-    // Grid lines
     ctx.strokeStyle = 'rgba(0,255,255,0.12)';
     ctx.lineWidth = 0.5;
     for (let x = 0; x < W; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
     for (let y = 0; y < H; y += 18) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
-    // Main text
     const pulse = 0.8 + 0.2 * Math.sin(t * 1.5);
     ctx.shadowBlur = 30;
     ctx.shadowColor = accentColor;
@@ -74,7 +68,6 @@ function makeVideoCanvasTexture(label, accentColor) {
     ctx.font = '18px monospace';
     ctx.fillText('AGENCY360 · CREATIVE · XR', W / 2, H / 2 + 18);
 
-    // Bottom ticker
     const tickerOffset = (t * 60) % (W + 800);
     ctx.shadowColor = '#ffff00';
     ctx.shadowBlur = 10;
@@ -83,17 +76,6 @@ function makeVideoCanvasTexture(label, accentColor) {
     ctx.textAlign = 'left';
     ctx.fillText('◆ SOFTWARE  ◆ VIDEO 360°  ◆ AVATARES 3D  ◆ EVENTOS XR  ◆ METAVERSO  ◆ STREAMING  ', W - tickerOffset, H - 14);
 
-    // Corner brackets
-    ctx.strokeStyle = 'rgba(0,255,255,0.7)';
-    ctx.lineWidth = 2;
-    ctx.shadowBlur = 0;
-    const bsize = 18;
-    [[0,0],[W,0],[0,H],[W,H]].forEach(([cx, cy]) => {
-      const sx = cx === 0 ? 1 : -1, sy = cy === 0 ? 1 : -1;
-      ctx.beginPath(); ctx.moveTo(cx + sx * bsize, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + sy * bsize); ctx.stroke();
-    });
-
-    // Scanlines
     for (let y = 0; y < H; y += 3) {
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
       ctx.fillRect(0, y, W, 1.5);
@@ -103,6 +85,71 @@ function makeVideoCanvasTexture(label, accentColor) {
   }
 
   return { canvas, tex, draw };
+}
+
+// Building wall branding texture — grey metallic with AGENCY360 neon text on each face
+function makeBuildingWallTexture(accentColor) {
+  accentColor = accentColor || '#00ffff';
+  const W = 512, H = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Metallic grey base
+  const grd = ctx.createLinearGradient(0, 0, W, H);
+  grd.addColorStop(0, '#1a1a22');
+  grd.addColorStop(0.4, '#2a2a35');
+  grd.addColorStop(0.7, '#1e1e28');
+  grd.addColorStop(1, '#141420');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle panel lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < H; y += 64) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  for (let x = 0; x < W; x += 64) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+
+  // Metallic sheen strip
+  const shine = ctx.createLinearGradient(0, 0, W, 0);
+  shine.addColorStop(0, 'rgba(255,255,255,0)');
+  shine.addColorStop(0.35, 'rgba(255,255,255,0.07)');
+  shine.addColorStop(0.5, 'rgba(255,255,255,0.13)');
+  shine.addColorStop(0.65, 'rgba(255,255,255,0.07)');
+  shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shine;
+  ctx.fillRect(0, 0, W, H);
+
+  // Neon horizontal accent line
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 14;
+  ctx.shadowColor = accentColor;
+  ctx.beginPath(); ctx.moveTo(30, H * 0.28); ctx.lineTo(W - 30, H * 0.28); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(30, H * 0.72); ctx.lineTo(W - 30, H * 0.72); ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // AGENCY360 text
+  ctx.shadowBlur = 22;
+  ctx.shadowColor = accentColor;
+  ctx.fillStyle = accentColor;
+  ctx.font = 'bold 48px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('AGENCY360', W / 2, H / 2 - 16);
+
+  ctx.shadowColor = '#ffffff';
+  ctx.shadowBlur = 8;
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '20px monospace';
+  ctx.fillText('CREATIVE · XR · METAVERSE', W / 2, H / 2 + 26);
+  ctx.shadowBlur = 0;
+
+  return new THREE.CanvasTexture(canvas);
 }
 
 // Neon sign canvas texture
@@ -446,8 +493,7 @@ function buildCity(scene, flicker, gt, videoTex) {
   // Interactive stands
   STANDS.forEach(stand => addStandBooth(scene, stand));
 
-  // Canvas screens — only on zone building faces, flat against the wall, no floating angle screens
-  // [x, y, z, w, h, rotY, label, color]
+  // Canvas screens on zone building faces
   const screenDefs = [
     [20 + 4.05, 10, -20, 5.5, 3.1, -Math.PI/2, 'SOFTWARE HUB', '#00ffff'],
     [-20, 12, -20 - 4.65, 6.5, 3.7, Math.PI, 'STUDIO 360', '#ff00ff'],
@@ -459,6 +505,18 @@ function buildCity(scene, flicker, gt, videoTex) {
     extraCanvases.push(cv);
     addExtraScreen(scene, x, y, z, w, h, cv.tex, flicker, rotY);
   });
+
+  // ── Vimeo video screens fijas en la ciudad (iframes en HTML overlay) ──
+  // Se añaden como elementos DOM encima del canvas de Three.js
+  addVimeoScreen(scene, -8, 8, -18, 8, 4.5, 0,
+    'https://player.vimeo.com/video/76979871?autoplay=1&loop=1&muted=1&background=1', flicker, 0xff00ff);
+  addVimeoScreen(scene, 8, 8, 18, 8, 4.5, Math.PI,
+    'https://player.vimeo.com/video/148751763?autoplay=1&loop=1&muted=1&background=1', flicker, 0xff6600);
+  // Duplicados al otro lado
+  addVimeoScreen(scene, 8, 8, -18, 8, 4.5, 0,
+    'https://player.vimeo.com/video/148751763?autoplay=1&loop=1&muted=1&background=1', flicker, 0xff6600);
+  addVimeoScreen(scene, -8, 8, 18, 8, 4.5, Math.PI,
+    'https://player.vimeo.com/video/76979871?autoplay=1&loop=1&muted=1&background=1', flicker, 0xff00ff);
 
   // Distant skyline — 16 simple boxes, no glow sprites
   const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });
@@ -508,11 +566,17 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
   const color = zone.color;
   const isHQ = zone.isHQ;
 
-  // Body — dark
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(w, h, w),
-    new THREE.MeshStandardMaterial({ color: 0x04010c, roughness: 0.35, metalness: 0.9 })
-  );
+  // Body — metallic grey with AGENCY360 branding on all 4 faces
+  const wallTex = makeBuildingWallTexture(zone.colorHex);
+  const bodyMats = [
+    new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.3, metalness: 0.85 }), // right
+    new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.3, metalness: 0.85 }), // left
+    new THREE.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.2, metalness: 0.95 }), // top
+    new THREE.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.2, metalness: 0.95 }), // bottom
+    new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.3, metalness: 0.85 }), // front
+    new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.3, metalness: 0.85 }), // back
+  ];
+  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), bodyMats);
   body.position.set(x, h / 2, z);
   scene.add(body);
 
@@ -523,15 +587,6 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
     ledge.position.set(x, h * frac, z);
     scene.add(ledge);
     flicker.push({ material: lMat, baseIntensity: frac === 1.0 ? 0.9 : 0.5, flickerSpeed: 0.3 + Math.random() * 0.6, flickerOffset: Math.random() * Math.PI * 2 });
-  });
-
-  // Corner strips
-  [[-w/2,-w/2],[w/2,-w/2],[-w/2,w/2],[w/2,w/2]].forEach(([ox, oz]) => {
-    const mat = emissiveMat(color, 1.3);
-    const strip = new THREE.Mesh(new THREE.BoxGeometry(0.12, h, 0.12), mat);
-    strip.position.set(x + ox, h/2, z + oz);
-    scene.add(strip);
-    flicker.push({ material: mat, baseIntensity: 1.3, flickerSpeed: 0.5 + Math.random(), flickerOffset: Math.random() * Math.PI * 2 });
   });
 
   // Small window dots — tiny squares only on front face, not floating planes
@@ -649,10 +704,11 @@ function addExtraScreen(scene, x, y, z, w, h, canvasTex, flicker, rotY = 0) {
 // ─── Mid building ─────────────────────────────────────────────────────────────
 
 function createMidBuilding(scene, x, z, w, h, nc, flicker) {
-  // Body
+  // Body — metallic grey with branding
+  const wallTex = makeBuildingWallTexture('#' + nc.toString(16).padStart(6, '0'));
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(w, h, w * 0.9),
-    new THREE.MeshBasicMaterial({ color: 0x04010c })
+    new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.3, metalness: 0.85 })
   );
   body.position.set(x, h / 2, z);
   scene.add(body);
@@ -776,6 +832,72 @@ function addStandBooth(scene, stand) {
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 0.8), signMat);
   sign.position.set(x, 3.7, z + 0.4);
   scene.add(sign);
+}
+
+// ─── Vimeo screen billboard (3D frame + placeholder texture) ─────────────────
+// Real Vimeo video is shown via HTML overlay in CyberCity.jsx
+
+function addVimeoScreen(scene, x, y, z, w, h, rotY, vimeoUrl, flicker, neonColor) {
+  // Dark backing panel
+  const backMat = new THREE.MeshStandardMaterial({ color: 0x050005, roughness: 0.3, metalness: 0.9 });
+  const back = new THREE.Mesh(new THREE.BoxGeometry(w + 0.4, h + 0.4, 0.25), backMat);
+  back.position.set(x, y, z);
+  back.rotation.y = rotY;
+  scene.add(back);
+
+  // Placeholder canvas — magenta/orange gradient with "▶ VIDEO" label
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 288;
+  const ctx = canvas.getContext('2d');
+  const grd = ctx.createLinearGradient(0, 0, 512, 288);
+  const hex = '#' + neonColor.toString(16).padStart(6, '0');
+  grd.addColorStop(0, '#050010');
+  grd.addColorStop(1, hex + '22');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, 512, 288);
+  ctx.shadowBlur = 30; ctx.shadowColor = hex;
+  ctx.fillStyle = hex;
+  ctx.font = 'bold 72px monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('▶', 256, 120);
+  ctx.font = '22px monospace';
+  ctx.fillStyle = '#ffffff99';
+  ctx.shadowBlur = 0;
+  ctx.fillText('AGENCY360 · VIDEO', 256, 180);
+  const tex = new THREE.CanvasTexture(canvas);
+
+  const screenMat = new THREE.MeshBasicMaterial({ map: tex });
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(w, h), screenMat);
+  screen.position.set(x, y, z);
+  screen.rotation.y = rotY;
+  // offset slightly in front of backing
+  const offset = 0.15;
+  screen.position.x += Math.sin(rotY) * offset;
+  screen.position.z += Math.cos(rotY) * offset;
+  scene.add(screen);
+
+  // Neon border
+  const bGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(w + 0.1, h + 0.1, 0.05));
+  const bLine = new THREE.LineSegments(bGeo, new THREE.LineBasicMaterial({ color: neonColor }));
+  bLine.position.copy(screen.position);
+  bLine.rotation.y = rotY;
+  scene.add(bLine);
+
+  // Glow
+  const glowMat = new THREE.SpriteMaterial({ color: neonColor, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending });
+  const glow = new THREE.Sprite(glowMat);
+  glow.scale.set(w * 1.8, h * 1.8, 1);
+  glow.position.set(x, y, z);
+  scene.add(glow);
+  flicker.push({ material: glowMat, baseIntensity: 0.2, flickerSpeed: 0.7, flickerOffset: Math.random() * Math.PI * 2 });
+
+  // Support poles
+  const poleMat = new THREE.MeshBasicMaterial({ color: 0x222233 });
+  [[-w/2 + 0.3], [w/2 - 0.3]].forEach(([ox]) => {
+    const pole = new THREE.Mesh(new THREE.BoxGeometry(0.15, y, 0.15), poleMat);
+    pole.position.set(x + ox, y / 2, z);
+    scene.add(pole);
+  });
 }
 
 // ─── Billboard sign ───────────────────────────────────────────────────────────

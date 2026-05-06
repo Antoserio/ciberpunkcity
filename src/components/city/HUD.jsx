@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { ZONES } from './cityData';
-import { STANDS } from './standsData';
 
 export default function HUD({ isLocked, activeZone, nearStand, onActivateStand }) {
   return (
@@ -161,31 +160,6 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand }
           </div>
         </motion.div>
       )}
-
-      {/* Stands panel — always visible on the right */}
-      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
-        {STANDS.map(stand => (
-          <button
-            key={stand.id}
-            onClick={(e) => { e.stopPropagation(); onActivateStand && onActivateStand(stand); }}
-            className="flex items-center gap-2 px-3 py-2 rounded text-left transition-all hover:scale-105 active:scale-95"
-            style={{
-              background: `linear-gradient(135deg, rgba(0,0,0,0.88), ${stand.color}25)`,
-              border: `1px solid ${stand.color}80`,
-              boxShadow: `0 0 12px ${stand.color}30`,
-              minWidth: 160,
-            }}
-          >
-            <span className="text-xl">{stand.icon}</span>
-            <div>
-              <p className="font-orbitron text-[10px] font-bold tracking-widest leading-tight" style={{ color: stand.color }}>
-                {stand.title}
-              </p>
-              <p className="font-rajdhani text-[10px] text-gray-500 leading-tight">{stand.subtitle}</p>
-            </div>
-          </button>
-        ))}
-      </div>
 
       {/* Zone proximity hint */}
       {activeZone && (

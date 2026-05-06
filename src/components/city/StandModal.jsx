@@ -93,9 +93,14 @@ export default function StandModal({ stand, onClose }) {
           </div>
 
           {/* close hint */}
-          <p className="relative z-10 text-center font-orbitron text-xs tracking-widest" style={{ color: `${c}50` }}>
-            CLICK O ESC PARA CERRAR
-          </p>
+          <div className="relative z-10 flex items-center justify-center gap-3 mt-2">
+            <span className="font-orbitron text-xs tracking-widest px-3 py-1 rounded border" style={{ color: `${c}80`, borderColor: `${c}40`, background: `${c}10` }}>
+              ESC
+            </span>
+            <span className="font-orbitron text-xs tracking-widest" style={{ color: `${c}50` }}>
+              O CLICK FUERA PARA CERRAR
+            </span>
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

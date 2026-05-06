@@ -96,28 +96,35 @@ export default function HUD({ isLocked, activeZone, nearStand }) {
       {nearStand && (
         <motion.div
           key={nearStand.id}
-          initial={{ opacity: 0, scale: 0.85, y: 10 }}
+          initial={{ opacity: 0, scale: 0.8, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, scale: 0.8, y: 10 }}
           className="fixed bottom-36 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
         >
           <div
-            className="px-6 py-3 rounded text-center flex items-center gap-3"
+            className="px-8 py-4 rounded-lg text-center flex flex-col items-center gap-2"
             style={{
-              background: `${nearStand.color}18`,
-              border: `1px solid ${nearStand.color}60`,
-              boxShadow: `0 0 24px ${nearStand.color}30`,
+              background: `linear-gradient(135deg, rgba(0,0,0,0.85), ${nearStand.color}22)`,
+              border: `2px solid ${nearStand.color}`,
+              boxShadow: `0 0 40px ${nearStand.color}60, 0 0 80px ${nearStand.color}20, inset 0 0 20px ${nearStand.color}10`,
             }}
           >
-            <span
-              className="font-orbitron text-xl font-black px-2 py-1 rounded border animate-pulse"
-              style={{ color: nearStand.color, borderColor: nearStand.color, boxShadow: `0 0 12px ${nearStand.color}` }}
-            >
-              {nearStand.key}
-            </span>
-            <span className="font-orbitron text-xs tracking-widest" style={{ color: nearStand.color }}>
-              {nearStand.title}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{nearStand.icon}</span>
+              <span className="font-orbitron text-base font-black tracking-widest" style={{ color: nearStand.color, textShadow: `0 0 15px ${nearStand.color}` }}>
+                {nearStand.title}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="font-orbitron text-xs text-gray-400 tracking-widest">PULSA</span>
+              <span
+                className="font-orbitron text-2xl font-black px-3 py-1 rounded border-2 animate-pulse"
+                style={{ color: nearStand.color, borderColor: nearStand.color, boxShadow: `0 0 20px ${nearStand.color}`, background: `${nearStand.color}15` }}
+              >
+                {nearStand.key}
+              </span>
+              <span className="font-orbitron text-xs text-gray-400 tracking-widest">PARA ACTIVAR</span>
+            </div>
           </div>
         </motion.div>
       )}

@@ -124,9 +124,9 @@ function makeNeonSignTexture(text, color) {
 
 const MOVE_SPEED = 16;
 const LOOK_SPEED = 0.0018;
-const LOOK_SMOOTH = 0.18;
+const LOOK_SMOOTH = 0.10;
 
-const STAND_RADIUS = 5;
+const STAND_RADIUS = 9;
 
 export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, yt1IframeRef, yt2IframeRef, onNearStand, onLeaveStand, onActivateStand }) {
   const mountRef = useRef(null);
@@ -283,7 +283,7 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, yt1
       if (isLockedRef.current && (mouseDeltaRef.current.x !== 0 || mouseDeltaRef.current.y !== 0)) {
         targetYawRef.current -= mouseDeltaRef.current.x * LOOK_SPEED;
         targetPitchRef.current -= mouseDeltaRef.current.y * LOOK_SPEED;
-        targetPitchRef.current = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, targetPitchRef.current));
+        targetPitchRef.current = Math.max(-Math.PI / 2.1, Math.min(Math.PI / 2.1, targetPitchRef.current));
         mouseDeltaRef.current.x = 0;
         mouseDeltaRef.current.y = 0;
       }

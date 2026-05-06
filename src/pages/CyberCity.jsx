@@ -17,9 +17,6 @@ export default function CyberCity() {
   const [openStand, setOpenStand] = useState(null);
   const nearStandStateRef = useRef(null);
   const openStandRef = useRef(null);
-  const vimeoIframeRef = useRef(null);
-  const yt1IframeRef = useRef(null); // kept for CityWorld prop compatibility
-  const yt2IframeRef = useRef(null);
 
   // Keep refs in sync so keydown handler can read the latest values
   useEffect(() => { nearStandStateRef.current = nearStand; }, [nearStand]);
@@ -58,23 +55,11 @@ export default function CyberCity() {
           <CityWorld
             onEnterZone={handleEnterZone}
             onExitZone={handleExitZone}
-            vimeoIframeRef={vimeoIframeRef}
-            yt1IframeRef={yt1IframeRef}
-            yt2IframeRef={yt2IframeRef}
             onNearStand={setNearStand}
             onLeaveStand={() => setNearStand(null)}
             onActivateStand={(stand) => setOpenStand(stand)}
           />
           </div>
-          {/* Vimeo video overlay */}
-          <iframe
-            ref={vimeoIframeRef}
-            src="https://player.vimeo.com/video/641418395?autoplay=1&muted=1&loop=1&background=1"
-            style={{ position: 'absolute', display: 'none', border: '2px solid #ff00ff', boxShadow: '0 0 20px #ff00ff80, 0 0 40px #ff00ff40', pointerEvents: 'none', borderRadius: '2px' }}
-            allow="autoplay; fullscreen"
-            title="Vimeo Screen"
-          />
-          {/* YouTube iframes removed — error 153: YouTube blocks external domain embedding */}
         </div>
       )}
 
@@ -87,7 +72,7 @@ export default function CyberCity() {
 
       {/* HUD overlay */}
       {started && (
-        <HUD isLocked={isLocked || hasClickedOnce} activeZone={activeZone} nearStand={nearStand} />
+        <HUD isLocked={isLocked || hasClickedOnce} activeZone={activeZone} nearStand={nearStand} onActivateStand={(stand) => setOpenStand(stand)} />
       )}
 
       {/* Zone info panel */}

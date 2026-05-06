@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ZONES } from './cityData';
 
-export default function HUD({ isLocked, activeZone, nearStand }) {
+export default function HUD({ isLocked, activeZone, nearStand, onActivateStand }) {
   return (
     <>
       {/* Crosshair */}
@@ -102,12 +102,13 @@ export default function HUD({ isLocked, activeZone, nearStand }) {
           initial={{ opacity: 0, scale: 0.8, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.8, y: 10 }}
-          className="fixed bottom-36 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+          className="fixed bottom-36 left-1/2 -translate-x-1/2 z-30"
         >
-          <div
-            className="px-8 py-4 rounded-lg text-center flex flex-col items-center gap-2"
+          <button
+            onClick={() => onActivateStand && onActivateStand(nearStand)}
+            className="px-8 py-4 rounded-lg text-center flex flex-col items-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
             style={{
-              background: `linear-gradient(135deg, rgba(0,0,0,0.85), ${nearStand.color}22)`,
+              background: `linear-gradient(135deg, rgba(0,0,0,0.88), ${nearStand.color}22)`,
               border: `2px solid ${nearStand.color}`,
               boxShadow: `0 0 40px ${nearStand.color}60, 0 0 80px ${nearStand.color}20, inset 0 0 20px ${nearStand.color}10`,
             }}
@@ -126,9 +127,9 @@ export default function HUD({ isLocked, activeZone, nearStand }) {
               >
                 {nearStand.key}
               </span>
-              <span className="font-orbitron text-xs text-gray-400 tracking-widest">PARA ACTIVAR</span>
+              <span className="font-orbitron text-xs text-gray-400 tracking-widest">O CLICK AQUÍ</span>
             </div>
-          </div>
+          </button>
         </motion.div>
       )}
 

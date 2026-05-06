@@ -115,9 +115,12 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand }
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{nearStand.icon}</span>
-              <span className="font-orbitron text-base font-black tracking-widest" style={{ color: nearStand.color, textShadow: `0 0 15px ${nearStand.color}` }}>
-                {nearStand.title}
-              </span>
+              <div>
+                <span className="font-orbitron text-base font-black tracking-widest" style={{ color: nearStand.color, textShadow: `0 0 15px ${nearStand.color}` }}>
+                  {nearStand.title}
+                </span>
+                <p className="font-rajdhani text-xs text-gray-400 mt-0.5">{nearStand.subtitle}</p>
+              </div>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <span className="font-orbitron text-xs text-gray-400 tracking-widest">PULSA</span>

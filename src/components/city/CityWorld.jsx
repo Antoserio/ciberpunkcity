@@ -251,6 +251,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       // Stand interaction — works regardless of pointer lock state
       if (nearStandRef.current && e.key.toUpperCase() === nearStandRef.current.key.toUpperCase()) {
         if (document.pointerLockElement) document.exitPointerLock();
+        isLockedRef.current = false;
         onActivateStand && onActivateStand(nearStandRef.current);
       }
     };

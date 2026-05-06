@@ -22,12 +22,16 @@ export default function CyberCity() {
   useEffect(() => { nearStandStateRef.current = nearStand; }, [nearStand]);
   useEffect(() => { openStandRef.current = openStand; }, [openStand]);
 
-  // Escape closes the stand modal
+  // Escape closes the stand modal and re-locks pointer
   useEffect(() => {
     if (!started) return;
     const onKey = (e) => {
       if (e.key === 'Escape' && openStandRef.current) {
         setOpenStand(null);
+        setTimeout(() => {
+          const canvas = document.querySelector('canvas');
+          if (canvas) canvas.requestPointerLock();
+        }, 200);
       }
     };
     document.addEventListener('keydown', onKey);
@@ -93,8 +97,19 @@ export default function CyberCity() {
         <MiniMap activeZone={activeZone} />
       )}
 
-      {/* Stand modal */}
-      {openStand && <StandModal stand={openStand} onClose={() => setOpenStand(null)} />}
+      {/* Stand modal — re-lock pointer when closed so movement resumes */}
+      {openStand && (
+        <StandModal
+          stand={openStand}
+          onClose={() => {
+            setOpenStand(null);
+            setTimeout(() => {
+              const canvas = document.querySelector('canvas');
+              if (canvas) canvas.requestPointerLock();
+            }, 200);
+          }}
+        />
+      )}
 
       {/* Avatar AI Assistant */}
       {started && <AvatarAssistant />}

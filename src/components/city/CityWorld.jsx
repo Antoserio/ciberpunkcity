@@ -2,6 +2,22 @@ import { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { ZONES } from './cityData';
 
+// Sprite texture for glow halos
+function makeGlowTexture(color) {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  grad.addColorStop(0, color + 'ff');
+  grad.addColorStop(0.2, color + 'aa');
+  grad.addColorStop(0.5, color + '44');
+  grad.addColorStop(1, color + '00');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  return new THREE.CanvasTexture(canvas);
+}
+
 const MOVE_SPEED = 8;
 const LOOK_SPEED = 0.002;
 
@@ -62,6 +78,7 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
     renderer.toneMappingExposure = 1.1;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
+    const canvas = renderer.domElement;
 
     // ── Lighting ─────────────────────────────────────────────────────────────
     // Extremely dark ambient so neons dominate
@@ -83,22 +100,43 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
     moon.shadow.bias = -0.001;
     scene.add(moon);
 
-    // Build city
-    buildCity(scene, flickerObjectsRef.current);
+    // Glow textures
+    const glowTextures = {
+      cyan: makeGlowTexture('#00ffff'),
+      magenta: makeGlowTexture('#ff00ff'),
+      yellow: makeGlowTexture('#ffff00'),
+      blue: makeGlowTexture('#0088ff'),
+      orange: makeGlowTexture('#ff6600'),
+      white: makeGlowTexture('#aaccff'),
+    };
 
-    // Pointer lock
-    const handleClick = () => { if (!isLockedRef.current) mount.requestPointerLock(); };
-    const handlePointerLockChange = () => { isLockedRef.current = document.pointerLockElement === mount; };
+    // Build city
+    buildCity(scene, flickerObjectsRef.current, glowTextures);
+
+    // Pointer lock — request on canvas, also allow movement without lock (arrow keys always work)
+    const handleClick = () => { canvas.requestPointerLock(); };
+    const handlePointerLockChange = () => {
+      isLockedRef.current = !!(document.pointerLockElement === canvas || document.pointerLockElement === mount);
+    };
     const handleMouseMove = (e) => {
       if (!isLockedRef.current) return;
       yawRef.current -= e.movementX * LOOK_SPEED;
       pitchRef.current -= e.movementY * LOOK_SPEED;
       pitchRef.current = Math.max(-Math.PI / 3, Math.min(Math.PI / 6, pitchRef.current));
     };
-    const handleKeyDown = (e) => { keysRef.current[e.code] = true; };
-    const handleKeyUp = (e) => { keysRef.current[e.code] = false; };
+    const handleKeyDown = (e) => {
+      keysRef.current[e.code] = true;
+      // Allow movement even without pointer lock
+      if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
+        e.preventDefault();
+        isLockedRef.current = true; // allow movement on keypress
+      }
+    };
+    const handleKeyUp = (e) => {
+      keysRef.current[e.code] = false;
+    };
 
-    mount.addEventListener('click', handleClick);
+    canvas.addEventListener('click', handleClick);
     document.addEventListener('pointerlockchange', handlePointerLockChange);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('keydown', handleKeyDown);
@@ -139,7 +177,7 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
         o.material.emissiveIntensity = o.baseIntensity + Math.sin(t * o.flickerSpeed + o.flickerOffset) * 0.18;
       }
 
-      renderer.render(scene, camera);
+        renderer.render(scene, camera);
     };
     animate();
 
@@ -152,7 +190,7 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
 
     return () => {
       cancelAnimationFrame(animFrameRef.current);
-      mount.removeEventListener('click', handleClick);
+      canvas.removeEventListener('click', handleClick);
       document.removeEventListener('pointerlockchange', handlePointerLockChange);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('keydown', handleKeyDown);
@@ -172,7 +210,20 @@ function stdMat(params) {
   return new THREE.MeshStandardMaterial(params);
 }
 
-function buildCity(scene, flickerObjects) {
+function addGlowSprite(scene, x, y, z, texture, size = 6) {
+  const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.setScalar(size);
+  sprite.position.set(x, y, z);
+  scene.add(sprite);
+}
+
+function colorToGlowKey(color) {
+  const map = { 0x00ffff: 'cyan', 0xff00ff: 'magenta', 0xffff00: 'yellow', 0x0088ff: 'blue', 0xff6600: 'orange', 0xffffff: 'white' };
+  return map[color] || 'cyan';
+}
+
+function buildCity(scene, flickerObjects, gt) {
   // ── Ground — dark, slightly reflective wet asphalt ──────────────────────
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(200, 200),
@@ -217,7 +268,7 @@ function buildCity(scene, flickerObjects) {
   }
 
   // ── Zone buildings ───────────────────────────────────────────────────────
-  ZONES.forEach(zone => createZoneBuilding(scene, zone, flickerObjects));
+  ZONES.forEach(zone => createZoneBuilding(scene, zone, flickerObjects, gt));
 
   // ── Background buildings ─────────────────────────────────────────────────
   const bgPositions = [
@@ -231,7 +282,7 @@ function buildCity(scene, flickerObjects) {
     const h = 9 + (i * 3.7 % 18);
     const w = 5 + (i * 1.3 % 5);
     const nc = neonColors[i % 4];
-    createDetailBuilding(scene, x, z, w, h, nc, flickerObjects);
+    createDetailBuilding(scene, x, z, w, h, nc, flickerObjects, gt);
   });
 
   // ── Distant backdrop ─────────────────────────────────────────────────────
@@ -241,18 +292,21 @@ function buildCity(scene, flickerObjects) {
     const h = 14 + (i % 8) * 6;
     const w = 5 + (i % 4) * 2;
     const nc = neonColors[i % 4];
+    const bx = Math.cos(angle) * dist;
+    const bz = Math.sin(angle) * dist;
     const geo = new THREE.BoxGeometry(w, h, w * 0.9);
-    const mat = stdMat({ color: 0x010306, emissive: nc, emissiveIntensity: 0.04, roughness: 0.6, metalness: 0.5 });
+    const mat = stdMat({ color: 0x010306, emissive: nc, emissiveIntensity: 0.12, roughness: 0.6, metalness: 0.5 });
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(Math.cos(angle) * dist, h / 2, Math.sin(angle) * dist);
+    mesh.position.set(bx, h / 2, bz);
     scene.add(mesh);
     // Top beacon
-    const beacon = new THREE.Mesh(
-      new THREE.BoxGeometry(w + 0.1, 0.3, w * 0.9 + 0.1),
-      stdMat({ color: nc, emissive: nc, emissiveIntensity: 0.7, roughness: 0.3 })
-    );
-    beacon.position.set(Math.cos(angle) * dist, h + 0.15, Math.sin(angle) * dist);
+    const beaconMat = stdMat({ color: nc, emissive: nc, emissiveIntensity: 1.2, roughness: 0.3 });
+    const beacon = new THREE.Mesh(new THREE.BoxGeometry(w + 0.1, 0.35, w * 0.9 + 0.1), beaconMat);
+    beacon.position.set(bx, h + 0.17, bz);
     scene.add(beacon);
+    // Glow halo on top
+    const gKey = colorToGlowKey(nc);
+    addGlowSprite(scene, bx, h + 2, bz, gt[gKey], 10 + (i % 4) * 3);
   }
 
   // ── Particles ─────────────────────────────────────────────────────────────
@@ -269,7 +323,7 @@ function buildCity(scene, flickerObjects) {
 }
 
 // ─── Zone building — detailed with ledges, windows, volumetric light ────────
-function createZoneBuilding(scene, zone, flickerObjects) {
+function createZoneBuilding(scene, zone, flickerObjects, gt) {
   const [x, , z] = zone.position;
   const h = zone.buildingHeight || 15;
   const w = zone.buildingWidth || 8;
@@ -367,10 +421,18 @@ function createZoneBuilding(scene, zone, flickerObjects) {
   const groundLight = new THREE.PointLight(color, 1.2, 14);
   groundLight.position.set(x, 0.5, z);
   scene.add(groundLight);
+
+  // Glow halos — large atmospheric bloom around building top
+  if (gt) {
+    const gKey = colorToGlowKey(color);
+    addGlowSprite(scene, x, h + 4, z, gt[gKey], 22); // big halo
+    addGlowSprite(scene, x, h + 1, z, gt[gKey], 10); // tighter core
+    addGlowSprite(scene, x, 0.5, z, gt[gKey], 8);    // ground wash
+  }
 }
 
 // ─── Background building with detail ────────────────────────────────────────
-function createDetailBuilding(scene, x, z, w, h, nc, flickerObjects) {
+function createDetailBuilding(scene, x, z, w, h, nc, flickerObjects, gt) {
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(w, h, w * 0.9),
     stdMat({ color: 0x050810, roughness: 0.45, metalness: 0.75 })
@@ -402,6 +464,12 @@ function createDetailBuilding(scene, x, z, w, h, nc, flickerObjects) {
   const rLight = new THREE.PointLight(nc, 0.8, 10);
   rLight.position.set(x, h + 1.5, z);
   scene.add(rLight);
+
+  // Glow halo
+  if (gt) {
+    const gKey = colorToGlowKey(nc);
+    addGlowSprite(scene, x, h + 2, z, gt[gKey], 8);
+  }
 }
 
 // ─── Street light ────────────────────────────────────────────────────────────

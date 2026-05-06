@@ -112,6 +112,7 @@ export default function StandModal({ stand, onClose }) {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-50 flex items-center justify-center"
         style={{ background: 'rgba(0,3,15,0.88)', backdropFilter: 'blur(16px)' }}
+        onClick={(e) => e.stopPropagation()}
       >
         <motion.div
           initial={{ scale: 0.85, y: 40, opacity: 0 }}
@@ -131,11 +132,7 @@ export default function StandModal({ stand, onClose }) {
             style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.3) 2px, rgba(0,0,0,0.3) 4px)' }}
           />
 
-          {/* Corner decorations */}
-          {[['top-0 left-0', 'border-t-2 border-l-2'], ['top-0 right-0', 'border-t-2 border-r-2'],
-            ['bottom-0 left-0', 'border-b-2 border-l-2'], ['bottom-0 right-0', 'border-b-2 border-r-2']].map(([pos, cls], i) => (
-            <div key={i} className={`absolute ${pos} w-5 h-5 ${cls}`} style={{ borderColor: c }} />
-          ))}
+
 
           {/* Header */}
           <div className="relative z-10 px-6 pt-5 pb-4 border-b flex items-center justify-between"

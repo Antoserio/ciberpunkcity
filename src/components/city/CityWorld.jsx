@@ -303,8 +303,9 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, yt1
         euler.set(0, yawRef.current, 0);
         dir.applyEuler(euler);
         camera.position.addScaledVector(dir, MOVE_SPEED * delta);
-        camera.position.x = Math.max(-90, Math.min(90, camera.position.x));
-        camera.position.z = Math.max(-90, Math.min(90, camera.position.z));
+        // Clamp position — stop at boundary, never teleport back
+        camera.position.x = Math.max(-85, Math.min(85, camera.position.x));
+        camera.position.z = Math.max(-85, Math.min(85, camera.position.z));
         camera.position.y = 1.7;
       }
 

@@ -79,15 +79,18 @@ export default function HUD({ isLocked, activeZone, nearStand }) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-none text-center"
+          className="fixed inset-0 z-30 pointer-events-none flex items-center justify-center"
         >
-          <div className="glass-dark px-8 py-4 rounded">
-            <p className="font-orbitron text-xs neon-text-cyan tracking-widest mb-2">
-              CLICK PARA INICIAR EXPLORACIÓN
+          <div className="glass-dark px-10 py-6 rounded-lg text-center" style={{ border: '2px solid rgba(0,255,255,0.5)', boxShadow: '0 0 40px rgba(0,255,255,0.3)' }}>
+            <p className="font-orbitron text-lg neon-text-cyan tracking-widest mb-3 animate-pulse">
+              👆 CLICK EN LA PANTALLA PARA EXPLORAR
             </p>
-            <p className="text-xs font-rajdhani text-gray-500">
-              WASD / ↑↓←→ mover · Mouse girar · ESC salir · Acércate a edificios para explorar
-            </p>
+            <div className="flex flex-wrap justify-center gap-4 text-xs font-rajdhani text-gray-400">
+              <span>🎮 <b className="text-cyan-400">WASD</b> · mover</span>
+              <span>🖱️ <b className="text-cyan-400">Mouse</b> · girar</span>
+              <span>⌨️ <b className="text-cyan-400">ESC</b> · salir</span>
+              <span>🏛️ <b className="text-cyan-400">Acércate</b> a los stands</span>
+            </div>
           </div>
         </motion.div>
       )}

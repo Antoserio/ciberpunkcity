@@ -117,8 +117,8 @@ function makeNeonSignTexture(text, color) {
   return new THREE.CanvasTexture(canvas);
 }
 
-const MOVE_SPEED = 14;
-const LOOK_SPEED = 0.002;
+const MOVE_SPEED = 16;
+const LOOK_SPEED = 0.0022;
 
 export default function CityWorld({ onEnterZone, onExitZone }) {
   const mountRef = useRef(null);
@@ -164,21 +164,18 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
     camera.position.set(0, 1.7, 14);
 
-    // Renderer — NO shadows for performance
-    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+    // Renderer — NO shadows, minimal settings for max performance
+    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', precision: 'lowp' });
     renderer.setSize(W, H);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.0));
     renderer.shadowMap.enabled = false;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.4;
+    renderer.toneMapping = THREE.NoToneMapping;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
 
-    // ── Minimal lighting (just 2 lights for perf) ──────────────────────────
-    scene.add(new THREE.AmbientLight(0x080415, 2.0));
-    const hemi = new THREE.HemisphereLight(0x1a0040, 0x000210, 0.6);
-    scene.add(hemi);
+    // ── Single ambient light only — no dynamic lights at all for max perf ──
+    scene.add(new THREE.AmbientLight(0x1a0535, 3.5));
 
     // Glow textures
     const gt = {
@@ -254,17 +251,17 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
       camera.quaternion.setFromEuler(euler);
       checkZoneProximity(camera.position);
 
-      // Flicker — update every 3rd frame for perf
-      if (frameCount % 3 === 0) {
+      // Flicker — update every 6th frame for perf
+      if (frameCount % 6 === 0) {
         const t = frameCount * 0.016;
         for (let i = 0; i < flickerObjectsRef.current.length; i++) {
           const o = flickerObjectsRef.current[i];
           o.material.emissiveIntensity = o.baseIntensity + Math.sin(t * o.flickerSpeed + o.flickerOffset) * 0.2;
         }
-        // Update video screen canvas
-        if (videoScreenRef.current) {
-          videoScreenRef.current.draw(frameCount * 0.016);
-        }
+      }
+      // Video canvas update every 2 frames
+      if (frameCount % 2 === 0 && videoScreenRef.current) {
+        videoScreenRef.current.draw(frameCount * 0.016);
       }
 
       renderer.render(scene, camera);
@@ -388,8 +385,8 @@ function buildCity(scene, flicker, gt, videoTex) {
   ];
   signs.forEach(s => addBillboard(scene, s.x, 5, s.z, s.text, s.color, flicker));
 
-  // Distant skyline (simple boxes, no lights)
-  for (let i = 0; i < 40; i++) {
+  // Distant skyline — reduced to 20 for perf
+  for (let i = 0; i < 20; i++) {
     const angle = (i / 40) * Math.PI * 2;
     const dist = 70 + (i % 6) * 10;
     const h = 12 + (i % 9) * 7;
@@ -415,8 +412,8 @@ function buildCity(scene, flicker, gt, videoTex) {
     addGlowSprite(scene, bx, h + 2.5, bz, gt[gKey], 12 + (i % 4) * 4);
   }
 
-  // Floating particles
-  const count = 500;
+  // Floating particles — reduced count
+  const count = 200;
   const pos = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   const particleColors = [[0,1,1],[1,0,1],[1,0.8,0],[0.3,0.5,1]];
@@ -468,24 +465,36 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
     flicker.push({ material: mat, baseIntensity: 1.3, flickerSpeed: 0.5 + Math.random(), flickerOffset: Math.random() * Math.PI * 2 });
   });
 
-  // Window grid (all 4 faces)
-  const winColors = [color, 0xffffff, 0xaa88ff];
-  const offsets = [[0, w/2+0.02, 0, 0], [0, -w/2-0.02, Math.PI, 0], [-w/2-0.02, 0, 0, Math.PI/2], [w/2+0.02, 0, 0, -Math.PI/2]];
-  for (let floor = 1; floor < Math.floor(h / 2.2); floor++) {
-    for (let col = 0; col < 3; col++) {
-      offsets.forEach(([ox, oz, , ry]) => {
-        if (Math.random() > 0.4) {
-          const wc = winColors[Math.floor(Math.random() * 3)];
-          const mat = emissiveMat(wc, 0.5 + Math.random() * 0.7);
-          const win = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.85), mat);
-          win.rotation.y = ry;
-          win.position.set(x + ox + (col - 1) * 2, floor * 2.2, z + oz);
-          scene.add(win);
-          flicker.push({ material: mat, baseIntensity: 0.5 + Math.random() * 0.4, flickerSpeed: 0.2 + Math.random() * 3, flickerOffset: Math.random() * Math.PI * 2 });
-        }
-      });
+  // Window grid — instanced for performance
+  const winGeo = new THREE.PlaneGeometry(0.6, 0.8);
+  const winColors = [color, 0xaaaaff, 0xff88ff];
+  const offsets4 = [
+    [0,  w/2+0.02, 0],
+    [0, -w/2-0.02, Math.PI],
+    [-w/2-0.02, 0, Math.PI/2],
+    [w/2+0.02,  0, -Math.PI/2],
+  ];
+  offsets4.forEach(([ox, oz, ry]) => {
+    const wc = winColors[Math.floor(Math.random() * winColors.length)];
+    const mat = emissiveMat(wc, 0.7);
+    flicker.push({ material: mat, baseIntensity: 0.7, flickerSpeed: 0.3 + Math.random(), flickerOffset: Math.random() * Math.PI * 2 });
+    const floors = Math.floor(h / 2.2);
+    const count = floors * 3;
+    const inst = new THREE.InstancedMesh(winGeo, mat, count);
+    inst.frustumCulled = true;
+    const dummy = new THREE.Object3D();
+    let idx = 0;
+    for (let floor = 1; floor <= floors; floor++) {
+      for (let col = 0; col < 3; col++) {
+        dummy.position.set(x + ox + (col - 1) * 2, floor * 2.2, z + oz);
+        dummy.rotation.y = ry;
+        dummy.updateMatrix();
+        inst.setMatrixAt(idx++, dummy.matrix);
+      }
     }
-  }
+    inst.instanceMatrix.needsUpdate = true;
+    scene.add(inst);
+  });
 
   // HQ gets the big video screen billboard
   if (isHQ && videoTex) {
@@ -508,10 +517,7 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
   scene.add(ring);
   flicker.push({ material: ringMat, baseIntensity: 0.7, flickerSpeed: 0.4, flickerOffset: Math.random() * Math.PI * 2 });
 
-  // Only 2 point lights per zone (not per detail building)
-  const topLight = new THREE.PointLight(color, 3.0, 30);
-  topLight.position.set(x, h + 2, z);
-  scene.add(topLight);
+  // No PointLights — use emissive + glow sprites only
 
   // Glow halos
   const gKey = colorToGlowKey(color);
@@ -579,15 +585,19 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker, gt) {
   scene.add(strip);
   flicker.push({ material: stripMat, baseIntensity: 0.8, flickerSpeed: 0.6 + Math.random() * 0.8, flickerOffset: Math.random() * Math.PI * 2 });
 
-  // Windows
-  for (let f = 1; f < Math.floor(h / 3.5); f++) {
-    if (Math.random() > 0.45) {
-      const mat = emissiveMat(nc, 0.4 + Math.random() * 0.6);
-      const win = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.9), mat);
-      win.position.set(x + (Math.random() - 0.5) * (w - 1.2), f * 3.5, z + w * 0.45 + 0.02);
-      scene.add(win);
-      flicker.push({ material: mat, baseIntensity: 0.4 + Math.random() * 0.4, flickerSpeed: 0.3 + Math.random() * 3, flickerOffset: Math.random() * Math.PI * 2 });
+  // Windows — single instanced mesh for perf
+  const floors = Math.floor(h / 3.5);
+  if (floors > 0) {
+    const wMat = emissiveMat(nc, 0.6);
+    const wInst = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.7, 0.9), wMat, floors);
+    const dum = new THREE.Object3D();
+    for (let f = 1; f <= floors; f++) {
+      dum.position.set(x, f * 3.5, z + w * 0.45 + 0.02);
+      dum.updateMatrix();
+      wInst.setMatrixAt(f - 1, dum.matrix);
     }
+    wInst.instanceMatrix.needsUpdate = true;
+    scene.add(wInst);
   }
 
   // Glow sprite

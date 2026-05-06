@@ -15,10 +15,12 @@ export default function CyberCity() {
   const [nearStand, setNearStand] = useState(null);
   const [openStand, setOpenStand] = useState(null);
   const nearStandStateRef = useRef(null);
+  const openStandRef = useRef(null);
   const vimeoIframeRef = useRef(null);
 
-  // Keep a ref in sync so keydown handler can read the latest value
+  // Keep refs in sync so keydown handler can read the latest values
   useEffect(() => { nearStandStateRef.current = nearStand; }, [nearStand]);
+  useEffect(() => { openStandRef.current = openStand; }, [openStand]);
 
   // Listen for the stand key press
   useEffect(() => {
@@ -30,7 +32,9 @@ export default function CyberCity() {
         if (document.pointerLockElement) document.exitPointerLock();
         setOpenStand(stand);
       }
-      if (e.key === 'Escape') setOpenStand(null);
+      if (e.key === 'Escape' && openStandRef.current) {
+        setOpenStand(null);
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);

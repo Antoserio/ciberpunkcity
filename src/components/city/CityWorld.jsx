@@ -147,18 +147,21 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, onN
   const vimeoScreenWorldPos = useRef(null); // { x, y, z } world position of vimeo screen
 
   const checkZoneProximity = useCallback((pos) => {
+    // Zone check
+    let inZone = false;
     for (const zone of ZONES) {
       const dx = pos.x - zone.position[0];
       const dz = pos.z - zone.position[2];
       if (dx * dx + dz * dz < zone.radius * zone.radius) {
+        inZone = true;
         if (activeZoneRef.current !== zone.id) {
           activeZoneRef.current = zone.id;
           onEnterZone(zone);
         }
-        return;
+        break;
       }
     }
-    if (activeZoneRef.current !== null) {
+    if (!inZone && activeZoneRef.current !== null) {
       activeZoneRef.current = null;
       onExitZone();
     }

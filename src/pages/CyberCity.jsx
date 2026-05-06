@@ -40,12 +40,13 @@ export default function CyberCity() {
   const handleExitZone = () => setActiveZone(null);
 
   // Track pointer lock state
-  const handleStart = () => {
-    setStarted(true);
-    document.addEventListener('pointerlockchange', () => {
-      setIsLocked(!!document.pointerLockElement);
-    });
-  };
+  useEffect(() => {
+    const onLockChange = () => setIsLocked(!!document.pointerLockElement);
+    document.addEventListener('pointerlockchange', onLockChange);
+    return () => document.removeEventListener('pointerlockchange', onLockChange);
+  }, []);
+
+  const handleStart = () => setStarted(true);
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden">

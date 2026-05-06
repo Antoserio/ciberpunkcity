@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import CityWorld from '../components/city/CityWorld.jsx';
 import HUD from '../components/city/HUD';
@@ -11,6 +11,7 @@ export default function CyberCity() {
   const [started, setStarted] = useState(false);
   const [activeZone, setActiveZone] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
+  const vimeoIframeRef = useRef(null);
 
   const handleEnterZone = (zone) => setActiveZone(zone);
   const handleExitZone = () => setActiveZone(null);
@@ -31,6 +32,22 @@ export default function CyberCity() {
           <CityWorld
             onEnterZone={handleEnterZone}
             onExitZone={handleExitZone}
+            vimeoIframeRef={vimeoIframeRef}
+          />
+          {/* Vimeo video overlay - projected onto 3D screen position */}
+          <iframe
+            ref={vimeoIframeRef}
+            src="https://player.vimeo.com/video/641418395?autoplay=1&muted=1&loop=1&background=1"
+            style={{
+              position: 'absolute',
+              display: 'none',
+              border: '2px solid #ff00ff',
+              boxShadow: '0 0 20px #ff00ff80, 0 0 40px #ff00ff40',
+              pointerEvents: 'none',
+              borderRadius: '2px',
+            }}
+            allow="autoplay; fullscreen"
+            title="Vimeo Screen"
           />
         </div>
       )}

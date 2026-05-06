@@ -19,7 +19,9 @@ function makeGlowTexture(hex) {
 }
 
 // Animated canvas texture for the "video screen" billboard
-function makeVideoCanvasTexture() {
+function makeVideoCanvasTexture(label, accentColor) {
+  label = label || 'AGENCY360';
+  accentColor = accentColor || '#ff00ff';
   const W = 512, H = 288;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -54,20 +56,22 @@ function makeVideoCanvasTexture() {
     for (let x = 0; x < W; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
     for (let y = 0; y < H; y += 18) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
-    // Main text: AGENCY360
+    // Main text
     const pulse = 0.8 + 0.2 * Math.sin(t * 1.5);
     ctx.shadowBlur = 30;
-    ctx.shadowColor = '#ff00ff';
-    ctx.fillStyle = `rgba(255,0,255,${pulse})`;
+    ctx.shadowColor = accentColor;
+    ctx.fillStyle = accentColor;
+    ctx.globalAlpha = pulse;
     ctx.font = 'bold 52px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('AGENCY 360', W / 2, H / 2 - 18);
+    ctx.fillText(label, W / 2, H / 2 - 18);
+    ctx.globalAlpha = 1;
 
     ctx.shadowColor = '#00ffff';
     ctx.shadowBlur = 20;
     ctx.fillStyle = `rgba(0,255,255,${0.6 + 0.3 * Math.sin(t * 2)})`;
     ctx.font = '18px monospace';
-    ctx.fillText('CREATIVE · DIGITAL · XR', W / 2, H / 2 + 18);
+    ctx.fillText('AGENCY360 · CREATIVE · XR', W / 2, H / 2 + 18);
 
     // Bottom ticker
     const tickerOffset = (t * 60) % (W + 800);
@@ -121,7 +125,7 @@ const MOVE_SPEED = 16;
 const LOOK_SPEED = 0.0018;
 const LOOK_SMOOTH = 0.18;
 
-export default function CityWorld({ onEnterZone, onExitZone }) {
+export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef }) {
   const mountRef = useRef(null);
   const keysRef = useRef({});
   const yawRef = useRef(0);
@@ -135,6 +139,8 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
   const clockRef = useRef(new THREE.Clock());
   const flickerObjectsRef = useRef([]);
   const videoScreenRef = useRef(null);
+  const extraCanvasesRef = useRef([]);
+  const vimeoScreenWorldPos = useRef(null); // { x, y, z } world position of vimeo screen
 
   const checkZoneProximity = useCallback((pos) => {
     for (const zone of ZONES) {
@@ -195,7 +201,10 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
     const videoScreen = makeVideoCanvasTexture();
     videoScreenRef.current = videoScreen;
 
-    buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
+    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
+    extraCanvasesRef.current = extraCanvases;
+    // Store vimeo screen world position for overlay
+    vimeoScreenWorldPos.current = { x: -20, y: 14, z: -20 + 4.6 };
 
     // Controls
     const handleClick = () => { canvas.requestPointerLock(); };
@@ -276,8 +285,40 @@ export default function CityWorld({ onEnterZone, onExitZone }) {
       if (frameCount % 2 === 0 && videoScreenRef.current) {
         videoScreenRef.current.draw(frameCount * 0.016);
       }
+      // Extra canvases update every 4 frames staggered
+      if (frameCount % 4 === 0) {
+        const t = frameCount * 0.016;
+        for (let i = 0; i < extraCanvasesRef.current.length; i++) {
+          if (frameCount % 4 === (i % 4)) extraCanvasesRef.current[i].draw(t + i * 1.3);
+        }
+      }
 
       renderer.render(scene, camera);
+
+      // Project vimeo screen world pos to screen coords for overlay iframe
+      if (vimeoIframeRef && vimeoIframeRef.current && vimeoScreenWorldPos.current) {
+        const wp = vimeoScreenWorldPos.current;
+        const vec = new THREE.Vector3(wp.x, wp.y, wp.z);
+        vec.project(camera);
+        const hw = mount.clientWidth / 2;
+        const hh = mount.clientHeight / 2;
+        const sx = (vec.x * hw) + hw;
+        const sy = -(vec.y * hh) + hh;
+        // Scale factor based on distance
+        const dist = camera.position.distanceTo(new THREE.Vector3(wp.x, wp.y, wp.z));
+        const scale = Math.max(0, Math.min(1, 30 / dist));
+        const iw = 320 * scale;
+        const ih = 180 * scale;
+        if (vec.z < 1 && scale > 0.05) {
+          vimeoIframeRef.current.style.display = 'block';
+          vimeoIframeRef.current.style.left = `${sx - iw / 2}px`;
+          vimeoIframeRef.current.style.top = `${sy - ih / 2}px`;
+          vimeoIframeRef.current.style.width = `${iw}px`;
+          vimeoIframeRef.current.style.height = `${ih}px`;
+        } else {
+          vimeoIframeRef.current.style.display = 'none';
+        }
+      }
     };
     animate();
 
@@ -331,6 +372,7 @@ function colorToGlowKey(color) {
 // ─── Main city builder ────────────────────────────────────────────────────────
 
 function buildCity(scene, flicker, gt, videoTex) {
+  const extraCanvases = [];
   // Ground — wet purple-dark asphalt
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
@@ -381,6 +423,24 @@ function buildCity(scene, flicker, gt, videoTex) {
   addBillboard(scene, 14, 5, -3, '◆ SOFTWARE', '#00ffff');
   addBillboard(scene, -14, 5, 3, '◆ VIDEO 360', '#ff00ff');
 
+  // Extra animated canvas screens on zone buildings
+  const screenDefs = [
+    // [x, y, z, w, h, rotY, label, color]
+    [20 + 4.1, 10, -20, 6, 3.4, -Math.PI/2, 'TECH HUB', '#00ffff'],
+    [-20, 12, -20 - 4.6, 7, 3.9, Math.PI, 'STUDIO 360', '#ff00ff'],
+    [20 - 4.1, 8, 20, 5.5, 3.1, Math.PI/2, 'AVATAR LAB', '#ffff00'],
+    [-20 + 4.6, 9, 20, 5, 2.8, 0, 'EVENT DOME', '#ff6600'],
+    // Extra floating screens near center
+    [8, 7, -2, 4.5, 2.5, -Math.PI/6, 'LIVE XR', '#ff44aa'],
+    [-8, 6, -2, 4, 2.2, Math.PI/6, 'METAVERSE', '#4488ff'],
+    [0, 14, -10, 5.5, 3.1, 0, 'NEXUS FEED', '#00ffff'],
+  ];
+  screenDefs.forEach(([x, y, z, w, h, rotY, label, color]) => {
+    const cv = makeVideoCanvasTexture(label, color);
+    extraCanvases.push(cv);
+    addExtraScreen(scene, x, y, z, w, h, cv.tex, flicker, rotY);
+  });
+
   // Distant skyline — 16 simple boxes, no glow sprites
   const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });
   for (let i = 0; i < 16; i++) {
@@ -416,6 +476,8 @@ function buildCity(scene, flicker, gt, videoTex) {
   pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   pGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 0.07, vertexColors: true, transparent: true, opacity: 0.7 })));
+
+  return extraCanvases;
 }
 
 // ─── Zone building ────────────────────────────────────────────────────────────
@@ -526,7 +588,6 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
   scene.add(screen);
 
   // Neon border around screen
-  const borderMat = emissiveMat(0xff00ff, 1.2);
   const borderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(screenW + 0.2, screenH + 0.2, 0.05));
   const borderLine = new THREE.LineSegments(borderGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
   borderLine.position.set(bx, bh * 0.55, bz + bw / 2 + 0.1);
@@ -546,6 +607,31 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
   side.rotation.y = -Math.PI / 2;
   side.position.set(bx + bw / 2 + 0.08, bh * 0.6, bz);
   scene.add(side);
+}
+
+// ─── Extra canvas screens on mid buildings ────────────────────────────────────
+
+function addExtraScreen(scene, x, y, z, w, h, canvasTex, flicker, rotY = 0) {
+  const mat = new THREE.MeshBasicMaterial({ map: canvasTex, side: THREE.FrontSide, transparent: false });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  mesh.position.set(x, y, z);
+  mesh.rotation.y = rotY;
+  scene.add(mesh);
+
+  // neon border
+  const bGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(w + 0.15, h + 0.15, 0.04));
+  const bLine = new THREE.LineSegments(bGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
+  bLine.position.set(x, y, z);
+  bLine.rotation.y = rotY;
+  scene.add(bLine);
+
+  // glow sprite
+  const sprMat = new THREE.SpriteMaterial({ color: 0x00ffff, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending });
+  const spr = new THREE.Sprite(sprMat);
+  spr.scale.set(w * 1.6, h * 1.6, 1);
+  spr.position.set(x, y, z);
+  scene.add(spr);
+  flicker.push({ material: sprMat, baseIntensity: 0.18, flickerSpeed: 0.6, flickerOffset: Math.random() * Math.PI * 2 });
 }
 
 // ─── Mid building ─────────────────────────────────────────────────────────────

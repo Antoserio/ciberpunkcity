@@ -128,7 +128,7 @@ const LOOK_SMOOTH = 0.18;
 
 const STAND_RADIUS = 5;
 
-export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, yt1IframeRef, yt2IframeRef, onNearStand, onLeaveStand }) {
+export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, yt1IframeRef, yt2IframeRef, onNearStand, onLeaveStand, onActivateStand }) {
   const mountRef = useRef(null);
   const keysRef = useRef({});
   const yawRef = useRef(0);
@@ -252,10 +252,14 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, yt1
     };
     const handleKeyDown = (e) => {
       keysRef.current[e.code] = true;
-      // Only prevent default for movement keys, not interaction keys like B/A
       if (['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
         e.preventDefault();
         isLockedRef.current = true;
+      }
+      // Stand interaction — fire from here so it works while pointer is locked
+      if (nearStandRef.current && e.key.toUpperCase() === nearStandRef.current.key.toUpperCase()) {
+        if (document.pointerLockElement) document.exitPointerLock();
+        onActivateStand && onActivateStand(nearStandRef.current);
       }
     };
     const handleKeyUp = (e) => { keysRef.current[e.code] = false; };
@@ -279,7 +283,7 @@ export default function CityWorld({ onEnterZone, onExitZone, vimeoIframeRef, yt1
       if (isLockedRef.current && (mouseDeltaRef.current.x !== 0 || mouseDeltaRef.current.y !== 0)) {
         targetYawRef.current -= mouseDeltaRef.current.x * LOOK_SPEED;
         targetPitchRef.current -= mouseDeltaRef.current.y * LOOK_SPEED;
-        targetPitchRef.current = Math.max(-Math.PI / 3, Math.min(Math.PI / 5, targetPitchRef.current));
+        targetPitchRef.current = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, targetPitchRef.current));
         mouseDeltaRef.current.x = 0;
         mouseDeltaRef.current.y = 0;
       }

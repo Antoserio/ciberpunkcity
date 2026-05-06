@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import CityWorld from '../components/city/CityWorld.jsx';
 import HUD from '../components/city/HUD';
 import ZonePanel from '../components/city/ZonePanel';
@@ -15,35 +15,6 @@ export default function CyberCity() {
   const [hasClickedOnce, setHasClickedOnce] = useState(false);
   const [nearStand, setNearStand] = useState(null);
   const [openStand, setOpenStand] = useState(null);
-  const nearStandStateRef = useRef(null);
-  const openStandRef = useRef(null);
-
-  // Keep refs in sync so keydown handler can read the latest values
-  useEffect(() => { nearStandStateRef.current = nearStand; }, [nearStand]);
-  useEffect(() => { openStandRef.current = openStand; }, [openStand]);
-
-  // Escape closes the stand modal only (browser also fires Escape to exit pointer lock)
-  useEffect(() => {
-    if (!started) return;
-    const onKey = (e) => {
-      if (e.key === 'Escape' && openStandRef.current) {
-        // Let the modal close, then re-request pointer lock after a brief delay
-        // so the browser's built-in pointer lock exit completes first
-        setTimeout(() => {
-          setOpenStand(null);
-          setTimeout(() => {
-            const canvas = document.querySelector('canvas');
-            if (canvas) canvas.requestPointerLock();
-          }, 300);
-        }, 50);
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [started]);
-
-  const handleEnterZone = (zone) => setActiveZone(zone);
-  const handleExitZone = () => setActiveZone(null);
 
   // Track pointer lock state
   useEffect(() => {
@@ -52,72 +23,87 @@ export default function CyberCity() {
     return () => document.removeEventListener('pointerlockchange', onLockChange);
   }, []);
 
-  const handleStart = () => setStarted(true);
+  const handleActivateStand = useCallback((stand) => {
+    // Exit pointer lock so modal can receive input
+    if (document.pointerLockElement) document.exitPointerLock();
+    setOpenStand(stand);
+  }, []);
+
+  const handleCloseStand = useCallback(() => {
+    setOpenStand(null);
+    // Re-request pointer lock after modal closes
+    setTimeout(() => {
+      const canvas = document.querySelector('canvas');
+      if (canvas) canvas.requestPointerLock();
+    }, 150);
+  }, []);
+
+  // Escape key closes modal
+  useEffect(() => {
+    if (!started) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape' && openStand) {
+        e.stopImmediatePropagation();
+        handleCloseStand();
+      }
+    };
+    document.addEventListener('keydown', onKey, true); // capture phase — runs before CityWorld handler
+    return () => document.removeEventListener('keydown', onKey, true);
+  }, [started, openStand, handleCloseStand]);
+
+  if (!started) {
+    return <SplashScreen onEnter={() => setStarted(true)} />;
+  }
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden">
       {/* 3D World */}
-      {started && (
-        <div className="absolute inset-0">
-          <div onClick={() => setHasClickedOnce(true)} className="absolute inset-0">
-          <CityWorld
-            onEnterZone={handleEnterZone}
-            onExitZone={handleExitZone}
-            onNearStand={setNearStand}
-            onLeaveStand={() => setNearStand(null)}
-            onActivateStand={(stand) => setOpenStand(stand)}
-            modalOpen={!!openStand}
-          />
-          </div>
-        </div>
-      )}
+      <div className="absolute inset-0" onClick={() => setHasClickedOnce(true)}>
+        <CityWorld
+          onEnterZone={setActiveZone}
+          onExitZone={() => setActiveZone(null)}
+          onNearStand={setNearStand}
+          onLeaveStand={() => setNearStand(null)}
+          onActivateStand={handleActivateStand}
+          modalOpen={!!openStand}
+        />
+      </div>
 
-      {/* Splash screen */}
+      {/* HUD overlay */}
+      <HUD
+        isLocked={isLocked || hasClickedOnce}
+        activeZone={activeZone}
+        nearStand={openStand ? null : nearStand}
+        onActivateStand={handleActivateStand}
+      />
+
+      {/* Zone info panel */}
       <AnimatePresence>
-        {!started && (
-          <SplashScreen onEnter={handleStart} />
+        {activeZone && !openStand && (
+          <ZonePanel
+            key={activeZone.id}
+            zone={activeZone}
+            onClose={() => setActiveZone(null)}
+          />
         )}
       </AnimatePresence>
 
-      {/* HUD overlay — hide nearStand popup when modal is open */}
-      {started && (
-        <HUD isLocked={isLocked || hasClickedOnce} activeZone={activeZone} nearStand={openStand ? null : nearStand} onActivateStand={(stand) => setOpenStand(stand)} />
-      )}
-
-      {/* Zone info panel */}
-      {started && (
-        <AnimatePresence>
-          {activeZone && (
-            <ZonePanel
-              key={activeZone.id}
-              zone={activeZone}
-              onClose={() => setActiveZone(null)}
-            />
-          )}
-        </AnimatePresence>
-      )}
-
       {/* Mini map */}
-      {started && (
-        <MiniMap activeZone={activeZone} />
-      )}
+      <MiniMap activeZone={activeZone} />
 
-      {/* Stand modal — re-lock pointer when closed so movement resumes */}
-      {openStand && (
-        <StandModal
-          stand={openStand}
-          onClose={() => {
-            setOpenStand(null);
-            setTimeout(() => {
-              const canvas = document.querySelector('canvas');
-              if (canvas) canvas.requestPointerLock();
-            }, 200);
-          }}
-        />
-      )}
+      {/* Stand modal */}
+      <AnimatePresence>
+        {openStand && (
+          <StandModal
+            key={openStand.id}
+            stand={openStand}
+            onClose={handleCloseStand}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Avatar AI Assistant */}
-      {started && <AvatarAssistant />}
+      <AvatarAssistant />
     </div>
   );
 }

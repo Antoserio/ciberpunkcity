@@ -146,8 +146,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const extraCanvasesRef = useRef([]);
   const modalOpenRef = useRef(false);
 
-  // Keep modalOpenRef in sync so the animate loop can read it without re-creating listeners
-  useEffect(() => { modalOpenRef.current = modalOpen; }, [modalOpen]);
+  // When modal opens: freeze movement immediately by clearing pressed keys and unlocking
+  useEffect(() => {
+    modalOpenRef.current = modalOpen;
+    if (modalOpen) {
+      keysRef.current = {};
+      isLockedRef.current = false;
+    }
+  }, [modalOpen]);
 
   const checkZoneProximity = useCallback((pos) => {
     // Don't update proximity state while a modal is open
@@ -249,15 +255,15 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       mouseDeltaRef.current.y += e.movementY;
     };
     const handleKeyDown = (e) => {
+      // Block all movement and interaction while modal is open
+      if (modalOpenRef.current) return;
       keysRef.current[e.code] = true;
       if (['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
         e.preventDefault();
         isLockedRef.current = true;
       }
-      // Stand interaction — works regardless of pointer lock state
+      // Stand interaction
       if (nearStandRef.current && e.key.toUpperCase() === nearStandRef.current.key.toUpperCase()) {
-        if (document.pointerLockElement) document.exitPointerLock();
-        isLockedRef.current = false;
         onActivateStand && onActivateStand(nearStandRef.current);
       }
     };

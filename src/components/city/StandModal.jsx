@@ -3,7 +3,6 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 function VideoContent({ stand }) {
-  const [playing, setPlaying] = useState(false);
   const c = stand.color;
   return (
     <div className="relative z-10">
@@ -11,42 +10,14 @@ function VideoContent({ stand }) {
         className="relative rounded overflow-hidden mb-4"
         style={{ paddingBottom: '56.25%', background: '#000' }}
       >
-        {!playing ? (
-          <div
-            className="absolute inset-0 cursor-pointer group"
-            onClick={() => setPlaying(true)}
-            style={{ backgroundImage: `url(${stand.videoThumb})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-          >
-            <div className="absolute inset-0 flex items-center justify-center"
-              style={{ background: 'rgba(0,0,0,0.5)' }}>
-              <motion.div
-                whileHover={{ scale: 1.15 }}
-                className="w-20 h-20 rounded-full flex items-center justify-center"
-                style={{ background: `${c}30`, border: `3px solid ${c}`, boxShadow: `0 0 40px ${c}` }}
-              >
-                <span className="text-3xl ml-1">▶</span>
-              </motion.div>
-            </div>
-            <div className="absolute bottom-3 left-3 font-orbitron text-xs tracking-widest px-2 py-1 rounded"
-              style={{ background: 'rgba(0,0,0,0.7)', color: c, border: `1px solid ${c}50` }}>
-              ▶ REPRODUCIR VIDEO
-            </div>
-          </div>
-        ) : (
-          <iframe
-            className="absolute inset-0 w-full h-full"
-            src={stand.videoUrl}
-            frameBorder="0"
-            allow="autoplay; fullscreen"
-            allowFullScreen
-          />
-        )}
+        <iframe
+          className="absolute inset-0 w-full h-full"
+          src={stand.videoUrl}
+          frameBorder="0"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+        />
       </div>
-      {!playing && (
-        <p className="font-rajdhani text-sm text-gray-400 text-center">
-          👆 Click para reproducir el video
-        </p>
-      )}
     </div>
   );
 }
@@ -141,7 +112,6 @@ export default function StandModal({ stand, onClose }) {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-50 flex items-center justify-center"
         style={{ background: 'rgba(0,3,15,0.88)', backdropFilter: 'blur(16px)' }}
-        onClick={onClose}
       >
         <motion.div
           initial={{ scale: 0.85, y: 40, opacity: 0 }}
@@ -155,7 +125,6 @@ export default function StandModal({ stand, onClose }) {
             borderColor: c,
             boxShadow: `0 0 60px ${c}50, 0 0 120px ${c}15`,
           }}
-          onClick={e => e.stopPropagation()}
         >
           {/* Scanlines */}
           <div className="absolute inset-0 pointer-events-none opacity-10"
@@ -211,7 +180,7 @@ export default function StandModal({ stand, onClose }) {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={onClose}
+              onClick={() => window.open('mailto:info@agency360.com?subject=Interesado en ' + stand.title, '_blank')}
               className="w-full py-3 font-orbitron text-sm font-bold tracking-widest rounded transition-all"
               style={{
                 background: `linear-gradient(135deg, ${c}25, ${c}40)`,

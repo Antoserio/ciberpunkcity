@@ -12,6 +12,7 @@ export default function CyberCity() {
   const [started, setStarted] = useState(false);
   const [activeZone, setActiveZone] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
+  const [hasClickedOnce, setHasClickedOnce] = useState(false);
   const [nearStand, setNearStand] = useState(null);
   const [openStand, setOpenStand] = useState(null);
   const nearStandStateRef = useRef(null);
@@ -53,6 +54,7 @@ export default function CyberCity() {
       {/* 3D World */}
       {started && (
         <div className="absolute inset-0">
+          <div onClick={() => setHasClickedOnce(true)} className="absolute inset-0">
           <CityWorld
             onEnterZone={handleEnterZone}
             onExitZone={handleExitZone}
@@ -63,6 +65,7 @@ export default function CyberCity() {
             onLeaveStand={() => setNearStand(null)}
             onActivateStand={(stand) => setOpenStand(stand)}
           />
+          </div>
           {/* Vimeo video overlay */}
           <iframe
             ref={vimeoIframeRef}
@@ -84,7 +87,7 @@ export default function CyberCity() {
 
       {/* HUD overlay */}
       {started && (
-        <HUD isLocked={isLocked} activeZone={activeZone} nearStand={nearStand} />
+        <HUD isLocked={isLocked || hasClickedOnce} activeZone={activeZone} nearStand={nearStand} />
       )}
 
       {/* Zone info panel */}

@@ -7,7 +7,6 @@ import AvatarAssistant from '../components/city/AvatarAssistant';
 import SplashScreen from '../components/city/SplashScreen';
 import MiniMap from '../components/city/MiniMap';
 import StandModal from '../components/city/StandModal';
-import Studio360VideoOverlay from '../components/city/Studio360VideoOverlay';
 
 export default function CyberCity() {
   const [started, setStarted] = useState(false);
@@ -69,8 +68,6 @@ export default function CyberCity() {
           modalOpen={!!openStand}
         />
       </div>
-
-      <Studio360VideoOverlay />
 
       {/* HUD overlay */}
       <HUD

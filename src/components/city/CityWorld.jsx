@@ -629,19 +629,7 @@ function buildCity(scene, flicker, gt, videoTex) {
 
 
 
-  // Vimeo screen on STUDIO 360 front facade
-  addVimeoScreen(
-    scene,
-    -20,
-    10,
-    -15.42,
-    7.2,
-    8.8,
-    0,
-    'https://player.vimeo.com/video/641418395?autoplay=1&loop=1&muted=1&background=1&title=0&byline=0&portrait=0',
-    flicker,
-    0xff00ff,
-  );
+  // STUDIO 360 facade stays clean; real video is rendered as HTML overlay.
 
   // Distant skyline — 16 simple boxes, no glow sprites
   const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });

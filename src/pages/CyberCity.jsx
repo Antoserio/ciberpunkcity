@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import CityWorld from '../components/city/CityWorld.jsx';
 import HUD from '../components/city/HUD';
@@ -68,6 +68,22 @@ export default function CyberCity() {
           modalOpen={!!openStand}
         />
       </div>
+
+      <iframe
+        className="absolute z-10 pointer-events-none border-0"
+        style={{
+          left: '27.3%',
+          top: '31.2%',
+          width: '14.1%',
+          height: '26.2%',
+          transform: 'perspective(1000px) rotateY(2deg) rotateX(7deg)',
+          filter: 'saturate(1.15) brightness(1.02)',
+          boxShadow: '0 0 30px rgba(255,0,255,0.25)',
+        }}
+        src="https://www.youtube.com/embed/h7LhhrhjvAE?autoplay=1&mute=1&loop=1&playlist=h7LhhrhjvAE&controls=0&rel=0&modestbranding=1"
+        allow="autoplay; encrypted-media; picture-in-picture"
+        title="Studio 360 Video"
+      />
 
       {/* HUD overlay */}
       <HUD

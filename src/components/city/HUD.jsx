@@ -104,40 +104,6 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
         </div>
       )}
 
-      {/* Stand proximity — BIG letter popup */}
-      {nearStand && (
-        <motion.div
-          key={nearStand.id}
-          initial={{ opacity: 0, y: 20, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.96 }}
-          transition={{ type: 'spring', damping: 18, stiffness: 260 }}
-          className="fixed inset-x-3 bottom-28 sm:inset-0 sm:bottom-auto z-30 flex items-end sm:items-center justify-center pointer-events-none"
-        >
-          <button
-            className="pointer-events-auto w-full sm:w-auto px-5 sm:px-8 py-4 sm:py-5 rounded-lg text-center flex flex-col items-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
-            onClick={(e) => { e.stopPropagation(); onActivateStand && onActivateStand(nearStand); }}
-            style={{
-              background: `linear-gradient(135deg, rgba(0,0,0,0.92), ${nearStand.color}20)`,
-              border: `2px solid ${nearStand.color}`,
-              boxShadow: `0 0 40px ${nearStand.color}50, inset 0 0 20px ${nearStand.color}08`,
-            }}
-          >
-            <div className="flex items-center gap-3 w-full">
-              <span className="text-2xl sm:text-3xl">{nearStand.icon}</span>
-              <div className="text-left min-w-0 flex-1">
-                <p className="font-orbitron text-sm sm:text-lg font-black tracking-widest truncate" style={{ color: nearStand.color, textShadow: `0 0 15px ${nearStand.color}` }}>
-                  {nearStand.title}
-                </p>
-                <p className="font-rajdhani text-xs sm:text-sm text-gray-400 truncate">{nearStand.subtitle}</p>
-              </div>
-            </div>
-            <p className="font-orbitron text-xs tracking-widest mt-1" style={{ color: `${nearStand.color}90` }}>
-              TOCA PARA ABRIR
-            </p>
-          </button>
-        </motion.div>
-      )}
 
       {/* Zone proximity hint */}
       {activeZone && (

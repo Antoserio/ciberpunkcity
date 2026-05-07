@@ -485,7 +485,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
     extraCanvasesRef.current = extraCanvases;
 
-    const robotSwarm = addFlyingRobots(scene, gt);
+    const robotSwarm = addFlyingRobots(scene);
     let heroRobot = null;
 
     if (robotModelUrl) {
@@ -1132,32 +1132,41 @@ function createFlyingRobot(color = 0x00ffff) {
   return { group, trail };
 }
 
-function addFlyingRobots(scene, gt) {
+function addFlyingRobots(scene) {
   const colors = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
-  return Array.from({ length: 8 }, (_, i) => {
+  return Array.from({ length: 4 }, (_, i) => {
     const robot = createFlyingRobot(colors[i % colors.length]);
-    const radius = 18 + (i % 4) * 9;
-    const speed = 1.4 + i * 0.18;
-    const height = 5 + (i % 3) * 2.4;
-    const offset = i * 0.8;
-    const glowKey = colorToGlowKey(colors[i % colors.length]);
-    const glow = addGlowSprite(scene, 0, height, 0, gt[glowKey] || gt.magenta, 2.6);
-    robot.group.add(glow);
-    robot.group.position.set(Math.cos(offset) * radius, height, Math.sin(offset) * radius);
+    const originX = -28 + Math.random() * 56;
+    const originZ = -28 + Math.random() * 56;
+    const driftX = 4 + Math.random() * 10;
+    const driftZ = 4 + Math.random() * 10;
+    const speed = 0.14 + Math.random() * 0.16;
+    const height = 4.5 + Math.random() * 5;
+    const offset = Math.random() * Math.PI * 2;
+    const wobble = 0.3 + Math.random() * 0.5;
+    const yawOffset = Math.random() * Math.PI * 2;
+
+    robot.group.position.set(originX, height, originZ);
     scene.add(robot.group);
-    return { ...robot, radius, speed, height, offset };
+
+    return { ...robot, originX, originZ, driftX, driftZ, speed, height, offset, wobble, yawOffset };
   });
 }
 
 function updateFlyingRobots(robots, time) {
   robots.forEach((robot, index) => {
-    const angle = time * robot.speed + robot.offset;
-    const fastWave = Math.sin(time * (4 + index * 0.2) + index) * 0.8;
-    robot.group.position.x = Math.cos(angle) * robot.radius;
-    robot.group.position.z = Math.sin(angle) * robot.radius;
-    robot.group.position.y = robot.height + fastWave;
-    robot.group.rotation.y = -angle + Math.PI / 2;
-    robot.group.rotation.z = Math.sin(time * 8 + index) * 0.12;
-    robot.trail.scale.y = 0.8 + Math.sin(time * 12 + index) * 0.2;
+    const tx = time * robot.speed + robot.offset;
+    const tz = time * (robot.speed * 0.8) + robot.offset * 1.7;
+    const x = robot.originX + Math.sin(tx) * robot.driftX + Math.sin(tx * 0.37 + index) * 2.4;
+    const z = robot.originZ + Math.cos(tz) * robot.driftZ + Math.cos(tz * 0.43 + index * 1.3) * 2.8;
+    const y = robot.height + Math.sin(time * 0.9 + robot.offset) * robot.wobble + Math.cos(time * 0.55 + index) * 0.35;
+
+    const prevX = robot.group.position.x;
+    const prevZ = robot.group.position.z;
+
+    robot.group.position.set(x, y, z);
+    robot.group.rotation.y = Math.atan2(x - prevX, z - prevZ) + robot.yawOffset;
+    robot.group.rotation.z = Math.sin(time * 1.8 + index) * 0.05;
+    robot.trail.scale.y = 0.6 + Math.sin(time * 2.2 + index) * 0.08;
   });
 }

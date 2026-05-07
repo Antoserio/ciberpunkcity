@@ -629,9 +629,8 @@ function buildCity(scene, flicker, gt, videoTex) {
 
 
 
-  // Canvas screen on STUDIO 360 front facade
-  addExtraScreen(scene, -20, 10, -15.42, 7.2, 8.8, videoTex, flicker, 0);
-  // Los videos de Vimeo se volverán a integrar después, sin placeholders 3D intrusivos.
+  // Pantalla integrada en la fachada izquierda de STUDIO 360
+  addExtraScreen(scene, -20.6, 7.2, -15.92, 6.4, 5.2, videoTex, flicker, 0);
 
   // Distant skyline — 16 simple boxes, no glow sprites
   const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });
@@ -769,25 +768,39 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
 
 // ─── Extra canvas screens on mid buildings ────────────────────────────────────
 
-function addExtraScreen(scene, x, y, z, w, h, canvasTex, flicker, rotY = 0) {
-  const mat = new THREE.MeshBasicMaterial({ map: canvasTex, side: THREE.DoubleSide, transparent: false });
+function addExtraScreen(scene, x, y, z, canvasTex, flicker, rotY = 0) {
+  const texW = canvasTex.image?.width || 512;
+  const texH = canvasTex.image?.height || 288;
+  const aspect = texW / texH;
+  const h = 5.2;
+  const w = h * aspect;
+
+  const frame = new THREE.Mesh(
+    new THREE.BoxGeometry(w + 0.5, h + 0.5, 0.18),
+    new THREE.MeshBasicMaterial({ color: 0x050008 })
+  );
+  frame.position.set(x, y, z - 0.02);
+  frame.rotation.y = rotY;
+  scene.add(frame);
+
+  const mat = new THREE.MeshBasicMaterial({ map: canvasTex, side: THREE.FrontSide });
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
-  mesh.position.set(x, y, z);
+  mesh.position.set(x, y, z + 0.08);
   mesh.rotation.y = rotY;
   scene.add(mesh);
 
-  const bGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(w + 0.15, h + 0.15, 0.04));
+  const bGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(w + 0.18, h + 0.18, 0.08));
   const bLine = new THREE.LineSegments(bGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
-  bLine.position.set(x, y, z);
+  bLine.position.set(x, y, z + 0.05);
   bLine.rotation.y = rotY;
   scene.add(bLine);
 
-  const sprMat = new THREE.SpriteMaterial({ color: 0xff00ff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending });
+  const sprMat = new THREE.SpriteMaterial({ color: 0xff00ff, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending });
   const spr = new THREE.Sprite(sprMat);
-  spr.scale.set(w * 1.35, h * 1.15, 1);
-  spr.position.set(x, y, z - 0.15);
+  spr.scale.set(w * 1.12, h * 1.08, 1);
+  spr.position.set(x, y, z - 0.08);
   scene.add(spr);
-  flicker.push({ material: sprMat, baseIntensity: 0.22, flickerSpeed: 0.6, flickerOffset: Math.random() * Math.PI * 2 });
+  flicker.push({ material: sprMat, baseIntensity: 0.16, flickerSpeed: 0.6, flickerOffset: Math.random() * Math.PI * 2 });
 }
 
 // ─── Mid building ─────────────────────────────────────────────────────────────

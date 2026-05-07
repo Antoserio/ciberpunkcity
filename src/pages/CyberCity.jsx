@@ -76,6 +76,7 @@ export default function CyberCity() {
           onActivateStand={handleActivateStand}
           modalOpen={!!openStand}
           plazaVideoUrl="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
+          isMobile={isMobile}
         />
       </div>
 

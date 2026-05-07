@@ -334,7 +334,7 @@ const LOOK_SMOOTH = 0.22;
 const MAX_PITCH = Math.PI / 2 - 0.02;
 
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl, isMobile = false }) {
   const mountRef = useRef(null);
   const keysRef = useRef({});
   const yawRef = useRef(0);
@@ -351,6 +351,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const videoScreenRef = useRef(null);
   const extraCanvasesRef = useRef([]);
   const modalOpenRef = useRef(false);
+  const touchStateRef = useRef({ moving: false, looking: false, moveId: null, lookId: null, moveStartX: 0, moveStartY: 0, moveX: 0, moveY: 0 });
 
   // When modal opens: freeze movement immediately by clearing pressed keys and unlocking
   useEffect(() => {
@@ -464,9 +465,12 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     extraCanvasesRef.current = extraCanvases;
 
     // Controls
-    const handleClick = () => { canvas.requestPointerLock(); };
+    const handleClick = () => {
+      if (isMobile) return;
+      canvas.requestPointerLock();
+    };
     const handlePointerLockChange = () => {
-      isLockedRef.current = document.pointerLockElement === canvas;
+      isLockedRef.current = isMobile ? true : document.pointerLockElement === canvas;
     };
     const handleMouseMove = (e) => {
       if (!isLockedRef.current) return;
@@ -484,7 +488,62 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
     const handleKeyUp = (e) => { keysRef.current[e.code] = false; };
 
+    const handleTouchStart = (e) => {
+      if (!isMobile || modalOpenRef.current) return;
+      for (const touch of e.changedTouches) {
+        if (touch.clientX < window.innerWidth * 0.45 && touchStateRef.current.moveId === null) {
+          touchStateRef.current.moveId = touch.identifier;
+          touchStateRef.current.moving = true;
+          touchStateRef.current.moveStartX = touch.clientX;
+          touchStateRef.current.moveStartY = touch.clientY;
+          touchStateRef.current.moveX = 0;
+          touchStateRef.current.moveY = 0;
+        } else if (touchStateRef.current.lookId === null) {
+          touchStateRef.current.lookId = touch.identifier;
+          touchStateRef.current.looking = true;
+          touchStateRef.current.lookStartX = touch.clientX;
+          touchStateRef.current.lookStartY = touch.clientY;
+        }
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (!isMobile || modalOpenRef.current) return;
+      for (const touch of e.changedTouches) {
+        if (touch.identifier === touchStateRef.current.moveId) {
+          touchStateRef.current.moveX = touch.clientX - touchStateRef.current.moveStartX;
+          touchStateRef.current.moveY = touch.clientY - touchStateRef.current.moveStartY;
+        }
+        if (touch.identifier === touchStateRef.current.lookId) {
+          targetYawRef.current -= (touch.clientX - touchStateRef.current.lookStartX) * LOOK_SPEED * 0.7;
+          targetPitchRef.current -= (touch.clientY - touchStateRef.current.lookStartY) * LOOK_SPEED * 0.7;
+          targetPitchRef.current = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, targetPitchRef.current));
+          touchStateRef.current.lookStartX = touch.clientX;
+          touchStateRef.current.lookStartY = touch.clientY;
+        }
+      }
+    };
+
+    const handleTouchEnd = (e) => {
+      for (const touch of e.changedTouches) {
+        if (touch.identifier === touchStateRef.current.moveId) {
+          touchStateRef.current.moveId = null;
+          touchStateRef.current.moving = false;
+          touchStateRef.current.moveX = 0;
+          touchStateRef.current.moveY = 0;
+        }
+        if (touch.identifier === touchStateRef.current.lookId) {
+          touchStateRef.current.lookId = null;
+          touchStateRef.current.looking = false;
+        }
+      }
+    };
+
     canvas.addEventListener('click', handleClick);
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: true });
+    canvas.addEventListener('touchcancel', handleTouchEnd, { passive: true });
     document.addEventListener('pointerlockchange', handlePointerLockChange);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('keydown', handleKeyDown);
@@ -513,22 +572,35 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
       // Movement
       const k = keysRef.current;
-      const moving = k['KeyW'] || k['ArrowUp'] || k['KeyS'] || k['ArrowDown'] || k['KeyA'] || k['ArrowLeft'] || k['KeyD'] || k['ArrowRight'];
-      if (isLockedRef.current && moving) {
+      const moving = k['KeyW'] || k['ArrowUp'] || k['KeyS'] || k['ArrowDown'] || k['KeyA'] || k['ArrowLeft'] || k['KeyD'] || k['ArrowRight'] || (isMobile && touchStateRef.current.moving);
+      if ((isLockedRef.current || isMobile) && moving) {
         dir.set(0, 0, 0);
+        if (isMobile && touchStateRef.current.moving) {
+          const moveX = touchStateRef.current.moveX;
+          const moveY = touchStateRef.current.moveY;
+          const threshold = 12;
+          if (moveY < -threshold) dir.z -= Math.min(Math.abs(moveY) / 60, 1);
+          if (moveY > threshold) dir.z += Math.min(Math.abs(moveY) / 60, 1);
+          if (moveX < -threshold) dir.x -= Math.min(Math.abs(moveX) / 60, 1);
+          if (moveX > threshold) dir.x += Math.min(Math.abs(moveX) / 60, 1);
+        }
         if (k['KeyW'] || k['ArrowUp']) dir.z -= 1;
         if (k['KeyS'] || k['ArrowDown']) dir.z += 1;
         if (k['KeyA'] || k['ArrowLeft']) dir.x -= 1;
         if (k['KeyD'] || k['ArrowRight']) dir.x += 1;
-        dir.normalize();
-        euler.set(0, yawRef.current, 0);
-        dir.applyEuler(euler);
-        camera.position.addScaledVector(dir, MOVE_SPEED * delta);
-        camera.position.y = 1.7;
+        if (dir.lengthSq() > 0) {
+          dir.normalize();
+          euler.set(0, yawRef.current, 0);
+          dir.applyEuler(euler);
+          camera.position.addScaledVector(dir, (isMobile ? MOVE_SPEED * 0.7 : MOVE_SPEED) * delta);
+          camera.position.y = 1.7;
+        }
       }
 
       euler.set(pitchRef.current, yawRef.current, 0);
       camera.quaternion.setFromEuler(euler);
+      camera.position.x = Math.max(-72, Math.min(72, camera.position.x));
+      camera.position.z = Math.max(-72, Math.min(72, camera.position.z));
       checkZoneProximity(camera.position);
 
       // Flicker — update every 6th frame for perf
@@ -568,6 +640,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     return () => {
       cancelAnimationFrame(animFrameRef.current);
       canvas.removeEventListener('click', handleClick);
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
+      canvas.removeEventListener('touchcancel', handleTouchEnd);
       document.removeEventListener('pointerlockchange', handlePointerLockChange);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('keydown', handleKeyDown);

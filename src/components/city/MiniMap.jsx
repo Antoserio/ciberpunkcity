@@ -3,7 +3,7 @@ import { ZONES } from './cityData';
 export default function MiniMap({ activeZone, isMobile = false }) {
   return (
     <div
-      className={`fixed z-30 rounded border ${isMobile ? 'bottom-20 left-3 w-24 h-24' : 'bottom-20 left-6 w-40 h-40'}` }
+      className={`fixed z-30 rounded border ${isMobile ? 'top-16 right-3 w-20 h-20' : 'bottom-20 left-6 w-40 h-40'}` }
       style={{
         background: 'rgba(3,6,18,0.9)',
         borderColor: 'rgba(0,255,255,0.3)',

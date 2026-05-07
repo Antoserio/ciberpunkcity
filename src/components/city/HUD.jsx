@@ -95,6 +95,15 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
         </motion.div>
       )}
 
+      {isMobile && (
+        <div className="fixed bottom-4 left-3 right-3 z-30 pointer-events-none">
+          <div className="glass-dark px-4 py-3 rounded text-center">
+            <p className="font-orbitron text-[10px] tracking-widest text-cyan-400 mb-1">MÓVIL</p>
+            <p className="font-rajdhani text-xs text-gray-300">Izquierda: mover · Derecha: girar</p>
+          </div>
+        </div>
+      )}
+
       {/* Stand proximity — BIG letter popup */}
       {nearStand && (
         <motion.div

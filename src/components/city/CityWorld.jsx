@@ -569,9 +569,9 @@ function buildCity(scene, flicker, gt, videoTex) {
   const groundSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshBasicMaterial({
-      color: 0x220033,
+      color: 0x331144,
       transparent: true,
-      opacity: 0.04,
+      opacity: 0.1,
       blending: THREE.AdditiveBlending,
     })
   );
@@ -582,7 +582,7 @@ function buildCity(scene, flicker, gt, videoTex) {
   // Plaza central abierta, sin cuadrante marcado
   const plaza = new THREE.Mesh(
     new THREE.CircleGeometry(32, 64),
-    new THREE.MeshBasicMaterial({ color: 0x050014, transparent: true, opacity: 0.45 })
+    new THREE.MeshBasicMaterial({ color: 0x0b0820, transparent: true, opacity: 0.22 })
   );
   plaza.rotation.x = -Math.PI / 2;
   plaza.position.y = 0.012;
@@ -737,15 +737,6 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.2, w * 0.3), signMat);
   sign.position.set(x, h + 1.8, z + w / 2 + 0.05);
   scene.add(sign);
-
-  // Ground zone ring
-  const ringMat = emissiveMat(color, 0.7);
-  ringMat.transparent = true; ringMat.opacity = 0.45; ringMat.side = THREE.DoubleSide;
-  const ring = new THREE.Mesh(new THREE.RingGeometry(zone.radius - 0.3, zone.radius, 64), ringMat);
-  ring.rotation.x = -Math.PI / 2;
-  ring.position.set(x, 0.04, z);
-  scene.add(ring);
-  flicker.push({ material: ringMat, baseIntensity: 0.7, flickerSpeed: 0.4, flickerOffset: Math.random() * Math.PI * 2 });
 
   // No PointLights — use emissive + glow sprites only
 

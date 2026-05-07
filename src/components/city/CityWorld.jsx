@@ -285,11 +285,9 @@ function makeNeonSignTexture(text, color) {
   return new THREE.CanvasTexture(canvas);
 }
 
-const MOVE_SPEED = 13;
-const LOOK_SPEED = 0.0016;
-const LOOK_SMOOTH = 0.18;
-const MOVE_ACCEL = 7;
-const MOVE_DAMPING = 9;
+const MOVE_SPEED = 16;
+const LOOK_SPEED = 0.0018;
+const LOOK_SMOOTH = 0.1;
 
 const STAND_RADIUS = 9;
 
@@ -310,7 +308,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const videoScreenRef = useRef(null);
   const extraCanvasesRef = useRef([]);
   const modalOpenRef = useRef(false);
-  const velocityRef = useRef(new THREE.Vector3());
 
   // When modal opens: freeze movement immediately by clearing pressed keys and unlocking
   useEffect(() => {
@@ -462,29 +459,19 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
       // Movement
       const k = keysRef.current;
-      dir.set(0, 0, 0);
-      if (isLockedRef.current) {
+      const moving = k['KeyW'] || k['ArrowUp'] || k['KeyS'] || k['ArrowDown'] || k['KeyA'] || k['ArrowLeft'] || k['KeyD'] || k['ArrowRight'];
+      if (isLockedRef.current && moving) {
+        dir.set(0, 0, 0);
         if (k['KeyW'] || k['ArrowUp']) dir.z -= 1;
         if (k['KeyS'] || k['ArrowDown']) dir.z += 1;
         if (k['KeyA'] || k['ArrowLeft']) dir.x -= 1;
         if (k['KeyD'] || k['ArrowRight']) dir.x += 1;
-      }
-
-      if (dir.lengthSq() > 0) {
         dir.normalize();
         euler.set(0, yawRef.current, 0);
         dir.applyEuler(euler);
-        velocityRef.current.addScaledVector(dir, MOVE_ACCEL * delta);
-        const maxSpeed = MOVE_SPEED;
-        if (velocityRef.current.length() > maxSpeed) {
-          velocityRef.current.setLength(maxSpeed);
-        }
+        camera.position.addScaledVector(dir, MOVE_SPEED * delta);
+        camera.position.y = 1.7;
       }
-
-      const damping = Math.max(0, 1 - MOVE_DAMPING * delta);
-      velocityRef.current.multiplyScalar(damping);
-      camera.position.addScaledVector(velocityRef.current, delta);
-      camera.position.y = 1.7;
 
       euler.set(pitchRef.current, yawRef.current, 0);
       camera.quaternion.setFromEuler(euler);

@@ -622,17 +622,7 @@ function buildCity(scene, flicker, gt, videoTex) {
     addExtraScreen(scene, x, y, z, w, h, cv.tex, flicker, rotY);
   });
 
-  // ── Vimeo video screens fijas en la ciudad (iframes en HTML overlay) ──
-  // Se añaden como elementos DOM encima del canvas de Three.js
-  addVimeoScreen(scene, -8, 8, -18, 8, 4.5, 0,
-    'https://player.vimeo.com/video/76979871?autoplay=1&loop=1&muted=1&background=1', flicker, 0xff00ff);
-  addVimeoScreen(scene, 8, 8, 18, 8, 4.5, Math.PI,
-    'https://player.vimeo.com/video/148751763?autoplay=1&loop=1&muted=1&background=1', flicker, 0xff6600);
-  // Duplicados al otro lado
-  addVimeoScreen(scene, 8, 8, -18, 8, 4.5, 0,
-    'https://player.vimeo.com/video/148751763?autoplay=1&loop=1&muted=1&background=1', flicker, 0xff6600);
-  addVimeoScreen(scene, -8, 8, 18, 8, 4.5, Math.PI,
-    'https://player.vimeo.com/video/76979871?autoplay=1&loop=1&muted=1&background=1', flicker, 0xff00ff);
+  // Los videos de Vimeo se volverán a integrar después, sin placeholders 3D intrusivos.
 
   // Distant skyline — 16 simple boxes, no glow sprites
   const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });

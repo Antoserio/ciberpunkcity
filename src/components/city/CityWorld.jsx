@@ -1235,12 +1235,34 @@ function updateFlyingRobots(robots, time) {
     x = Math.max(robot.bounds.minX, Math.min(robot.bounds.maxX, x));
     z = Math.max(robot.bounds.minZ, Math.min(robot.bounds.maxZ, z));
 
+    const safeTarget = avoidBuildingCollision(x, z, 3.5);
     const prevX = robot.group.position.x;
     const prevZ = robot.group.position.z;
 
-    robot.group.position.set(x, y, z);
-    robot.group.rotation.y = Math.atan2(x - prevX, z - prevZ) + robot.yawOffset;
+    robot.group.position.set(safeTarget.x, y, safeTarget.z);
+    robot.group.rotation.y = Math.atan2(safeTarget.x - prevX, safeTarget.z - prevZ) + robot.yawOffset;
     robot.group.rotation.z = Math.sin(time * 1.8 + index) * 0.05;
     robot.trail.scale.y = 0.6 + Math.sin(time * 2.2 + index) * 0.08;
   });
+}
+
+function avoidBuildingCollision(x, z, padding = 2.5) {
+  const safe = { x, z };
+
+  BUILDING_COLLIDERS.forEach((collider) => {
+    const dx = safe.x - collider.x;
+    const dz = safe.z - collider.z;
+    const distance = Math.hypot(dx, dz) || 0.001;
+    const minDistance = collider.radius + padding;
+
+    if (distance < minDistance) {
+      const push = (minDistance - distance) / distance;
+      safe.x += dx * push;
+      safe.z += dz * push;
+    }
+  });
+
+  safe.x = Math.max(-64, Math.min(64, safe.x));
+  safe.z = Math.max(-64, Math.min(64, safe.z));
+  return safe;
 }

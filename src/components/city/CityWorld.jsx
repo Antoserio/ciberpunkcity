@@ -657,8 +657,8 @@ function buildCity(scene, flicker, gt, videoTex) {
 
 
 
-  // Pantalla integrada en la fachada izquierda de STUDIO 360
-  addExtraScreen(scene, -20.6, 7.2, -15.92, videoTex, flicker, 0);
+  // Pantalla integrada en la fachada principal de STUDIO 360
+  addVideoScreen(scene, -20, -14, 8, 18, videoTex, flicker);
 
   // Distant skyline — 16 simple boxes, no glow sprites
   const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });

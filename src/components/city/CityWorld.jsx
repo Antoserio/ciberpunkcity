@@ -19,7 +19,7 @@ function makeGlowTexture(hex) {
 }
 
 // Animated canvas texture for the "video screen" billboard
-function makeVideoCanvasTexture(label, accentColor) {
+function makeVideoCanvasTexture(label, accentColor, mode = 'generic') {
   label = label || 'AGENCY360';
   accentColor = accentColor || '#ff00ff';
   const W = 512, H = 288;
@@ -52,46 +52,71 @@ function makeVideoCanvasTexture(label, accentColor) {
     for (let y = 0; y < H; y += 18) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
     const pulse = 0.8 + 0.2 * Math.sin(t * 1.5);
-    ctx.save();
-    ctx.globalAlpha = 0.32 + 0.08 * Math.sin(t * 1.4);
-    ctx.fillStyle = '#ff4db8';
-    for (let i = 0; i < 7; i++) {
-      const barX = 40 + i * 70 + Math.sin(t * 0.8 + i) * 8;
-      ctx.fillRect(barX, 20, 18, H - 40);
+    if (mode === 'dance') {
+      ctx.save();
+      ctx.globalAlpha = 0.32 + 0.08 * Math.sin(t * 1.4);
+      ctx.fillStyle = '#ff4db8';
+      for (let i = 0; i < 7; i++) {
+        const barX = 40 + i * 70 + Math.sin(t * 0.8 + i) * 8;
+        ctx.fillRect(barX, 20, 18, H - 40);
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(W * 0.32 + Math.sin(t * 1.2) * 14, H * 0.6 + Math.cos(t * 1.5) * 10);
+      ctx.rotate(-0.28 + Math.sin(t * 0.9) * 0.05);
+      ctx.fillStyle = 'rgba(255, 210, 240, 0.92)';
+      ctx.shadowBlur = 35;
+      ctx.shadowColor = accentColor;
+      ctx.fillRect(-16, -90, 24, 110);
+      ctx.fillRect(-42, -20, 80, 22);
+      ctx.fillRect(-30, 18, 20, 92);
+      ctx.fillRect(2, 18, 20, 92);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(W * 0.58 + Math.sin(t * 1.5 + 1.2) * 16, H * 0.58 + Math.cos(t * 1.1 + 0.4) * 12);
+      ctx.rotate(0.22 + Math.sin(t * 1.1) * 0.06);
+      ctx.fillStyle = 'rgba(255, 235, 245, 0.95)';
+      ctx.shadowBlur = 35;
+      ctx.shadowColor = '#ffffff';
+      ctx.fillRect(-12, -84, 22, 102);
+      ctx.fillRect(-34, -12, 66, 20);
+      ctx.fillRect(-24, 18, 18, 84);
+      ctx.fillRect(2, 18, 18, 84);
+      ctx.restore();
+
+      const tickerOffset = (t * 90) % (W + 900);
+      ctx.shadowColor = accentColor;
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = 'rgba(255,120,210,0.95)';
+      ctx.font = 'bold 14px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('◆ STUDIO 360 ◆ DANCE MAPPING ◆ PERFORMANCE VISUAL ◆ AGENCY360 ◆', W - tickerOffset, H - 16);
+    } else {
+      ctx.shadowBlur = 30;
+      ctx.shadowColor = accentColor;
+      ctx.fillStyle = accentColor;
+      ctx.globalAlpha = pulse;
+      ctx.font = 'bold 52px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, W / 2, H / 2 - 18);
+      ctx.globalAlpha = 1;
+
+      ctx.shadowColor = '#00ffff';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = `rgba(0,255,255,${0.6 + 0.3 * Math.sin(t * 2)})`;
+      ctx.font = '18px monospace';
+      ctx.fillText('AGENCY360 · CREATIVE · XR', W / 2, H / 2 + 18);
+
+      const tickerOffset = (t * 60) % (W + 800);
+      ctx.shadowColor = '#ffff00';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = 'rgba(255,255,0,0.9)';
+      ctx.font = '13px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('◆ SOFTWARE  ◆ VIDEO 360°  ◆ AVATARES 3D  ◆ EVENTOS XR  ◆ METAVERSO  ◆ STREAMING  ', W - tickerOffset, H - 14);
     }
-    ctx.restore();
-
-    ctx.save();
-    ctx.translate(W * 0.32 + Math.sin(t * 1.2) * 14, H * 0.6 + Math.cos(t * 1.5) * 10);
-    ctx.rotate(-0.28 + Math.sin(t * 0.9) * 0.05);
-    ctx.fillStyle = 'rgba(255, 210, 240, 0.92)';
-    ctx.shadowBlur = 35;
-    ctx.shadowColor = accentColor;
-    ctx.fillRect(-16, -90, 24, 110);
-    ctx.fillRect(-42, -20, 80, 22);
-    ctx.fillRect(-30, 18, 20, 92);
-    ctx.fillRect(2, 18, 20, 92);
-    ctx.restore();
-
-    ctx.save();
-    ctx.translate(W * 0.58 + Math.sin(t * 1.5 + 1.2) * 16, H * 0.58 + Math.cos(t * 1.1 + 0.4) * 12);
-    ctx.rotate(0.22 + Math.sin(t * 1.1) * 0.06);
-    ctx.fillStyle = 'rgba(255, 235, 245, 0.95)';
-    ctx.shadowBlur = 35;
-    ctx.shadowColor = '#ffffff';
-    ctx.fillRect(-12, -84, 22, 102);
-    ctx.fillRect(-34, -12, 66, 20);
-    ctx.fillRect(-24, 18, 18, 84);
-    ctx.fillRect(2, 18, 18, 84);
-    ctx.restore();
-
-    const tickerOffset = (t * 90) % (W + 900);
-    ctx.shadowColor = accentColor;
-    ctx.shadowBlur = 12;
-    ctx.fillStyle = 'rgba(255,120,210,0.95)';
-    ctx.font = 'bold 14px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText('◆ STUDIO 360 ◆ DANCE MAPPING ◆ PERFORMANCE VISUAL ◆ AGENCY360 ◆', W - tickerOffset, H - 16);
 
     for (let y = 0; y < H; y += 3) {
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
@@ -397,7 +422,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
 
     // Video screen animated canvas
-    const videoScreen = makeVideoCanvasTexture('DANCE XR', '#ff00ff');
+    const videoScreen = makeVideoCanvasTexture('DANCE XR', '#ff00ff', 'dance');
     videoScreenRef.current = videoScreen;
 
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
@@ -606,10 +631,10 @@ function buildCity(scene, flicker, gt, videoTex) {
 
   // Canvas screens on zone building faces
   const screenDefs = [
-    [20 - 4.05, 8, 20, 5, 2.8, Math.PI/2, 'AVATAR LAB', '#ffff00'],
+    [20 - 4.05, 8, 20, 5, 2.8, Math.PI/2, 'DANCE XR', '#ff00ff', 'dance'],
   ];
-  screenDefs.forEach(([x, y, z, w, h, rotY, label, color]) => {
-    const cv = makeVideoCanvasTexture(label, color);
+  screenDefs.forEach(([x, y, z, w, h, rotY, label, color, mode]) => {
+    const cv = makeVideoCanvasTexture(label, color, mode);
     extraCanvases.push(cv);
     addExtraScreen(scene, x, y, z, w, h, cv.tex, flicker, rotY);
   });

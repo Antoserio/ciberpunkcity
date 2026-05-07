@@ -34,7 +34,7 @@ export default function RobotUploadPanel({ onUploaded, currentRobotFileName = ''
   return (
     <div className="fixed top-20 left-3 sm:left-6 z-40 max-w-[90vw] sm:max-w-sm rounded border px-3 py-3 glass-dark">
       <p className="font-orbitron text-[10px] sm:text-xs tracking-widest text-cyan-400 mb-2">ROBOT GLB GLOBAL</p>
-      <p className="font-rajdhani text-xs text-gray-300 mb-3">Tu modelo guardado aparecerá volando en la ciudad. Si quieres cambiarlo, vuelve a subir un .glb.</p>
+      <p className="font-rajdhani text-xs text-gray-300 mb-3">Ya hay un robot precargado en la ciudad. Solo sube otro si quieres reemplazarlo.</p>
       <input
         ref={inputRef}
         type="file"
@@ -56,7 +56,7 @@ export default function RobotUploadPanel({ onUploaded, currentRobotFileName = ''
             <p className="font-rajdhani text-[11px] text-gray-300">Si no lo ves, entra en la ciudad: ahora vuela más cerca del centro.</p>
           </>
         )}
-        <p className="font-rajdhani text-[11px] text-cyan-300/80">Tu robot actual es: {currentRobotFileName || fileName || 'ninguno todavía'}</p>
+        <p className="font-rajdhani text-[11px] text-cyan-300/80">Tu robot actual es: {currentRobotFileName || fileName || 'robotpequeño.glb'}</p>
       </div>
     </div>
   );

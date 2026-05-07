@@ -35,7 +35,20 @@ export default function CyberCity() {
       if (settings.length > 0 && settings[0].robot_model_url) {
         setRobotModelUrl(settings[0].robot_model_url);
         setRobotFileName(settings[0].robot_file_name || '');
+        return;
       }
+
+      const defaultRobotUrl = 'https://base44.app/api/apps/69fa345f1e88257c77c4e49b/files/mp/public/69fa345f1e88257c77c4e49b/3afd5ce0c_robotpequeo.glb';
+      const defaultRobotFileName = 'robotpequeño.glb';
+
+      await base44.entities.WorldSettings.create({
+        key: 'global_robot_model',
+        robot_model_url: defaultRobotUrl,
+        robot_file_name: defaultRobotFileName,
+      });
+
+      setRobotModelUrl(defaultRobotUrl);
+      setRobotFileName(defaultRobotFileName);
     };
 
     loadGlobalRobot();

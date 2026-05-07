@@ -116,7 +116,6 @@ export default function CyberCity() {
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden">
-      {/* 3D World */}
       <div className="absolute inset-0" onClick={() => setHasClickedOnce(true)}>
         <CityWorld
           onEnterZone={setActiveZone}
@@ -133,14 +132,14 @@ export default function CyberCity() {
         />
       </div>
 
-
-
       <TopNav activeView={activeView} onChangeView={handleChangeView} />
-
-      <RobotUploadPanel onUploaded={(fileUrl, fileName) => {
-        setRobotModelUrl(fileUrl);
-        setRobotFileName(fileName || '');
-      }} currentRobotFileName={robotFileName} />
+      <RobotUploadPanel
+        onUploaded={(fileUrl, fileName) => {
+          setRobotModelUrl(fileUrl);
+          setRobotFileName(fileName || '');
+        }}
+        currentRobotFileName={robotFileName}
+      />
 
       {/* HUD overlay */}
       {activeView === 'explore' && (
@@ -153,7 +152,6 @@ export default function CyberCity() {
         />
       )}
 
-      {/* Zone info panel */}
       <AnimatePresence>
         {activeView === 'explore' && activeZone && !openStand && (
           <ZonePanel
@@ -162,13 +160,7 @@ export default function CyberCity() {
             onClose={() => setActiveZone(null)}
           />
         )}
-      </AnimatePresence>
 
-      {/* Mini map */}
-      {activeView === 'explore' && <MiniMap activeZone={activeZone} isMobile={isMobile} />}
-
-      {/* Stand modal */}
-      <AnimatePresence>
         {activeView === 'explore' && openStand && (
           <StandModal
             key={openStand.id}
@@ -177,6 +169,8 @@ export default function CyberCity() {
           />
         )}
       </AnimatePresence>
+
+      {activeView === 'explore' && <MiniMap activeZone={activeZone} isMobile={isMobile} />}
 
       <button
         onClick={() => {
@@ -191,8 +185,6 @@ export default function CyberCity() {
 
       {activeView === 'works' && <WorksScreen />}
       <AboutOverlay open={activeView === 'about'} onClose={() => setActiveView('explore')} />
-
-      {/* Avatar AI Assistant */}
       <AvatarAssistant />
     </div>
   );

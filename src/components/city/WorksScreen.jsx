@@ -2,11 +2,11 @@ import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { STANDS } from './standsData';
 
-const workItems = STANDS.filter((stand) => stand.type === 'video' || stand.type === 'showcase');
+const WORK_ITEMS = STANDS.filter((stand) => stand.type === 'video' || stand.type === 'showcase');
 
 export default function WorksScreen() {
-  const [activeId, setActiveId] = useState(workItems[0]?.id || '');
-  const activeWork = useMemo(() => workItems.find((item) => item.id === activeId) || workItems[0], [activeId]);
+  const [activeId, setActiveId] = useState(WORK_ITEMS[0]?.id || '');
+  const activeWork = useMemo(() => WORK_ITEMS.find((item) => item.id === activeId) || WORK_ITEMS[0], [activeId]);
 
   if (!activeWork) return null;
 
@@ -68,7 +68,7 @@ export default function WorksScreen() {
 
       <div className="pointer-events-auto fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
         <div className="flex items-center gap-2 rounded-full border border-red-500/20 bg-black/60 px-3 py-3 backdrop-blur-xl">
-          {workItems.map((item) => {
+          {WORK_ITEMS.map((item) => {
             const active = item.id === activeWork.id;
             return (
               <button

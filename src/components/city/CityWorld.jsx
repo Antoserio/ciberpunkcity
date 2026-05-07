@@ -555,10 +555,29 @@ function buildCity(scene, flicker, gt, videoTex) {
   // Ground — plaza oscura abierta
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
-    new THREE.MeshStandardMaterial({ color: 0x020008, roughness: 0.2, metalness: 0.55 })
+    new THREE.MeshStandardMaterial({
+      color: 0x020008,
+      roughness: 0.08,
+      metalness: 0.82,
+      transparent: true,
+      opacity: 0.96,
+    })
   );
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
+
+  const groundSheen = new THREE.Mesh(
+    new THREE.PlaneGeometry(220, 220),
+    new THREE.MeshBasicMaterial({
+      color: 0x220033,
+      transparent: true,
+      opacity: 0.08,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  groundSheen.rotation.x = -Math.PI / 2;
+  groundSheen.position.y = 0.015;
+  scene.add(groundSheen);
 
   // Plaza central abierta, sin cuadrante marcado
   const plaza = new THREE.Mesh(

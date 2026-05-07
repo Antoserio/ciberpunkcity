@@ -556,11 +556,13 @@ function buildCity(scene, flicker, gt, videoTex) {
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshStandardMaterial({
-      color: 0x020008,
-      roughness: 0.08,
-      metalness: 0.82,
+      color: 0x0a0f1f,
+      emissive: 0x08101d,
+      emissiveIntensity: 0.45,
+      roughness: 0.12,
+      metalness: 0.88,
       transparent: true,
-      opacity: 0.96,
+      opacity: 0.98,
     })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -569,9 +571,9 @@ function buildCity(scene, flicker, gt, videoTex) {
   const groundSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshBasicMaterial({
-      color: 0x220033,
+      color: 0x3a6bff,
       transparent: true,
-      opacity: 0.08,
+      opacity: 0.14,
       blending: THREE.AdditiveBlending,
     })
   );
@@ -582,7 +584,7 @@ function buildCity(scene, flicker, gt, videoTex) {
   // Plaza central abierta, sin cuadrante marcado
   const plaza = new THREE.Mesh(
     new THREE.CircleGeometry(32, 64),
-    new THREE.MeshBasicMaterial({ color: 0x050014, transparent: true, opacity: 0.45 })
+    new THREE.MeshBasicMaterial({ color: 0x18263f, transparent: true, opacity: 0.22 })
   );
   plaza.rotation.x = -Math.PI / 2;
   plaza.position.y = 0.012;

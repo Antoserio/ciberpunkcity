@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { ZONES } from './cityData';
+import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 
 // Radial glow sprite texture
@@ -363,9 +364,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   }, [modalOpen]);
 
   const checkZoneProximity = useCallback((pos) => {
-    // Don't update proximity state while a modal is open
     if (modalOpenRef.current) return;
-    // Zone check
+
     let inZone = false;
     for (const zone of ZONES) {
       const dx = pos.x - zone.position[0];
@@ -379,11 +379,31 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         break;
       }
     }
+
     if (!inZone && activeZoneRef.current !== null) {
       activeZoneRef.current = null;
       onExitZone();
     }
 
+    let nearestStand = null;
+    for (const stand of STANDS) {
+      const dx = pos.x - stand.position[0];
+      const dz = pos.z - stand.position[2];
+      if (dx * dx + dz * dz < 16) {
+        nearestStand = stand;
+        break;
+      }
+    }
+
+    if (nearestStand && nearStandRef.current !== nearestStand.id) {
+      nearStandRef.current = nearestStand.id;
+      onNearStand(nearestStand);
+    }
+
+    if (!nearestStand && nearStandRef.current !== null) {
+      nearStandRef.current = null;
+      onLeaveStand();
+    }
   }, [onEnterZone, onExitZone, onNearStand, onLeaveStand]);
 
   useEffect(() => {

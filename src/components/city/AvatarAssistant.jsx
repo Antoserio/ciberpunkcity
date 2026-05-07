@@ -4,17 +4,14 @@ import { MessageSquare, X, Send, Minimize2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const AVATAR_MESSAGES = [
-  "¡Bienvenido a Agency360 CyberCity! Soy NOVA, tu guía virtual. ¿En qué puedo ayudarte hoy?",
+  "Hola, soy VIKY. Estoy aquí para hablar contigo sobre Agency360 y ayudarte a explorar la experiencia. ¿Qué te gustaría ver?",
 ];
 
-const SYSTEM_PROMPT = `Eres NOVA, la asistente virtual de Agency360, una agencia 360 especializada en:
-- Software y desarrollo tecnológico (apps, plataformas SaaS, e-commerce)
-- Producción de video y audiovisual (spots, 360°, live streaming, motion graphics)
-- Avatares 3D y experiencias XR (realidad aumentada, metaverso, avatares hiperrealistas)
-- Eventos inmersivos (mapping, instalaciones interactivas, festivales digitales)
-
-Eres entusiasta, profesional y creativa. Hablas en español. Respuestas cortas (máximo 3 oraciones). 
-Ayuda a los visitantes a entender los servicios y los anima a contactar con el equipo.`;
+const SYSTEM_PROMPT = `Eres VIKY, el avatar conversacional de Agency360.
+Hablas en español, con tono cercano, creativo y seguro.
+Ayudas a los visitantes a entender los servicios de Agency360: software, producción audiovisual, avatares 3D, XR y eventos inmersivos.
+Tus respuestas deben ser cortas, claras y naturales, con máximo 3 oraciones.
+Cuando tenga sentido, invita a seguir conversando o a contactar con el equipo.`;
 
 export default function AvatarAssistant() {
   const [open, setOpen] = useState(false);
@@ -39,10 +36,10 @@ export default function AvatarAssistant() {
     setInput('');
     setLoading(true);
 
-    const history = [...messages, userMsg].map(m => `${m.role === 'user' ? 'Usuario' : 'NOVA'}: ${m.content}`).join('\n');
-    
+    const history = [...messages, userMsg].map(m => `${m.role === 'user' ? 'Usuario' : 'VIKY'}: ${m.content}`).join('\n');
+
     const response = await base44.integrations.Core.InvokeLLM({
-      prompt: `${SYSTEM_PROMPT}\n\nConversación:\n${history}\n\nNOVA:`,
+      prompt: `${SYSTEM_PROMPT}\n\nConversación:\n${history}\n\nVIKY:`,
     });
 
     setMessages(prev => [...prev, { role: 'assistant', content: response }]);
@@ -72,9 +69,9 @@ export default function AvatarAssistant() {
               border: '2px solid #00ffff',
               boxShadow: '0 0 20px #00ffff60, 0 0 40px #00ffff20',
             }}
-            title="Hablar con NOVA"
+            title="Hablar con VIKY"
           >
-            🤖
+            👩🏻‍🎤
             <span
               className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse"
               style={{ background: '#00ffff', boxShadow: '0 0 8px #00ffff' }}
@@ -104,13 +101,21 @@ export default function AvatarAssistant() {
               style={{ borderColor: '#00ffff30', background: 'rgba(0,255,255,0.05)' }}
             >
               <div className="flex items-center gap-2">
-                <span className="text-lg">🤖</span>
+                <span className="text-lg">👩🏻‍🎤</span>
                 <div>
-                  <p className="font-orbitron text-xs font-bold text-cyan-400">NOVA</p>
-                  <p className="text-xs text-gray-500 font-rajdhani">Asistente Virtual · Online</p>
+                  <p className="font-orbitron text-xs font-bold text-cyan-400">VIKY</p>
+                  <p className="text-xs text-gray-500 font-rajdhani">Avatar conversacional · Online</p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://vikydj.netlify.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] font-orbitron tracking-widest text-cyan-400 hover:text-cyan-300 transition-colors"
+                >
+                  VER VIKY
+                </a>
                 <button onClick={() => setMinimized(true)} className="text-gray-600 hover:text-gray-400 transition-colors">
                   <Minimize2 size={14} />
                 </button>
@@ -125,7 +130,7 @@ export default function AvatarAssistant() {
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {msg.role === 'assistant' && (
-                    <span className="text-sm mr-1 mt-1">🤖</span>
+                    <span className="text-sm mr-1 mt-1">👩🏻‍🎤</span>
                   )}
                   <div
                     className="max-w-[85%] px-3 py-2 rounded text-xs font-rajdhani leading-relaxed"
@@ -145,7 +150,7 @@ export default function AvatarAssistant() {
               ))}
               {loading && (
                 <div className="flex justify-start">
-                  <span className="text-sm mr-1 mt-1">🤖</span>
+                  <span className="text-sm mr-1 mt-1">👩🏻‍🎤</span>
                   <div
                     className="px-3 py-2 rounded"
                     style={{ background: 'rgba(0,255,255,0.08)', border: '1px solid rgba(0,255,255,0.2)' }}
@@ -204,8 +209,8 @@ export default function AvatarAssistant() {
               boxShadow: '0 0 15px #00ffff40',
             }}
           >
-            <span>🤖</span>
-            <span className="font-orbitron text-xs text-cyan-400">NOVA</span>
+            <span>👩🏻‍🎤</span>
+            <span className="font-orbitron text-xs text-cyan-400">VIKY</span>
             <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
           </motion.button>
         )}

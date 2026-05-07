@@ -420,6 +420,13 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     if (audioRef.current) {
       audioRef.current.ambienceAudio.muted = !audioEnabled;
       audioRef.current.ambienceLayerTwo.muted = !audioEnabled;
+      if (!audioEnabled) {
+        audioRef.current.ambienceAudio.pause();
+        audioRef.current.ambienceLayerTwo.pause();
+      } else {
+        audioRef.current.ambienceAudio.play().catch(() => {});
+        audioRef.current.ambienceLayerTwo.play().catch(() => {});
+      }
     }
   }, [audioEnabled]);
 
@@ -517,9 +524,16 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     ambienceLayerTwo.loop = true;
     ambienceAudio.volume = 0.22;
     ambienceLayerTwo.volume = 0.08;
+    ambienceAudio.muted = !audioEnabled;
+    ambienceLayerTwo.muted = !audioEnabled;
     audioRef.current = { ambienceAudio, ambienceLayerTwo };
 
     const startAmbientAudio = () => {
+      if (!audioEnabled) return;
+      ambienceAudio.muted = false;
+      ambienceLayerTwo.muted = false;
+      ambienceAudio.volume = 0.22;
+      ambienceLayerTwo.volume = 0.08;
       ambienceAudio.play().catch(() => {});
       ambienceLayerTwo.play().catch(() => {});
     };

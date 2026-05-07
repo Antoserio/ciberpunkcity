@@ -155,7 +155,7 @@ export default function CyberCity() {
 
       <button
         onClick={() => setAudioEnabled((value) => !value)}
-        className="fixed bottom-4 right-4 z-40 rounded-full border border-white/10 bg-black/60 px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white backdrop-blur-md transition hover:border-cyan-400/40 hover:text-cyan-300"
+        className="fixed bottom-24 right-6 z-40 rounded-full border border-white/10 bg-black/60 px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white backdrop-blur-md transition hover:border-cyan-400/40 hover:text-cyan-300 sm:bottom-24"
       >
         {audioEnabled ? 'SONIDO ON' : 'SONIDO OFF'}
       </button>

@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
@@ -335,7 +336,7 @@ const LOOK_SMOOTH = 0.22;
 const MAX_PITCH = Math.PI / 2 - 0.02;
 
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl, isMobile = false }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '' }) {
   const mountRef = useRef(null);
   const keysRef = useRef({});
   const yawRef = useRef(0);
@@ -483,6 +484,19 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
     extraCanvasesRef.current = extraCanvases;
+
+    const robotSwarm = addFlyingRobots(scene, gt);
+    let heroRobot = null;
+
+    if (robotModelUrl) {
+      const loader = new GLTFLoader();
+      loader.load(robotModelUrl, (gltf) => {
+        heroRobot = gltf.scene;
+        heroRobot.scale.setScalar(1.4);
+        heroRobot.position.set(0, 4, 18);
+        scene.add(heroRobot);
+      });
+    }
 
     // Controls
     const handleClick = () => {
@@ -646,6 +660,13 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         }
       }
 
+      const robotTime = frameCount * 0.016;
+      updateFlyingRobots(robotSwarm, robotTime);
+      if (heroRobot) {
+        heroRobot.position.y = 4 + Math.sin(robotTime * 2.4) * 0.5;
+        heroRobot.rotation.y += 0.02;
+      }
+
       renderer.render(scene, camera);
     };
     animate();
@@ -671,6 +692,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       window.removeEventListener('resize', handleResize);
       plazaVideoScreen?.dispose();
       plazaVideoTexture?.dispose();
+      robotSwarm.forEach((robot) => scene.remove(robot.group));
+      if (heroRobot) scene.remove(heroRobot);
       if (plazaVideoElement) {
         plazaVideoElement.pause();
         plazaVideoElement.removeAttribute('src');
@@ -679,7 +702,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
-  }, [checkZoneProximity, plazaVideoUrl]);
+  }, [checkZoneProximity, plazaVideoUrl, robotModelUrl]);
 
   return <div ref={mountRef} className="w-full h-full cursor-crosshair" />;
 }
@@ -1074,4 +1097,67 @@ function addBillboard(scene, x, y, z, text, colorHex) {
   );
   pole.position.set(x, y / 2, z);
   scene.add(pole);
+}
+
+function createFlyingRobot(color = 0x00ffff) {
+  const group = new THREE.Group();
+
+  const body = new THREE.Mesh(
+    new THREE.SphereGeometry(0.35, 12, 12),
+    new THREE.MeshBasicMaterial({ color })
+  );
+  group.add(body);
+
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.6, 0.08, 8, 24),
+    new THREE.MeshBasicMaterial({ color: 0xffffff })
+  );
+  ring.rotation.x = Math.PI / 2;
+  group.add(ring);
+
+  const wingGeo = new THREE.BoxGeometry(1.2, 0.08, 0.18);
+  const wingMat = new THREE.MeshBasicMaterial({ color: 0x88ccff });
+  const wing = new THREE.Mesh(wingGeo, wingMat);
+  wing.position.y = 0.05;
+  group.add(wing);
+
+  const trail = new THREE.Mesh(
+    new THREE.ConeGeometry(0.12, 0.7, 10),
+    new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.8 })
+  );
+  trail.rotation.x = -Math.PI / 2;
+  trail.position.z = 0.55;
+  group.add(trail);
+
+  return { group, trail };
+}
+
+function addFlyingRobots(scene, gt) {
+  const colors = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
+  return Array.from({ length: 8 }, (_, i) => {
+    const robot = createFlyingRobot(colors[i % colors.length]);
+    const radius = 18 + (i % 4) * 9;
+    const speed = 1.4 + i * 0.18;
+    const height = 5 + (i % 3) * 2.4;
+    const offset = i * 0.8;
+    const glowKey = colorToGlowKey(colors[i % colors.length]);
+    const glow = addGlowSprite(scene, 0, height, 0, gt[glowKey] || gt.magenta, 2.6);
+    robot.group.add(glow);
+    robot.group.position.set(Math.cos(offset) * radius, height, Math.sin(offset) * radius);
+    scene.add(robot.group);
+    return { ...robot, radius, speed, height, offset };
+  });
+}
+
+function updateFlyingRobots(robots, time) {
+  robots.forEach((robot, index) => {
+    const angle = time * robot.speed + robot.offset;
+    const fastWave = Math.sin(time * (4 + index * 0.2) + index) * 0.8;
+    robot.group.position.x = Math.cos(angle) * robot.radius;
+    robot.group.position.z = Math.sin(angle) * robot.radius;
+    robot.group.position.y = robot.height + fastWave;
+    robot.group.rotation.y = -angle + Math.PI / 2;
+    robot.group.rotation.z = Math.sin(time * 8 + index) * 0.12;
+    robot.trail.scale.y = 0.8 + Math.sin(time * 12 + index) * 0.2;
+  });
 }

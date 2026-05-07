@@ -51,4 +51,23 @@ export const STANDS = [
       { name: 'METAVERSE SDK', cat: 'Integración 3D', color: '#00ffff', stats: ['Open Source', '2M API calls/día'], icon: '🌐' },
     ],
   },
+  {
+    id: 'info_point',
+    key: 'I',
+    position: [0, 0, 18],
+    color: '#7c3aed',
+    colorInt: 0x7c3aed,
+    title: 'PUNTO DE INFORMACIÓN',
+    subtitle: 'Bienvenida · Robots · Guía rápida',
+    description: 'Aquí podrás presentar tu robot principal, explicar la experiencia y usar este punto como acceso central para demos, atención o bienvenida en la ciudad.',
+    tags: ['INFO', 'ROBOTS', 'WELCOME', '3D MODEL'],
+    icon: 'ℹ️',
+    type: 'projects',
+    projects: [
+      { name: 'ROBOT GUÍA', cat: 'Recepción', color: '#7c3aed', stats: ['Avatar de bienvenida', 'Soporte visual en ciudad'], icon: '🤖' },
+      { name: 'MODELO GLB', cat: '3D Asset', color: '#7c3aed', stats: ['Listo para conectar', 'Ubicación central'], icon: '🛸' },
+      { name: 'RUTA RÁPIDA', cat: 'Movimiento', color: '#7c3aed', stats: ['Vuelo rápido', 'Recorrido urbano'], icon: '⚡' },
+      { name: 'SHOWCASE XR', cat: 'Experiencia', color: '#7c3aed', stats: ['Ideal para demos', 'Escena inmersiva'], icon: '✨' },
+    ],
+  },
 ];

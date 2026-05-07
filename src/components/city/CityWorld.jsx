@@ -285,9 +285,11 @@ function makeNeonSignTexture(text, color) {
   return new THREE.CanvasTexture(canvas);
 }
 
-const MOVE_SPEED = 16;
-const LOOK_SPEED = 0.0018;
-const LOOK_SMOOTH = 0.10;
+const MOVE_SPEED = 13;
+const LOOK_SPEED = 0.0016;
+const LOOK_SMOOTH = 0.18;
+const MOVE_ACCEL = 7;
+const MOVE_DAMPING = 9;
 
 const STAND_RADIUS = 9;
 
@@ -308,6 +310,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const videoScreenRef = useRef(null);
   const extraCanvasesRef = useRef([]);
   const modalOpenRef = useRef(false);
+  const velocityRef = useRef(new THREE.Vector3());
 
   // When modal opens: freeze movement immediately by clearing pressed keys and unlocking
   useEffect(() => {
@@ -459,19 +462,29 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
       // Movement
       const k = keysRef.current;
-      const moving = k['KeyW'] || k['ArrowUp'] || k['KeyS'] || k['ArrowDown'] || k['KeyA'] || k['ArrowLeft'] || k['KeyD'] || k['ArrowRight'];
-      if (isLockedRef.current && moving) {
-        dir.set(0, 0, 0);
+      dir.set(0, 0, 0);
+      if (isLockedRef.current) {
         if (k['KeyW'] || k['ArrowUp']) dir.z -= 1;
         if (k['KeyS'] || k['ArrowDown']) dir.z += 1;
         if (k['KeyA'] || k['ArrowLeft']) dir.x -= 1;
         if (k['KeyD'] || k['ArrowRight']) dir.x += 1;
+      }
+
+      if (dir.lengthSq() > 0) {
         dir.normalize();
         euler.set(0, yawRef.current, 0);
         dir.applyEuler(euler);
-        camera.position.addScaledVector(dir, MOVE_SPEED * delta);
-        camera.position.y = 1.7;
+        velocityRef.current.addScaledVector(dir, MOVE_ACCEL * delta);
+        const maxSpeed = MOVE_SPEED;
+        if (velocityRef.current.length() > maxSpeed) {
+          velocityRef.current.setLength(maxSpeed);
+        }
       }
+
+      const damping = Math.max(0, 1 - MOVE_DAMPING * delta);
+      velocityRef.current.multiplyScalar(damping);
+      camera.position.addScaledVector(velocityRef.current, delta);
+      camera.position.y = 1.7;
 
       euler.set(pitchRef.current, yawRef.current, 0);
       camera.quaternion.setFromEuler(euler);
@@ -556,13 +569,13 @@ function buildCity(scene, flicker, gt, videoTex) {
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshStandardMaterial({
-      color: 0x0a0f1f,
-      emissive: 0x08101d,
-      emissiveIntensity: 0.45,
-      roughness: 0.12,
-      metalness: 0.88,
+      color: 0x060b14,
+      emissive: 0x02060c,
+      emissiveIntensity: 0.16,
+      roughness: 0.2,
+      metalness: 0.92,
       transparent: true,
-      opacity: 0.98,
+      opacity: 0.72,
     })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -571,9 +584,9 @@ function buildCity(scene, flicker, gt, videoTex) {
   const groundSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshBasicMaterial({
-      color: 0x3a6bff,
+      color: 0x8fd6ff,
       transparent: true,
-      opacity: 0.14,
+      opacity: 0.05,
       blending: THREE.AdditiveBlending,
     })
   );
@@ -584,7 +597,7 @@ function buildCity(scene, flicker, gt, videoTex) {
   // Plaza central abierta, sin cuadrante marcado
   const plaza = new THREE.Mesh(
     new THREE.CircleGeometry(32, 64),
-    new THREE.MeshBasicMaterial({ color: 0x18263f, transparent: true, opacity: 0.22 })
+    new THREE.MeshBasicMaterial({ color: 0xbfe8ff, transparent: true, opacity: 0.06 })
   );
   plaza.rotation.x = -Math.PI / 2;
   plaza.position.y = 0.012;

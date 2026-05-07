@@ -9,6 +9,9 @@ import SplashScreen from '../components/city/SplashScreen';
 import MiniMap from '../components/city/MiniMap';
 import StandModal from '../components/city/StandModal';
 import RobotUploadPanel from '../components/city/RobotUploadPanel.jsx';
+import TopNav from '../components/city/TopNav.jsx';
+import WorksOverlay from '../components/city/WorksOverlay.jsx';
+import AboutOverlay from '../components/city/AboutOverlay.jsx';
 
 export default function CyberCity() {
   const [started, setStarted] = useState(false);
@@ -21,6 +24,7 @@ export default function CyberCity() {
   const [robotModelUrl, setRobotModelUrl] = useState('');
   const [robotFileName, setRobotFileName] = useState('');
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [activeView, setActiveView] = useState('explore');
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -69,13 +73,12 @@ export default function CyberCity() {
 
   const handleCloseStand = useCallback(() => {
     setOpenStand(null);
-    if (window.innerWidth < 768) return;
-    // Re-request pointer lock after modal closes
+    if (window.innerWidth < 768 || activeView !== 'explore') return;
     setTimeout(() => {
       const canvas = document.querySelector('canvas');
       if (canvas) canvas.requestPointerLock();
     }, 150);
-  }, []);
+  }, [activeView]);
 
   // Escape key closes modal
   useEffect(() => {
@@ -89,6 +92,23 @@ export default function CyberCity() {
     document.addEventListener('keydown', onKey, true); // capture phase — runs before CityWorld handler
     return () => document.removeEventListener('keydown', onKey, true);
   }, [started, openStand, handleCloseStand]);
+
+  const handleChangeView = useCallback((view) => {
+    setActiveView(view);
+    if (view !== 'explore' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!started || !audioEnabled) return;
+    const unlockAudio = () => {
+      const canvas = document.querySelector('canvas');
+      canvas?.dispatchEvent(new Event('click'));
+    };
+    window.addEventListener('pointerdown', unlockAudio, { once: true });
+    return () => window.removeEventListener('pointerdown', unlockAudio);
+  }, [started, audioEnabled]);
 
   if (!started) {
     return <SplashScreen onEnter={() => setStarted(true)} />;
@@ -114,23 +134,27 @@ export default function CyberCity() {
 
 
 
+      <TopNav activeView={activeView} onChangeView={handleChangeView} />
+
       <RobotUploadPanel onUploaded={(fileUrl, fileName) => {
         setRobotModelUrl(fileUrl);
         setRobotFileName(fileName || '');
       }} currentRobotFileName={robotFileName} />
 
       {/* HUD overlay */}
-      <HUD
-        isLocked={isMobile ? true : (isLocked || hasClickedOnce)}
-        activeZone={activeZone}
-        nearStand={nearStand}
-        onActivateStand={handleActivateStand}
-        isMobile={isMobile}
-      />
+      {activeView === 'explore' && (
+        <HUD
+          isLocked={isMobile ? true : (isLocked || hasClickedOnce)}
+          activeZone={activeZone}
+          nearStand={nearStand}
+          onActivateStand={handleActivateStand}
+          isMobile={isMobile}
+        />
+      )}
 
       {/* Zone info panel */}
       <AnimatePresence>
-        {activeZone && !openStand && (
+        {activeView === 'explore' && activeZone && !openStand && (
           <ZonePanel
             key={activeZone.id}
             zone={activeZone}
@@ -140,11 +164,11 @@ export default function CyberCity() {
       </AnimatePresence>
 
       {/* Mini map */}
-      <MiniMap activeZone={activeZone} isMobile={isMobile} />
+      {activeView === 'explore' && <MiniMap activeZone={activeZone} isMobile={isMobile} />}
 
       {/* Stand modal */}
       <AnimatePresence>
-        {openStand && (
+        {activeView === 'explore' && openStand && (
           <StandModal
             key={openStand.id}
             stand={openStand}
@@ -159,6 +183,9 @@ export default function CyberCity() {
       >
         {audioEnabled ? 'SONIDO ON' : 'SONIDO OFF'}
       </button>
+
+      <WorksOverlay open={activeView === 'works'} onClose={() => setActiveView('explore')} />
+      <AboutOverlay open={activeView === 'about'} onClose={() => setActiveView('explore')} />
 
       {/* Avatar AI Assistant */}
       <AvatarAssistant />

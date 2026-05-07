@@ -590,6 +590,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const handleClick = () => {
       if (isMobile) return;
       canvas.requestPointerLock();
+      startAmbientAudio();
     };
     const handlePointerLockChange = () => {
       isLockedRef.current = isMobile ? true : document.pointerLockElement === canvas;
@@ -662,7 +663,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
 
     canvas.addEventListener('click', handleClick);
-    canvas.addEventListener('click', startAmbientAudio);
     canvas.addEventListener('touchstart', startAmbientAudio, { passive: true });
     canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
@@ -787,7 +787,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     return () => {
       cancelAnimationFrame(animFrameRef.current);
       canvas.removeEventListener('click', handleClick);
-      canvas.removeEventListener('click', startAmbientAudio);
       canvas.removeEventListener('touchstart', startAmbientAudio);
       canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchmove', handleTouchMove);

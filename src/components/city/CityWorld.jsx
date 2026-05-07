@@ -556,11 +556,11 @@ function buildCity(scene, flicker, gt, videoTex) {
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshStandardMaterial({
-      color: 0x020008,
-      roughness: 0.08,
-      metalness: 0.82,
+      color: 0x060012,
+      roughness: 0.18,
+      metalness: 0.25,
       transparent: true,
-      opacity: 0.96,
+      opacity: 0.72,
     })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -571,7 +571,7 @@ function buildCity(scene, flicker, gt, videoTex) {
     new THREE.MeshBasicMaterial({
       color: 0x220033,
       transparent: true,
-      opacity: 0.08,
+      opacity: 0.04,
       blending: THREE.AdditiveBlending,
     })
   );
@@ -859,30 +859,6 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker) {
 
 // ─── Interactive stand booth ─────────────────────────────────────────────────
 
-function makeKeyPromptTexture(key, color) {
-  const size = 128;
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  // transparent bg
-  ctx.clearRect(0, 0, size, size);
-  // outer glow circle
-  const grad = ctx.createRadialGradient(64, 64, 10, 64, 64, 60);
-  grad.addColorStop(0, color + 'cc');
-  grad.addColorStop(0.5, color + '44');
-  grad.addColorStop(1, color + '00');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
-  // letter
-  ctx.shadowBlur = 24;
-  ctx.shadowColor = color;
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 72px monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(key, 64, 64);
-  return new THREE.CanvasTexture(canvas);
-}
 
 function addStandBooth(scene, stand) {
   const [x, , z] = stand.position;
@@ -919,14 +895,6 @@ function addStandBooth(scene, stand) {
   const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.3, 0.18, 8), capMat);
   cap.position.set(x, 3.15, z);
   scene.add(cap);
-
-  // Floating key prompt sprite (above booth)
-  const keyTex = makeKeyPromptTexture(stand.key, ch);
-  const keyMat = new THREE.SpriteMaterial({ map: keyTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  const keySprite = new THREE.Sprite(keyMat);
-  keySprite.scale.setScalar(2.0);
-  keySprite.position.set(x, 4.4, z);
-  scene.add(keySprite);
 
   // Glow halo
   const glowMat = new THREE.SpriteMaterial({ color: c, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending });

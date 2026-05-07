@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-
-const ROBOT_STORAGE_KEY = 'cybercity-last-robot-model';
+import { base44 } from '@/api/base44Client';
 import { AnimatePresence } from 'framer-motion';
 import CityWorld from '../components/city/CityWorld.jsx';
 import HUD from '../components/city/HUD';
@@ -19,7 +18,7 @@ export default function CyberCity() {
   const [nearStand, setNearStand] = useState(null);
   const [openStand, setOpenStand] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [robotModelUrl, setRobotModelUrl] = useState(() => localStorage.getItem(ROBOT_STORAGE_KEY) || '');
+  const [robotModelUrl, setRobotModelUrl] = useState('');
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -29,10 +28,15 @@ export default function CyberCity() {
   }, []);
 
   useEffect(() => {
-    if (robotModelUrl) {
-      localStorage.setItem(ROBOT_STORAGE_KEY, robotModelUrl);
-    }
-  }, [robotModelUrl]);
+    const loadGlobalRobot = async () => {
+      const settings = await base44.entities.WorldSettings.filter({ key: 'global_robot_model' }, '-updated_date', 1);
+      if (settings.length > 0 && settings[0].robot_model_url) {
+        setRobotModelUrl(settings[0].robot_model_url);
+      }
+    };
+
+    loadGlobalRobot();
+  }, []);
 
   // Track pointer lock state
   useEffect(() => {

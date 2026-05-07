@@ -12,14 +12,29 @@ export default function RobotUploadPanel({ onUploaded }) {
     setFileName(file.name);
     setLoading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const existing = await base44.entities.WorldSettings.filter({ key: 'global_robot_model' }, '-updated_date', 1);
+
+    if (existing.length > 0) {
+      await base44.entities.WorldSettings.update(existing[0].id, {
+        robot_model_url: file_url,
+        robot_file_name: file.name,
+      });
+    } else {
+      await base44.entities.WorldSettings.create({
+        key: 'global_robot_model',
+        robot_model_url: file_url,
+        robot_file_name: file.name,
+      });
+    }
+
     onUploaded(file_url);
     setLoading(false);
   };
 
   return (
     <div className="fixed top-20 left-3 sm:left-6 z-40 max-w-[90vw] sm:max-w-sm rounded border px-3 py-3 glass-dark">
-      <p className="font-orbitron text-[10px] sm:text-xs tracking-widest text-cyan-400 mb-2">ROBOT GLB TEMPORAL</p>
-      <p className="font-rajdhani text-xs text-gray-300 mb-3">Sube tu modelo .glb para verlo en la ciudad.</p>
+      <p className="font-orbitron text-[10px] sm:text-xs tracking-widest text-cyan-400 mb-2">ROBOT GLB GLOBAL</p>
+      <p className="font-rajdhani text-xs text-gray-300 mb-3">Sube tu modelo .glb para guardarlo y mostrarlo a todos en la ciudad.</p>
       <input
         ref={inputRef}
         type="file"

@@ -430,18 +430,26 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
     camera.position.set(0, 1.7, 14);
 
-    // Renderer — NO shadows, minimal settings for max performance
-    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', precision: 'lowp' });
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.0));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.shadowMap.enabled = false;
-    renderer.toneMapping = THREE.NoToneMapping;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
 
-    // ── Single ambient light only — no dynamic lights at all for max perf ──
-    scene.add(new THREE.AmbientLight(0x120322, 2.2));
+    // Luces
+    scene.add(new THREE.AmbientLight(0x3a2a68, 2.8));
+    scene.add(new THREE.HemisphereLight(0x66ccff, 0x12051f, 1.8));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
+    keyLight.position.set(24, 30, 14);
+    scene.add(keyLight);
+    const fillLight = new THREE.PointLight(0xff44cc, 18, 120, 2);
+    fillLight.position.set(0, 22, 0);
+    scene.add(fillLight);
 
     // Glow textures
     const gt = {
@@ -500,34 +508,44 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     if (robotModelUrl) {
       const loader = new GLTFLoader();
-      HERO_COLORS.forEach((heroColor, index) => {
+      const heroAnchors = [
+        { x: -38, z: -26 },
+        { x: 42, z: -18 },
+        { x: -24, z: 38 },
+        { x: 36, z: 30 },
+      ];
+
+      HERO_COLORS.slice(0, 4).forEach((heroColor, index) => {
         loader.load(robotModelUrl, (gltf) => {
           const heroRobot = gltf.scene;
-          heroRobot.scale.setScalar(1.2 + index * 0.08);
-          heroRobot.position.set(22 + index * 3.5, 8 + index * 0.45, 20 + index * 2.8);
+          const anchor = heroAnchors[index];
+          heroRobot.scale.setScalar(1.45 + index * 0.06);
+          heroRobot.position.set(anchor.x, 8 + index * 0.6, anchor.z);
 
           heroRobot.traverse((child) => {
             if (!child.isMesh) return;
             child.material = child.material.clone();
             if ('color' in child.material) {
-              child.material.color = new THREE.Color(heroColor);
+              child.material.color = new THREE.Color(heroColor).lerp(new THREE.Color(0xffffff), 0.22);
             }
             if ('emissive' in child.material) {
               child.material.emissive = new THREE.Color(heroColor);
-              child.material.emissiveIntensity = 1.2;
+              child.material.emissiveIntensity = 1.6;
             }
+            if ('roughness' in child.material) child.material.roughness = 0.28;
+            if ('metalness' in child.material) child.material.metalness = 0.72;
           });
 
           scene.add(heroRobot);
           heroRobots.push({
             mesh: heroRobot,
-            anchorX: 18 + index * 9,
-            anchorZ: 18 + (index % 2 === 0 ? 16 : -16),
-            speed: 0.12 + index * 0.018,
-            driftX: 12 + index * 1.8,
-            driftZ: 10 + index * 1.6,
-            height: 8 + index * 0.7,
-            offset: index * 1.4,
+            anchorX: anchor.x,
+            anchorZ: anchor.z,
+            speed: 0.11 + index * 0.018,
+            driftX: 10 + index * 1.6,
+            driftZ: 8 + index * 1.4,
+            height: 7 + index * 0.8,
+            offset: index * 1.7,
           });
         });
       });
@@ -799,13 +817,13 @@ function buildCity(scene, flicker, gt, videoTex) {
   const extraCanvases = [];
   // Ground — plaza oscura abierta
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(220, 220),
+    new THREE.PlaneGeometry(220, 220, 80, 80),
     new THREE.MeshStandardMaterial({
-      color: 0x090512,
-      roughness: 0.1,
-      metalness: 0.42,
+      color: 0x0d0818,
+      roughness: 0.24,
+      metalness: 0.58,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.86,
     })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -814,15 +832,21 @@ function buildCity(scene, flicker, gt, videoTex) {
   const groundSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshBasicMaterial({
-      color: 0x2b123f,
+      color: 0x5b2aa8,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.2,
       blending: THREE.AdditiveBlending,
     })
   );
   groundSheen.rotation.x = -Math.PI / 2;
   groundSheen.position.y = 0.015;
   scene.add(groundSheen);
+
+  const grid = new THREE.GridHelper(180, 48, 0x44d9ff, 0x7a35ff);
+  grid.position.y = 0.04;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.16;
+  scene.add(grid);
 
   // Plaza central abierta, sin cuadrante marcado
   const plaza = new THREE.Mesh(
@@ -913,7 +937,7 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
     makeWall(baseSeed + 2),       // front
     makeWall(baseSeed + 3),       // back
   ];
-  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), bodyMats);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w, 2, 4, 2), bodyMats);
   body.position.set(x, h / 2, z);
   scene.add(body);
 
@@ -1033,7 +1057,7 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker) {
   const hexColor = '#' + nc.toString(16).padStart(6, '0');
   const makeMidWall = (s) => new THREE.MeshBasicMaterial({ map: makeBuildingWallTexture(hexColor, s) });
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(w, h, w * 0.9),
+    new THREE.BoxGeometry(w, h, w * 0.9, 2, 4, 2),
     [makeMidWall(baseSeed), makeMidWall(baseSeed+1), new THREE.MeshBasicMaterial({color:0x0a000f}), new THREE.MeshBasicMaterial({color:0x0a000f}), makeMidWall(baseSeed+2), makeMidWall(baseSeed+3)]
   );
   body.position.set(x, h / 2, z);
@@ -1165,27 +1189,27 @@ function createFlyingRobot(color = 0x00ffff) {
   const group = new THREE.Group();
 
   const body = new THREE.Mesh(
-    new THREE.SphereGeometry(0.35, 12, 12),
-    new THREE.MeshBasicMaterial({ color })
+    new THREE.SphereGeometry(0.35, 18, 18),
+    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.9, roughness: 0.22, metalness: 0.75 })
   );
   group.add(body);
 
   const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(0.6, 0.08, 8, 24),
-    new THREE.MeshBasicMaterial({ color: 0xffffff })
+    new THREE.TorusGeometry(0.6, 0.08, 10, 32),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: color, emissiveIntensity: 0.45, roughness: 0.18, metalness: 0.85 })
   );
   ring.rotation.x = Math.PI / 2;
   group.add(ring);
 
   const wingGeo = new THREE.BoxGeometry(1.2, 0.08, 0.18);
-  const wingMat = new THREE.MeshBasicMaterial({ color: 0x88ccff });
+  const wingMat = new THREE.MeshStandardMaterial({ color: 0x88ccff, emissive: 0x224488, emissiveIntensity: 0.35, roughness: 0.3, metalness: 0.55 });
   const wing = new THREE.Mesh(wingGeo, wingMat);
   wing.position.y = 0.05;
   group.add(wing);
 
   const trail = new THREE.Mesh(
     new THREE.ConeGeometry(0.12, 0.7, 10),
-    new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.8 })
+    new THREE.MeshStandardMaterial({ color: 0xff00ff, emissive: 0xff00ff, emissiveIntensity: 1.1, transparent: true, opacity: 0.8, roughness: 0.1, metalness: 0.1 })
   );
   trail.rotation.x = -Math.PI / 2;
   trail.position.z = 0.55;

@@ -1,0 +1,21 @@
+{
+  "name": "WorldSettings",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Clave \u00fanica de configuraci\u00f3n"
+    },
+    "robot_model_url": {
+      "type": "string",
+      "description": "URL p\u00fablica del robot GLB global"
+    },
+    "robot_file_name": {
+      "type": "string",
+      "description": "Nombre del archivo del robot"
+    }
+  },
+  "required": [
+    "key"
+  ]
+}

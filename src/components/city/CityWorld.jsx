@@ -328,9 +328,9 @@ function makeNeonSignTexture(text, color) {
 }
 
 const MOVE_SPEED = 16;
-const LOOK_SPEED = 0.0018;
-const LOOK_SMOOTH = 0.12;
-const MAX_PITCH = Math.PI / 2 - 0.05;
+const LOOK_SPEED = 0.0032;
+const LOOK_SMOOTH = 0.22;
+const MAX_PITCH = Math.PI / 2 - 0.02;
 
 
 export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen }) {
@@ -631,7 +631,7 @@ function buildCity(scene, flicker, gt, videoTex) {
 
   // Canvas screens on zone building faces
   const screenDefs = [
-    [20 - 4.05, 8, 20, 5, 2.8, Math.PI/2, 'DANCE XR', '#ff00ff', 'dance'],
+    [23.6, 11.5, -20, 7.8, 14.5, -Math.PI / 2, 'DANCE XR', '#ff00ff', 'dance'],
   ];
   screenDefs.forEach(([x, y, z, w, h, rotY, label, color, mode]) => {
     const cv = makeVideoCanvasTexture(label, color, mode);
@@ -777,26 +777,24 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
 // ─── Extra canvas screens on mid buildings ────────────────────────────────────
 
 function addExtraScreen(scene, x, y, z, w, h, canvasTex, flicker, rotY = 0) {
-  const mat = new THREE.MeshBasicMaterial({ map: canvasTex, side: THREE.FrontSide, transparent: false });
+  const mat = new THREE.MeshBasicMaterial({ map: canvasTex, side: THREE.DoubleSide, transparent: false });
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
   mesh.position.set(x, y, z);
   mesh.rotation.y = rotY;
   scene.add(mesh);
 
-  // neon border
   const bGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(w + 0.15, h + 0.15, 0.04));
-  const bLine = new THREE.LineSegments(bGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
+  const bLine = new THREE.LineSegments(bGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
   bLine.position.set(x, y, z);
   bLine.rotation.y = rotY;
   scene.add(bLine);
 
-  // glow sprite
-  const sprMat = new THREE.SpriteMaterial({ color: 0x00ffff, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending });
+  const sprMat = new THREE.SpriteMaterial({ color: 0xff00ff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending });
   const spr = new THREE.Sprite(sprMat);
-  spr.scale.set(w * 1.6, h * 1.6, 1);
-  spr.position.set(x, y, z);
+  spr.scale.set(w * 1.35, h * 1.15, 1);
+  spr.position.set(x, y, z - 0.15);
   scene.add(spr);
-  flicker.push({ material: sprMat, baseIntensity: 0.18, flickerSpeed: 0.6, flickerOffset: Math.random() * Math.PI * 2 });
+  flicker.push({ material: sprMat, baseIntensity: 0.22, flickerSpeed: 0.6, flickerOffset: Math.random() * Math.PI * 2 });
 }
 
 // ─── Mid building ─────────────────────────────────────────────────────────────

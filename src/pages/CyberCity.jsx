@@ -70,37 +70,7 @@ export default function CyberCity() {
       </div>
 
 
-      <iframe
-        title="vimeo-player"
-        src="https://player.vimeo.com/video/641418395?h=6352849e2c&autoplay=1&muted=1&loop=1&autopause=0&background=1"
-        className="absolute z-10 pointer-events-none border-0"
-        style={{
-          left: '26.8%',
-          top: '36.2%',
-          width: '12.6%',
-          height: '18.4%',
-          filter: 'saturate(1.05) brightness(0.95)',
-        }}
-        referrerPolicy="strict-origin-when-cross-origin"
-        allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-        allowFullScreen
-      />
 
-      <iframe
-        title="vimeo-player"
-        src="https://player.vimeo.com/video/641418395?h=6352849e2c&autoplay=1&muted=1&loop=1&autopause=0&background=1"
-        className="absolute z-10 pointer-events-none border-0"
-        style={{
-          left: '26.8%',
-          top: '36.2%',
-          width: '12.6%',
-          height: '18.4%',
-          filter: 'saturate(1.05) brightness(0.95)',
-        }}
-        referrerPolicy="strict-origin-when-cross-origin"
-        allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-        allowFullScreen
-      />
 
       {/* HUD overlay */}
       <HUD

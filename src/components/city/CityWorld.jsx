@@ -18,6 +18,30 @@ function makeGlowTexture(hex) {
   return new THREE.CanvasTexture(canvas);
 }
 
+// Vimeo video texture mapped into the 3D world
+function makeVimeoVideoTexture() {
+  const video = document.createElement('video');
+  video.src = 'https://player.vimeo.com/external/641418395.sd.mp4?s=271dd84d2c8a7d6ac378c026bf5e7eb8cb975d3c&profile_id=165&oauth2_token_id=57447761';
+  video.crossOrigin = 'anonymous';
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.autoplay = true;
+  video.preload = 'auto';
+
+  const tex = new THREE.VideoTexture(video);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
+
+  const play = () => video.play().catch(() => {});
+  video.addEventListener('canplay', play);
+  play();
+
+  return { video, tex };
+}
+
 // Animated canvas texture for the "video screen" billboard
 function makeVideoCanvasTexture(label, accentColor, mode = 'generic') {
   label = label || 'AGENCY360';
@@ -421,11 +445,12 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       pink: makeGlowTexture('#ff44aa'),
     };
 
-    // Video screen animated canvas
+    // Video screen texture mapped into the 3D facade
+    const vimeoScreen = makeVimeoVideoTexture();
     const videoScreen = makeVideoCanvasTexture('DANCE XR', '#ff00ff', 'dance');
     videoScreenRef.current = videoScreen;
 
-    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
+    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, vimeoScreen.tex);
     extraCanvasesRef.current = extraCanvases;
 
     // Controls
@@ -535,6 +560,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('resize', handleResize);
+      vimeoScreen.video.pause();
+      vimeoScreen.video.src = '';
+      vimeoScreen.video.load();
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
@@ -769,8 +797,8 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
 // ─── Extra canvas screens on mid buildings ────────────────────────────────────
 
 function addExtraScreen(scene, x, y, z, canvasTex, flicker, rotY = 0) {
-  const texW = canvasTex.image?.width || 512;
-  const texH = canvasTex.image?.height || 288;
+  const texW = canvasTex.image?.videoWidth || canvasTex.image?.width || 512;
+  const texH = canvasTex.image?.videoHeight || canvasTex.image?.height || 288;
   const aspect = texW / texH;
   const h = 5.2;
   const w = h * aspect;

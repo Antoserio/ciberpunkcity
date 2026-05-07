@@ -489,13 +489,24 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     let heroRobot = null;
 
     if (robotModelUrl) {
-      const loader = new GLTFLoader();
-      loader.load(robotModelUrl, (gltf) => {
-        heroRobot = gltf.scene;
-        heroRobot.scale.setScalar(1.4);
-        heroRobot.position.set(0, 4, 18);
-        scene.add(heroRobot);
+    const loader = new GLTFLoader();
+    loader.load(robotModelUrl, (gltf) => {
+      heroRobot = gltf.scene;
+      heroRobot.scale.setScalar(1.4);
+      heroRobot.position.set(24, 8, 24);
+
+      heroRobot.traverse((child) => {
+        if (!child.isMesh) return;
+        child.material = child.material.clone();
+        if ('color' in child.material) child.material.color.multiplyScalar(1.35);
+        if ('emissive' in child.material) {
+          child.material.emissive = new THREE.Color(0x7c3aed);
+          child.material.emissiveIntensity = 0.65;
+        }
       });
+
+      scene.add(heroRobot);
+    });
     }
 
     // Controls
@@ -663,8 +674,18 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       const robotTime = frameCount * 0.016;
       updateFlyingRobots(robotSwarm, robotTime);
       if (heroRobot) {
-        heroRobot.position.y = 4 + Math.sin(robotTime * 2.4) * 0.5;
-        heroRobot.rotation.y += 0.02;
+        const heroX = 24 + Math.sin(robotTime * 0.22) * 22 + Math.sin(robotTime * 0.51) * 6;
+        const heroZ = 24 + Math.cos(robotTime * 0.18) * 20 + Math.cos(robotTime * 0.43) * 5;
+        const nextX = Math.max(-58, Math.min(58, heroX));
+        const nextZ = Math.max(-58, Math.min(58, heroZ));
+        const prevX = heroRobot.position.x;
+        const prevZ = heroRobot.position.z;
+
+        heroRobot.position.x += (nextX - heroRobot.position.x) * 0.02;
+        heroRobot.position.z += (nextZ - heroRobot.position.z) * 0.02;
+        heroRobot.position.y = 9 + Math.sin(robotTime * 1.4) * 1.2 + Math.cos(robotTime * 0.7) * 0.6;
+        heroRobot.rotation.y = Math.atan2(heroRobot.position.x - prevX, heroRobot.position.z - prevZ);
+        heroRobot.rotation.z = Math.sin(robotTime * 1.1) * 0.08;
       }
 
       renderer.render(scene, camera);

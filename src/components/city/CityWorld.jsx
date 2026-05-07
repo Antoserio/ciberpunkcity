@@ -629,10 +629,10 @@ function buildCity(scene, flicker, gt, videoTex) {
 
 
 
-  // Canvas screen on STUDIO 360 building facade
+  // Canvas screen on STUDIO 360 front facade
   const studioScreen = makeVideoCanvasTexture('DANCE XR', '#ff00ff', 'dance');
   extraCanvases.push(studioScreen);
-  addExtraScreen(scene, -15.42, 10, -20, 7.2, 8.8, studioScreen.tex, flicker, -Math.PI / 2);
+  addExtraScreen(scene, -20, 10, -15.42, 7.2, 8.8, studioScreen.tex, flicker, 0);
   // Los videos de Vimeo se volverán a integrar después, sin placeholders 3D intrusivos.
 
   // Distant skyline — 16 simple boxes, no glow sprites

@@ -862,12 +862,6 @@ function addStandBooth(scene, stand) {
   plat.position.set(x, 0.12, z);
   scene.add(plat);
 
-  // Neon ring on platform
-  const ringMat = new THREE.MeshBasicMaterial({ color: c });
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.07, 8, 32), ringMat);
-  ring.rotation.x = Math.PI / 2;
-  ring.position.set(x, 0.28, z);
-  scene.add(ring);
 
   // Kiosk column
   const colMat = new THREE.MeshStandardMaterial({ color: 0x08021a, roughness: 0.2, metalness: 0.9 });

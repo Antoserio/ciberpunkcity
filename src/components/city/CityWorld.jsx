@@ -421,9 +421,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       // Block all movement and interaction while modal is open
       if (modalOpenRef.current) return;
       keysRef.current[e.code] = true;
-      if (['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
+      if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
         e.preventDefault();
-        isLockedRef.current = true;
+        if (!isLockedRef.current) canvas.requestPointerLock();
       }
       // Stand interaction
       if (nearStandRef.current && e.key.toUpperCase() === nearStandRef.current.key.toUpperCase()) {

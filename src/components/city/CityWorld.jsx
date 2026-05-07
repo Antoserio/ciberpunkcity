@@ -414,8 +414,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     // Scene
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x06000f, 0.016);
-    scene.background = new THREE.Color(0x06000f);
+    scene.fog = new THREE.FogExp2(0x030008, 0.02);
+    scene.background = new THREE.Color(0x030008);
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
@@ -432,7 +432,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const canvas = renderer.domElement;
 
     // ── Single ambient light only — no dynamic lights at all for max perf ──
-    scene.add(new THREE.AmbientLight(0x1a0535, 3.5));
+    scene.add(new THREE.AmbientLight(0x120322, 2.2));
 
     // Glow textures
     const gt = {
@@ -739,11 +739,11 @@ function buildCity(scene, flicker, gt, videoTex) {
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshStandardMaterial({
-      color: 0x140a2c,
+      color: 0x090512,
       roughness: 0.1,
       metalness: 0.42,
       transparent: true,
-      opacity: 0.52,
+      opacity: 0.5,
     })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -752,9 +752,9 @@ function buildCity(scene, flicker, gt, videoTex) {
   const groundSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshBasicMaterial({
-      color: 0x5d2a8a,
+      color: 0x2b123f,
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.12,
       blending: THREE.AdditiveBlending,
     })
   );
@@ -1134,7 +1134,7 @@ function createFlyingRobot(color = 0x00ffff) {
 
 function addFlyingRobots(scene) {
   const colors = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
-  return Array.from({ length: 4 }, (_, i) => {
+  return Array.from({ length: 7 }, (_, i) => {
     const robot = createFlyingRobot(colors[i % colors.length]);
     const originX = -28 + Math.random() * 56;
     const originZ = -28 + Math.random() * 56;

@@ -11,7 +11,7 @@ export const STANDS = [
     tags: ['MAPPING', 'DANZA', 'ENERGÍA', 'EVENTO CORP.'],
     icon: '🎉',
     type: 'video',
-    videoUrl: 'https://player.vimeo.com/video/76979871?autoplay=1&loop=1&color=ff00ff&title=0&byline=0&portrait=0',
+    videoUrl: 'https://www.youtube.com/embed/h7LhhrhjvAE?autoplay=1&loop=1&playlist=h7LhhrhjvAE&rel=0&modestbranding=1',
     videoThumb: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80',
   },
   {

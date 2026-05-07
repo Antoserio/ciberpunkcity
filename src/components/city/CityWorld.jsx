@@ -420,13 +420,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     if (audioRef.current) {
       audioRef.current.ambienceAudio.muted = !audioEnabled;
       audioRef.current.ambienceLayerTwo.muted = !audioEnabled;
-      if (!audioEnabled) {
-        audioRef.current.ambienceAudio.pause();
-        audioRef.current.ambienceLayerTwo.pause();
-      } else {
-        audioRef.current.ambienceAudio.play().catch(() => {});
-        audioRef.current.ambienceLayerTwo.play().catch(() => {});
-      }
+      audioRef.current.ambienceAudio.volume = audioEnabled ? 0.22 : 0;
+      audioRef.current.ambienceLayerTwo.volume = audioEnabled ? 0.08 : 0;
     }
   }, [audioEnabled]);
 
@@ -447,7 +442,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.25;
@@ -522,20 +517,26 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const ambienceLayerTwo = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_c4a7d0b1d1.mp3?filename=ambient-piano-logo-6903.mp3');
     ambienceAudio.loop = true;
     ambienceLayerTwo.loop = true;
-    ambienceAudio.volume = 0.22;
-    ambienceLayerTwo.volume = 0.08;
+    ambienceAudio.preload = 'auto';
+    ambienceLayerTwo.preload = 'auto';
+    ambienceAudio.crossOrigin = 'anonymous';
+    ambienceLayerTwo.crossOrigin = 'anonymous';
+    ambienceAudio.volume = audioEnabled ? 0.22 : 0;
+    ambienceLayerTwo.volume = audioEnabled ? 0.08 : 0;
     ambienceAudio.muted = !audioEnabled;
     ambienceLayerTwo.muted = !audioEnabled;
     audioRef.current = { ambienceAudio, ambienceLayerTwo };
 
     const startAmbientAudio = () => {
-      if (!audioEnabled) return;
-      ambienceAudio.muted = false;
-      ambienceLayerTwo.muted = false;
-      ambienceAudio.volume = 0.22;
-      ambienceLayerTwo.volume = 0.08;
-      ambienceAudio.play().catch(() => {});
-      ambienceLayerTwo.play().catch(() => {});
+      ambienceAudio.currentTime = ambienceAudio.currentTime || 0;
+      ambienceLayerTwo.currentTime = ambienceLayerTwo.currentTime || 0;
+      ambienceAudio.muted = !audioEnabled;
+      ambienceLayerTwo.muted = !audioEnabled;
+      ambienceAudio.volume = audioEnabled ? 0.22 : 0;
+      ambienceLayerTwo.volume = audioEnabled ? 0.08 : 0;
+      const playMain = ambienceAudio.play();
+      const playLayer = ambienceLayerTwo.play();
+      Promise.allSettled([playMain, playLayer]).then(() => {});
     };
     const heroRobots = [];
     heroRobotsRef.current = heroRobots;
@@ -848,14 +849,14 @@ function buildCity(scene, flicker, gt, videoTex) {
   const extraCanvases = [];
   // Ground — plaza oscura abierta
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(220, 220, 80, 80),
-    new THREE.MeshStandardMaterial({
-      color: 0x0d0818,
-      roughness: 0.24,
-      metalness: 0.58,
-      transparent: true,
-      opacity: 0.86,
-    })
+  new THREE.PlaneGeometry(220, 220, 80, 80),
+  new THREE.MeshStandardMaterial({
+    color: 0x090612,
+    roughness: 0.12,
+    metalness: 0.92,
+    transparent: true,
+    opacity: 0.92,
+  })
   );
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
@@ -863,9 +864,9 @@ function buildCity(scene, flicker, gt, videoTex) {
   const groundSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshBasicMaterial({
-      color: 0x5b2aa8,
+      color: 0x7d4dff,
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.28,
       blending: THREE.AdditiveBlending,
     })
   );
@@ -873,10 +874,10 @@ function buildCity(scene, flicker, gt, videoTex) {
   groundSheen.position.y = 0.015;
   scene.add(groundSheen);
 
-  const grid = new THREE.GridHelper(180, 48, 0x44d9ff, 0x7a35ff);
+  const grid = new THREE.GridHelper(180, 48, 0x7ef9ff, 0xff4dd8);
   grid.position.y = 0.04;
   grid.material.transparent = true;
-  grid.material.opacity = 0.16;
+  grid.material.opacity = 0.24;
   scene.add(grid);
 
   // Plaza central abierta, sin cuadrante marcado

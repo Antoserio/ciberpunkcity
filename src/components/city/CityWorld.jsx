@@ -432,21 +432,30 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     if (plazaVideoUrl) {
       plazaVideoElement = document.createElement('video');
-      plazaVideoElement.src = plazaVideoUrl;
       plazaVideoElement.crossOrigin = 'anonymous';
       plazaVideoElement.muted = true;
       plazaVideoElement.loop = true;
       plazaVideoElement.playsInline = true;
       plazaVideoElement.autoplay = true;
+      plazaVideoElement.preload = 'auto';
       plazaVideoElement.setAttribute('muted', '');
       plazaVideoElement.setAttribute('playsinline', '');
-      plazaVideoElement.play().catch(() => {});
+      plazaVideoElement.setAttribute('webkit-playsinline', '');
+      plazaVideoElement.src = plazaVideoUrl;
+      plazaVideoElement.load();
 
       plazaVideoTexture = new THREE.VideoTexture(plazaVideoElement);
       plazaVideoTexture.colorSpace = THREE.SRGBColorSpace;
       plazaVideoTexture.minFilter = THREE.LinearFilter;
       plazaVideoTexture.magFilter = THREE.LinearFilter;
       plazaVideoTexture.generateMipmaps = false;
+
+      const startVideoPlayback = () => {
+        plazaVideoElement.play().catch(() => {});
+      };
+
+      plazaVideoElement.addEventListener('canplay', startVideoPlayback);
+      plazaVideoElement.addEventListener('loadeddata', startVideoPlayback);
 
       plazaVideoScreen = addPlazaVideoScreen(scene, plazaVideoTexture);
     }
@@ -534,6 +543,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (frameCount % 2 === 0 && videoScreenRef.current) {
         videoScreenRef.current.draw(frameCount * 0.016);
       }
+      if (plazaVideoTexture && plazaVideoElement && plazaVideoElement.readyState >= 2) {
+        plazaVideoTexture.needsUpdate = true;
+      }
       // Extra canvases update every 4 frames staggered
       if (frameCount % 4 === 0) {
         const t = frameCount * 0.016;
@@ -565,7 +577,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       plazaVideoTexture?.dispose();
       if (plazaVideoElement) {
         plazaVideoElement.pause();
-        plazaVideoElement.src = '';
+        plazaVideoElement.removeAttribute('src');
         plazaVideoElement.load();
       }
       renderer.dispose();

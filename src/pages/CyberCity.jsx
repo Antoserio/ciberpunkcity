@@ -97,7 +97,7 @@ export default function CyberCity() {
 
   const handleChangeView = useCallback((view) => {
     setActiveView(view);
-    if (view !== 'explore' && document.pointerLockElement) {
+    if (document.pointerLockElement) {
       document.exitPointerLock();
     }
   }, []);

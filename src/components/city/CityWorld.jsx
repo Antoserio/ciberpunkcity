@@ -357,6 +357,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const animFrameRef = useRef(null);
   const activeZoneRef = useRef(null);
   const nearStandRef = useRef(null);
+  const lastExploreCameraRef = useRef({ x: 0, y: 1.7, z: 14, yaw: 0, pitch: -0.1 });
   const clockRef = useRef(new THREE.Clock());
   const flickerObjectsRef = useRef([]);
   const videoScreenRef = useRef(null);
@@ -441,14 +442,18 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
-    camera.position.set(0, 1.7, 14);
+    camera.position.set(lastExploreCameraRef.current.x, lastExploreCameraRef.current.y, lastExploreCameraRef.current.z);
+    targetYawRef.current = lastExploreCameraRef.current.yaw;
+    yawRef.current = lastExploreCameraRef.current.yaw;
+    targetPitchRef.current = lastExploreCameraRef.current.pitch;
+    pitchRef.current = lastExploreCameraRef.current.pitch;
 
     if (activeView === 'works') {
-      camera.position.set(0, 2.4, 2.8);
-      targetYawRef.current = 0;
-      yawRef.current = 0;
-      targetPitchRef.current = -0.02;
-      pitchRef.current = -0.02;
+      camera.position.set(0, 2.6, -10.5);
+      targetYawRef.current = Math.PI;
+      yawRef.current = Math.PI;
+      targetPitchRef.current = -0.03;
+      pitchRef.current = -0.03;
     }
 
     // Renderer
@@ -771,14 +776,23 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       euler.set(pitchRef.current, yawRef.current, 0);
       camera.quaternion.setFromEuler(euler);
       if (activeView === 'works') {
+        targetYawRef.current = Math.PI;
+        targetPitchRef.current = -0.03;
         camera.position.x += (0 - camera.position.x) * 0.06;
-        camera.position.y += (2.4 - camera.position.y) * 0.06;
-        camera.position.z += (2.8 - camera.position.z) * 0.06;
+        camera.position.y += (2.6 - camera.position.y) * 0.06;
+        camera.position.z += (-10.5 - camera.position.z) * 0.06;
       }
 
       camera.position.x = Math.max(-72, Math.min(72, camera.position.x));
       camera.position.z = Math.max(-72, Math.min(72, camera.position.z));
       if (activeView === 'explore') {
+        lastExploreCameraRef.current = {
+          x: camera.position.x,
+          y: camera.position.y,
+          z: camera.position.z,
+          yaw: yawRef.current,
+          pitch: pitchRef.current,
+        };
         checkZoneProximity(camera.position);
       }
 
@@ -1100,8 +1114,8 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex) {
     color: worksTex ? 0xffffff : 0x000000,
     side: THREE.FrontSide,
   });
-  const rearScreen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW, facadeH), rearMat);
-  rearScreen.position.set(bx, facadeY, bz - bw / 2 - 0.08);
+  const rearScreen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW * 1.18, facadeH * 0.98), rearMat);
+  rearScreen.position.set(bx, facadeY - 0.1, bz - bw / 2 - 0.16);
   rearScreen.rotation.y = Math.PI;
   scene.add(rearScreen);
 
@@ -1110,9 +1124,9 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex) {
   frontBorderLine.position.set(bx, facadeY, bz + bw / 2 + 0.1);
   scene.add(frontBorderLine);
 
-  const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW + 0.12, facadeH + 0.12, 0.05));
+  const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW * 1.18 + 0.12, facadeH * 0.98 + 0.12, 0.05));
   const rearBorderLine = new THREE.LineSegments(rearBorderGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
-  rearBorderLine.position.set(bx, facadeY, bz - bw / 2 - 0.1);
+  rearBorderLine.position.set(bx, facadeY - 0.1, bz - bw / 2 - 0.18);
   rearBorderLine.rotation.y = Math.PI;
   scene.add(rearBorderLine);
 }

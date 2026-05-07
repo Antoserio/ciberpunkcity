@@ -471,9 +471,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         euler.set(0, yawRef.current, 0);
         dir.applyEuler(euler);
         camera.position.addScaledVector(dir, MOVE_SPEED * delta);
-        // Clamp position — stop at boundary, never teleport back
-        camera.position.x = Math.max(-85, Math.min(85, camera.position.x));
-        camera.position.z = Math.max(-85, Math.min(85, camera.position.z));
+        // Clamp position — plaza abierta con movimiento libre en toda la escena
+        camera.position.x = Math.max(-96, Math.min(96, camera.position.x));
+        camera.position.z = Math.max(-96, Math.min(96, camera.position.z));
         camera.position.y = 1.7;
       }
 
@@ -556,43 +556,34 @@ function colorToGlowKey(color) {
 
 function buildCity(scene, flicker, gt, videoTex) {
   const extraCanvases = [];
-  // Ground — wet purple-dark asphalt
+  // Ground — plaza oscura abierta
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
-    new THREE.MeshStandardMaterial({ color: 0x03000a, roughness: 0.15, metalness: 0.7 })
+    new THREE.MeshStandardMaterial({ color: 0x020008, roughness: 0.2, metalness: 0.55 })
   );
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
-  // Grid
-  const grid = new THREE.GridHelper(220, 80, 0xff00ff, 0x0a0020);
-  grid.material.opacity = 0.1;
-  grid.material.transparent = true;
-  scene.add(grid);
-
-  // Roads
-  const roadMat = new THREE.MeshStandardMaterial({ color: 0x04010a, roughness: 0.3, metalness: 0.6 });
-  const hRoad = new THREE.Mesh(new THREE.PlaneGeometry(220, 12), roadMat);
-  hRoad.rotation.x = -Math.PI / 2; hRoad.position.y = 0.01; scene.add(hRoad);
-  const vRoad = new THREE.Mesh(new THREE.PlaneGeometry(12, 220), roadMat);
-  vRoad.rotation.x = -Math.PI / 2; vRoad.position.y = 0.01; scene.add(vRoad);
-
-  // Neon road edge strips — single emissive plane each
-  [[7, 0, 220, 0.3], [-7, 0, 220, 0.3], [0, 7, 0.3, 220], [0, -7, 0.3, 220]].forEach(([x, z, w, d]) => {
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ color: 0xff00ff }));
-    mesh.rotation.x = -Math.PI / 2;
-    mesh.position.set(x, 0.015, z);
-    scene.add(mesh);
-  });
+  // Plaza central abierta, sin cuadrante marcado
+  const plaza = new THREE.Mesh(
+    new THREE.CircleGeometry(32, 64),
+    new THREE.MeshBasicMaterial({ color: 0x050014, transparent: true, opacity: 0.45 })
+  );
+  plaza.rotation.x = -Math.PI / 2;
+  plaza.position.y = 0.012;
+  scene.add(plaza);
 
   // Zone buildings
   ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex));
 
-  // Mid-range buildings — reduced to 10, no glow sprites
+  // Mid-range buildings — perímetro abierto con fondo más denso
   const midPositions = [
-    [-18,-22],[18,-22],[-22,18],[22,18],
-    [-28,-28],[28,-28],[-28,28],[28,28],
-    [-38,0],[38,0],
+    [-18,-30],[18,-30],[-30,18],[30,18],
+    [-34,-34],[34,-34],[-34,34],[34,34],
+    [-46,-18],[46,-18],[-46,18],[46,18],
+    [-12,-44],[12,-44],[-12,44],[12,44],
+    [-58,-30],[-44,-30],[-30,-30],[30,-30],[44,-30],[58,-30],
+    [-58,30],[-44,30],[-30,30],[30,30],[44,30],[58,30],
   ];
   const neonPalette = [0x00ffff, 0xff00ff, 0xffff00, 0x4488ff, 0xff44aa];
   midPositions.forEach(([x, z], i) => {

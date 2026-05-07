@@ -7,6 +7,7 @@ import AvatarAssistant from '../components/city/AvatarAssistant';
 import SplashScreen from '../components/city/SplashScreen';
 import MiniMap from '../components/city/MiniMap';
 import StandModal from '../components/city/StandModal';
+import RobotUploadPanel from '../components/city/RobotUploadPanel.jsx';
 
 export default function CyberCity() {
   const [started, setStarted] = useState(false);
@@ -16,6 +17,7 @@ export default function CyberCity() {
   const [nearStand, setNearStand] = useState(null);
   const [openStand, setOpenStand] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [robotModelUrl, setRobotModelUrl] = useState('');
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -77,11 +79,13 @@ export default function CyberCity() {
           modalOpen={!!openStand}
           plazaVideoUrl="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
           isMobile={isMobile}
-          robotModelUrl=""
+          robotModelUrl={robotModelUrl}
         />
       </div>
 
 
+
+      <RobotUploadPanel onUploaded={setRobotModelUrl} />
 
       {/* HUD overlay */}
       <HUD

@@ -1134,22 +1134,31 @@ function createFlyingRobot(color = 0x00ffff) {
 
 function addFlyingRobots(scene) {
   const colors = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
+  const lanes = [
+    { minX: -62, maxX: -36, minZ: -58, maxZ: 58 },
+    { minX: 36, maxX: 62, minZ: -58, maxZ: 58 },
+    { minX: -58, maxX: 58, minZ: -62, maxZ: -36 },
+    { minX: -58, maxX: 58, minZ: 36, maxZ: 62 },
+  ];
+
   return Array.from({ length: 7 }, (_, i) => {
     const robot = createFlyingRobot(colors[i % colors.length]);
-    const originX = -28 + Math.random() * 56;
-    const originZ = -28 + Math.random() * 56;
-    const driftX = 4 + Math.random() * 10;
-    const driftZ = 4 + Math.random() * 10;
-    const speed = 0.14 + Math.random() * 0.16;
-    const height = 4.5 + Math.random() * 5;
+    const lane = lanes[i % lanes.length];
+    const originX = lane.minX + Math.random() * (lane.maxX - lane.minX);
+    const originZ = lane.minZ + Math.random() * (lane.maxZ - lane.minZ);
+    const driftX = 3 + Math.random() * Math.min(8, (lane.maxX - lane.minX) * 0.35);
+    const driftZ = 3 + Math.random() * Math.min(8, (lane.maxZ - lane.minZ) * 0.35);
+    const speed = 0.1 + Math.random() * 0.12;
+    const height = 5 + Math.random() * 5;
     const offset = Math.random() * Math.PI * 2;
-    const wobble = 0.3 + Math.random() * 0.5;
-    const yawOffset = Math.random() * Math.PI * 2;
+    const wobble = 0.25 + Math.random() * 0.45;
+    const yawOffset = Math.random() * 0.35 - 0.175;
+    const bounds = lane;
 
     robot.group.position.set(originX, height, originZ);
     scene.add(robot.group);
 
-    return { ...robot, originX, originZ, driftX, driftZ, speed, height, offset, wobble, yawOffset };
+    return { ...robot, originX, originZ, driftX, driftZ, speed, height, offset, wobble, yawOffset, bounds };
   });
 }
 
@@ -1157,9 +1166,12 @@ function updateFlyingRobots(robots, time) {
   robots.forEach((robot, index) => {
     const tx = time * robot.speed + robot.offset;
     const tz = time * (robot.speed * 0.8) + robot.offset * 1.7;
-    const x = robot.originX + Math.sin(tx) * robot.driftX + Math.sin(tx * 0.37 + index) * 2.4;
-    const z = robot.originZ + Math.cos(tz) * robot.driftZ + Math.cos(tz * 0.43 + index * 1.3) * 2.8;
+    let x = robot.originX + Math.sin(tx) * robot.driftX + Math.sin(tx * 0.37 + index) * 2.4;
+    let z = robot.originZ + Math.cos(tz) * robot.driftZ + Math.cos(tz * 0.43 + index * 1.3) * 2.8;
     const y = robot.height + Math.sin(time * 0.9 + robot.offset) * robot.wobble + Math.cos(time * 0.55 + index) * 0.35;
+
+    x = Math.max(robot.bounds.minX, Math.min(robot.bounds.maxX, x));
+    z = Math.max(robot.bounds.minZ, Math.min(robot.bounds.maxZ, z));
 
     const prevX = robot.group.position.x;
     const prevZ = robot.group.position.z;

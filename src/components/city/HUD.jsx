@@ -95,8 +95,8 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
         </motion.div>
       )}
 
-      {isMobile && (
-        <div className="fixed bottom-4 left-3 right-3 z-30 pointer-events-none">
+      {isMobile && !nearStand && !activeZone && (
+        <div className="fixed bottom-16 left-3 right-3 z-30 pointer-events-none">
           <div className="glass-dark px-4 py-3 rounded text-center">
             <p className="font-orbitron text-[10px] tracking-widest text-cyan-400 mb-1">MÓVIL</p>
             <p className="font-rajdhani text-xs text-gray-300">Izquierda: mover · Derecha: girar</p>
@@ -112,10 +112,10 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.96 }}
           transition={{ type: 'spring', damping: 18, stiffness: 260 }}
-          className="fixed inset-0 z-30 flex items-center justify-center pointer-events-none"
+          className="fixed inset-x-3 bottom-28 sm:inset-0 sm:bottom-auto z-30 flex items-end sm:items-center justify-center pointer-events-none"
         >
           <button
-            className="pointer-events-auto px-8 py-5 rounded-lg text-center flex flex-col items-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+            className="pointer-events-auto w-full sm:w-auto px-5 sm:px-8 py-4 sm:py-5 rounded-lg text-center flex flex-col items-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
             onClick={(e) => { e.stopPropagation(); onActivateStand && onActivateStand(nearStand); }}
             style={{
               background: `linear-gradient(135deg, rgba(0,0,0,0.92), ${nearStand.color}20)`,
@@ -123,17 +123,17 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
               boxShadow: `0 0 40px ${nearStand.color}50, inset 0 0 20px ${nearStand.color}08`,
             }}
           >
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{nearStand.icon}</span>
-              <div className="text-left">
-                <p className="font-orbitron text-lg font-black tracking-widest" style={{ color: nearStand.color, textShadow: `0 0 15px ${nearStand.color}` }}>
+            <div className="flex items-center gap-3 w-full">
+              <span className="text-2xl sm:text-3xl">{nearStand.icon}</span>
+              <div className="text-left min-w-0 flex-1">
+                <p className="font-orbitron text-sm sm:text-lg font-black tracking-widest truncate" style={{ color: nearStand.color, textShadow: `0 0 15px ${nearStand.color}` }}>
                   {nearStand.title}
                 </p>
-                <p className="font-rajdhani text-sm text-gray-400">{nearStand.subtitle}</p>
+                <p className="font-rajdhani text-xs sm:text-sm text-gray-400 truncate">{nearStand.subtitle}</p>
               </div>
             </div>
             <p className="font-orbitron text-xs tracking-widest mt-1" style={{ color: `${nearStand.color}90` }}>
-              CLICK PARA ABRIR
+              TOCA PARA ABRIR
             </p>
           </button>
         </motion.div>
@@ -146,7 +146,7 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-none max-w-[90vw]"
+          className="fixed bottom-16 sm:bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-none max-w-[90vw]"
         >
           <div
             className="px-6 py-2 rounded text-center"

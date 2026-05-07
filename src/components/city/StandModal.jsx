@@ -119,7 +119,7 @@ export default function StandModal({ stand, onClose }) {
           animate={{ scale: 1, y: 0, opacity: 1 }}
           exit={{ scale: 0.88, y: 20, opacity: 0 }}
           transition={{ type: 'spring', damping: 22, stiffness: 260 }}
-          className="relative w-full rounded border overflow-hidden max-h-[88vh] overflow-y-auto"
+          className="relative w-full rounded border max-h-[88vh] overflow-y-auto"
           style={{
             maxWidth: stand.type === 'projects' ? '540px' : '600px',
             background: `linear-gradient(135deg, rgba(3,4,20,0.99) 0%, ${c}10 100%)`,
@@ -177,7 +177,10 @@ export default function StandModal({ stand, onClose }) {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => window.open('mailto:info@agency360.com?subject=Interesado en ' + stand.title, '_blank')}
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open('mailto:info@agency360.com?subject=Interesado en ' + stand.title, '_blank');
+              }}
               className="w-full py-3 font-orbitron text-sm font-bold tracking-widest rounded transition-all"
               style={{
                 background: `linear-gradient(135deg, ${c}25, ${c}40)`,
@@ -185,8 +188,7 @@ export default function StandModal({ stand, onClose }) {
                 color: c,
                 boxShadow: `0 0 20px ${c}30`,
               }}
-            onClick={(e) => e.stopPropagation()}
-          >
+            >
               CONTACTAR SOBRE ESTE SERVICIO →
             </motion.button>
           </div>

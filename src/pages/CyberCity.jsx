@@ -86,7 +86,7 @@ export default function CyberCity() {
       <HUD
         isLocked={isMobile ? true : (isLocked || hasClickedOnce)}
         activeZone={activeZone}
-        nearStand={null}
+        nearStand={nearStand}
         onActivateStand={handleActivateStand}
         isMobile={isMobile}
       />

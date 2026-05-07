@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { ZONES } from './cityData';
+import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 
 // Radial glow sprite texture
 function makeGlowTexture(hex) {
@@ -427,6 +428,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     let plazaVideoElement = null;
     let plazaVideoTexture = null;
+    let plazaVideoScreen = null;
 
     if (plazaVideoUrl) {
       plazaVideoElement = document.createElement('video');
@@ -446,10 +448,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       plazaVideoTexture.magFilter = THREE.LinearFilter;
       plazaVideoTexture.generateMipmaps = false;
 
-      const studioZone = ZONES.find((zone) => zone.id === 'video');
-      if (studioZone) {
-        studioZone.videoOverlayTexture = plazaVideoTexture;
-      }
+      plazaVideoScreen = addPlazaVideoScreen(scene, plazaVideoTexture);
     }
 
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
@@ -562,10 +561,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('resize', handleResize);
-      const studioZone = ZONES.find((zone) => zone.id === 'video');
-      if (studioZone) {
-        delete studioZone.videoOverlayTexture;
-      }
+      plazaVideoScreen?.dispose();
       plazaVideoTexture?.dispose();
       if (plazaVideoElement) {
         plazaVideoElement.pause();
@@ -665,10 +661,6 @@ function buildCity(scene, flicker, gt, videoTex) {
   });
 
 
-
-  // Pantalla integrada en la fachada izquierda de STUDIO 360
-  addExtraScreen(scene, -20.6, 7.2, -15.92, videoTex, flicker, 0);
-
   // Distant skyline — 16 simple boxes, no glow sprites
   const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });
   for (let i = 0; i < 16; i++) {
@@ -767,7 +759,7 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
 
   // HQ gets the big video screen billboard
   if (isHQ && videoTex) {
-    addVideoScreen(scene, x, z, w, h, videoTex, flicker, zone.videoOverlayTexture);
+    addVideoScreen(scene, x, z, w, h, videoTex, flicker);
   }
 
   // Zone billboard name above building
@@ -787,7 +779,7 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
 
 // ─── Video screen for HQ building ────────────────────────────────────────────
 
-function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, videoOverlayTex) {
+function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
   const facadeW = bw;
   const facadeH = bh * 0.82;
   const facadeY = bh * 0.48;
@@ -801,29 +793,6 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, videoOverlayTe
   const borderLine = new THREE.LineSegments(borderGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
   borderLine.position.set(bx, facadeY, bz + bw / 2 + 0.1);
   scene.add(borderLine);
-
-  if (videoOverlayTex) {
-    const overlayFrame = new THREE.Mesh(
-      new THREE.BoxGeometry(facadeW * 0.58, facadeH * 0.34, 0.18),
-      new THREE.MeshBasicMaterial({ color: 0x050008 })
-    );
-    overlayFrame.position.set(bx, bh * 0.57, bz + bw / 2 + 0.16);
-    scene.add(overlayFrame);
-
-    const overlayScreen = new THREE.Mesh(
-      new THREE.PlaneGeometry(facadeW * 0.54, facadeH * 0.3),
-      new THREE.MeshBasicMaterial({ map: videoOverlayTex, side: THREE.FrontSide })
-    );
-    overlayScreen.position.set(bx, bh * 0.57, bz + bw / 2 + 0.27);
-    scene.add(overlayScreen);
-
-    const overlayBorder = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW * 0.55, facadeH * 0.31, 0.05)),
-      new THREE.LineBasicMaterial({ color: 0xff44cc })
-    );
-    overlayBorder.position.set(bx, bh * 0.57, bz + bw / 2 + 0.24);
-    scene.add(overlayBorder);
-  }
 }
 
 // ─── Extra canvas screens on mid buildings ────────────────────────────────────

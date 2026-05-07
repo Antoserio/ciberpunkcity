@@ -638,7 +638,7 @@ function buildCity(scene, flicker, gt, videoTex) {
     7.2,
     8.8,
     0,
-    'https://player.vimeo.com/video/641418395?autoplay=1&loop=1&muted=1&title=0&byline=0&portrait=0#t=1m',
+    'https://player.vimeo.com/video/641418395?autoplay=1&loop=1&muted=1&background=1&title=0&byline=0&portrait=0',
     flicker,
     0xff00ff,
   );

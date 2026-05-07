@@ -451,7 +451,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (isLockedRef.current && (mouseDeltaRef.current.x !== 0 || mouseDeltaRef.current.y !== 0)) {
         targetYawRef.current -= mouseDeltaRef.current.x * LOOK_SPEED;
         targetPitchRef.current -= mouseDeltaRef.current.y * LOOK_SPEED;
-        targetPitchRef.current = Math.max(-Math.PI / 2.1, Math.min(Math.PI / 2.1, targetPitchRef.current));
         mouseDeltaRef.current.x = 0;
         mouseDeltaRef.current.y = 0;
       }
@@ -471,9 +470,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         euler.set(0, yawRef.current, 0);
         dir.applyEuler(euler);
         camera.position.addScaledVector(dir, MOVE_SPEED * delta);
-        // Clamp position — rango más amplio para recorrer toda la plaza
-        camera.position.x = Math.max(-110, Math.min(110, camera.position.x));
-        camera.position.z = Math.max(-110, Math.min(110, camera.position.z));
         camera.position.y = 1.7;
       }
 

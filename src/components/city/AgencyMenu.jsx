@@ -67,34 +67,35 @@ export default function AgencyMenu({ open, onClose }) {
 
               <div className="grid flex-1 grid-cols-1 gap-5 overflow-y-auto p-5 sm:grid-cols-[1.2fr_0.9fr] sm:p-8">
                 <div className="space-y-5">
-                  <div className="rounded-3xl border border-cyan-400/20 bg-white/5 p-5 sm:p-7">
-                    <div className="mb-4 flex items-center gap-3 text-cyan-300">
+                  <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-5 sm:p-7">
+                    <div className="mb-6 flex items-center gap-3 text-cyan-300">
                       <Sparkles size={18} />
-                      <span className="font-orbitron text-xs tracking-[0.3em]">POR QUÉ ELEGIRNOS</span>
+                      <span className="font-orbitron text-[10px] tracking-[0.45em]">AGENCY360</span>
                     </div>
-                    <h3 className="max-w-2xl font-orbitron text-2xl leading-tight text-white sm:text-4xl">
-                      Diseñamos piezas cool, vendibles y listas para impresionar a clientes, marcas y partners.
-                    </h3>
-                    <p className="mt-4 max-w-2xl font-rajdhani text-base text-slate-300 sm:text-lg">
-                      Combinamos software, visuales, avatares y producción para que tu proyecto se vea potente y también convierta.
-                    </p>
+                    <div className="grid gap-6 sm:grid-cols-[1.2fr_0.8fr] sm:items-start">
+                      <div>
+                        <p className="font-rajdhani text-xs uppercase tracking-[0.35em] text-slate-500">Creative systems / immersive sales</p>
+                        <h3 className="mt-3 max-w-2xl font-orbitron text-3xl leading-tight text-white sm:text-5xl">
+                          Un menú más editorial, limpio y con presencia tipo showcase premium.
+                        </h3>
+                      </div>
+                      <p className="font-rajdhani text-sm leading-relaxed text-slate-300 sm:text-base">
+                        Software, vídeo, XR y avatares presentados como una pieza de marca clara, elegante y lista para enseñar.
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="grid gap-px overflow-hidden rounded-[2rem] border border-white/10 bg-white/10 sm:grid-cols-3">
                     {SERVICE_BLOCKS.map((item) => (
                       <div
                         key={item.id}
-                        className="rounded-3xl border p-4 sm:p-5"
-                        style={{
-                          borderColor: `${item.accent}40`,
-                          background: `linear-gradient(180deg, ${item.accent}12, rgba(255,255,255,0.03))`,
-                          boxShadow: `inset 0 0 30px ${item.accent}12`,
-                        }}
+                        className="min-h-[180px] bg-[#060a14] p-5 sm:p-6"
                       >
-                        <p className="font-orbitron text-xs tracking-[0.25em]" style={{ color: item.accent }}>
+                        <p className="font-rajdhani text-[11px] uppercase tracking-[0.35em] text-slate-500">0{SERVICE_BLOCKS.findIndex((block) => block.id === item.id) + 1}</p>
+                        <p className="mt-4 font-orbitron text-sm tracking-[0.22em]" style={{ color: item.accent }}>
                           {item.title}
                         </p>
-                        <p className="mt-3 font-rajdhani text-sm leading-relaxed text-slate-300">
+                        <p className="mt-4 font-rajdhani text-sm leading-relaxed text-slate-300">
                           {item.text}
                         </p>
                       </div>

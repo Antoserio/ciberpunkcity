@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 
-export default function RobotUploadPanel({ onUploaded }) {
+export default function RobotUploadPanel({ onUploaded, currentRobotFileName = '' }) {
   const inputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState('');
@@ -27,14 +27,14 @@ export default function RobotUploadPanel({ onUploaded }) {
       });
     }
 
-    onUploaded(file_url);
+    onUploaded(file_url, file.name);
     setLoading(false);
   };
 
   return (
     <div className="fixed top-20 left-3 sm:left-6 z-40 max-w-[90vw] sm:max-w-sm rounded border px-3 py-3 glass-dark">
       <p className="font-orbitron text-[10px] sm:text-xs tracking-widest text-cyan-400 mb-2">ROBOT GLB GLOBAL</p>
-      <p className="font-rajdhani text-xs text-gray-300 mb-3">Sube tu modelo .glb para guardarlo y mostrarlo a todos en la ciudad.</p>
+      <p className="font-rajdhani text-xs text-gray-300 mb-3">Tu modelo guardado aparecerá volando en la ciudad. Si quieres cambiarlo, vuelve a subir un .glb.</p>
       <input
         ref={inputRef}
         type="file"
@@ -49,9 +49,15 @@ export default function RobotUploadPanel({ onUploaded }) {
       >
         {loading ? 'SUBIENDO...' : 'CARGAR ROBOT'}
       </button>
-      {fileName && (
-        <p className="mt-2 truncate font-rajdhani text-xs text-gray-400">{fileName}</p>
-      )}
+      <div className="mt-2 space-y-1">
+        {(fileName || currentRobotFileName) && (
+          <>
+            <p className="truncate font-rajdhani text-xs text-gray-400">Guardado: {fileName || currentRobotFileName}</p>
+            <p className="font-rajdhani text-[11px] text-gray-300">Si no lo ves, entra en la ciudad: ahora vuela más cerca del centro.</p>
+          </>
+        )}
+        <p className="font-rajdhani text-[11px] text-cyan-300/80">Tu robot actual es: {currentRobotFileName || fileName || 'ninguno todavía'}</p>
+      </div>
     </div>
   );
 }

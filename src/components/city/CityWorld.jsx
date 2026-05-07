@@ -343,7 +343,7 @@ const BUILDING_COLLIDERS = [
 const HERO_COLORS = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
 
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '' }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true }) {
   const mountRef = useRef(null);
   const heroRobotsRef = useRef([]);
   const audioRef = useRef(null);
@@ -415,6 +415,13 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       onLeaveStand();
     }
   }, [onEnterZone, onExitZone, onNearStand, onLeaveStand]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.ambienceAudio.muted = !audioEnabled;
+      audioRef.current.ambienceLayerTwo.muted = !audioEnabled;
+    }
+  }, [audioEnabled]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -509,18 +516,18 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     if (robotModelUrl) {
       const loader = new GLTFLoader();
       const heroAnchors = [
-        { x: -38, z: -26 },
-        { x: 42, z: -18 },
-        { x: -24, z: 38 },
-        { x: 36, z: 30 },
+        { x: -10, z: -6 },
+        { x: 14, z: -10 },
+        { x: -12, z: 14 },
+        { x: 12, z: 12 },
       ];
 
       HERO_COLORS.slice(0, 4).forEach((heroColor, index) => {
         loader.load(robotModelUrl, (gltf) => {
           const heroRobot = gltf.scene;
           const anchor = heroAnchors[index];
-          heroRobot.scale.setScalar(1.45 + index * 0.06);
-          heroRobot.position.set(anchor.x, 8 + index * 0.6, anchor.z);
+          heroRobot.scale.setScalar(2 + index * 0.08);
+          heroRobot.position.set(anchor.x, 5 + index * 0.4, anchor.z);
 
           heroRobot.traverse((child) => {
             if (!child.isMesh) return;
@@ -541,10 +548,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
             mesh: heroRobot,
             anchorX: anchor.x,
             anchorZ: anchor.z,
-            speed: 0.11 + index * 0.018,
-            driftX: 10 + index * 1.6,
-            driftZ: 8 + index * 1.4,
-            height: 7 + index * 0.8,
+            speed: 0.08 + index * 0.012,
+            driftX: 5 + index * 0.8,
+            driftZ: 4 + index * 0.7,
+            height: 4.5 + index * 0.45,
             offset: index * 1.7,
           });
         });

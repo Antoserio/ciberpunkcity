@@ -19,6 +19,8 @@ export default function CyberCity() {
   const [openStand, setOpenStand] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [robotModelUrl, setRobotModelUrl] = useState('');
+  const [robotFileName, setRobotFileName] = useState('');
+  const [audioEnabled, setAudioEnabled] = useState(true);
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -32,6 +34,7 @@ export default function CyberCity() {
       const settings = await base44.entities.WorldSettings.filter({ key: 'global_robot_model' }, '-updated_date', 1);
       if (settings.length > 0 && settings[0].robot_model_url) {
         setRobotModelUrl(settings[0].robot_model_url);
+        setRobotFileName(settings[0].robot_file_name || '');
       }
     };
 
@@ -92,12 +95,16 @@ export default function CyberCity() {
           plazaVideoUrl="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
           isMobile={isMobile}
           robotModelUrl={robotModelUrl}
+          audioEnabled={audioEnabled}
         />
       </div>
 
 
 
-      <RobotUploadPanel onUploaded={setRobotModelUrl} />
+      <RobotUploadPanel onUploaded={(fileUrl, fileName) => {
+        setRobotModelUrl(fileUrl);
+        setRobotFileName(fileName || '');
+      }} currentRobotFileName={robotFileName} />
 
       {/* HUD overlay */}
       <HUD
@@ -132,6 +139,13 @@ export default function CyberCity() {
           />
         )}
       </AnimatePresence>
+
+      <button
+        onClick={() => setAudioEnabled((value) => !value)}
+        className="fixed bottom-4 right-4 z-40 rounded-full border border-white/10 bg-black/60 px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white backdrop-blur-md transition hover:border-cyan-400/40 hover:text-cyan-300"
+      >
+        {audioEnabled ? 'SONIDO ON' : 'SONIDO OFF'}
+      </button>
 
       {/* Avatar AI Assistant */}
       <AvatarAssistant />

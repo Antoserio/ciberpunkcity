@@ -1,7 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { ZONES } from './cityData';
-import { STANDS } from './standsData';
 
 // Radial glow sprite texture
 function makeGlowTexture(hex) {
@@ -289,7 +288,6 @@ const MOVE_SPEED = 16;
 const LOOK_SPEED = 0.0018;
 const LOOK_SMOOTH = 0.10;
 
-const STAND_RADIUS = 9;
 
 export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen }) {
   const mountRef = useRef(null);
@@ -340,27 +338,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       onExitZone();
     }
 
-    // Stand proximity — always check, independent of zones
-    let foundStand = null;
-    for (const stand of STANDS) {
-      const dx = pos.x - stand.position[0];
-      const dz = pos.z - stand.position[2];
-      if (dx * dx + dz * dz < STAND_RADIUS * STAND_RADIUS) {
-        foundStand = stand;
-        break;
-      }
-    }
-    if (foundStand) {
-      if (nearStandRef.current?.id !== foundStand.id) {
-        nearStandRef.current = foundStand;
-        onNearStand && onNearStand(foundStand);
-      }
-    } else {
-      if (nearStandRef.current !== null) {
-        nearStandRef.current = null;
-        onLeaveStand && onLeaveStand();
-      }
-    }
   }, [onEnterZone, onExitZone, onNearStand, onLeaveStand]);
 
   useEffect(() => {
@@ -424,10 +401,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
         e.preventDefault();
         isLockedRef.current = true;
-      }
-      // Stand interaction
-      if (nearStandRef.current && e.key.toUpperCase() === nearStandRef.current.key.toUpperCase()) {
-        onActivateStand && onActivateStand(nearStandRef.current);
       }
     };
     const handleKeyUp = (e) => { keysRef.current[e.code] = false; };

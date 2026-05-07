@@ -556,11 +556,11 @@ function buildCity(scene, flicker, gt, videoTex) {
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshStandardMaterial({
-      color: 0x060012,
-      roughness: 0.18,
-      metalness: 0.25,
+      color: 0x140a2c,
+      roughness: 0.1,
+      metalness: 0.42,
       transparent: true,
-      opacity: 0.72,
+      opacity: 0.52,
     })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -569,9 +569,9 @@ function buildCity(scene, flicker, gt, videoTex) {
   const groundSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshBasicMaterial({
-      color: 0x331144,
+      color: 0x5d2a8a,
       transparent: true,
-      opacity: 0.1,
+      opacity: 0.2,
       blending: THREE.AdditiveBlending,
     })
   );
@@ -612,8 +612,6 @@ function buildCity(scene, flicker, gt, videoTex) {
   addBillboard(scene, 14, 5, -3, '◆ SOFTWARE', '#00ffff');
   addBillboard(scene, -14, 5, 3, '◆ VIDEO 360', '#ff00ff');
 
-  // Interactive stands
-  STANDS.forEach(stand => addStandBooth(scene, stand));
 
   // Canvas screens on zone building faces
   const screenDefs = [
@@ -851,50 +849,6 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker) {
 // ─── Interactive stand booth ─────────────────────────────────────────────────
 
 
-function addStandBooth(scene, stand) {
-  const [x, , z] = stand.position;
-  const c = stand.colorInt;
-  const ch = stand.color;
-
-  // Base platform
-  const platMat = new THREE.MeshStandardMaterial({ color: 0x06020e, roughness: 0.3, metalness: 0.8 });
-  const plat = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.5, 0.25, 16), platMat);
-  plat.position.set(x, 0.12, z);
-  scene.add(plat);
-
-
-  // Kiosk column
-  const colMat = new THREE.MeshStandardMaterial({ color: 0x08021a, roughness: 0.2, metalness: 0.9 });
-  const col = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 2.8, 8), colMat);
-  col.position.set(x, 1.65, z);
-  scene.add(col);
-
-  // Column neon strip
-  const stripMat = new THREE.MeshBasicMaterial({ color: c });
-  const strip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.8, 0.05), stripMat);
-  strip.position.set(x + 0.32, 1.65, z);
-  scene.add(strip);
-
-  // Top cap disc
-  const capMat = emissiveMat(c, 1.2);
-  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.3, 0.18, 8), capMat);
-  cap.position.set(x, 3.15, z);
-  scene.add(cap);
-
-  // Glow halo
-  const glowMat = new THREE.SpriteMaterial({ color: c, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending });
-  const glow = new THREE.Sprite(glowMat);
-  glow.scale.setScalar(6);
-  glow.position.set(x, 2.0, z);
-  scene.add(glow);
-
-  // Small title sign
-  const signTex = makeNeonSignTexture(stand.id === 'back_to_life' ? 'BACK TO LIFE' : stand.title.substring(0, 12), ch);
-  const signMat = new THREE.MeshBasicMaterial({ map: signTex, transparent: true, depthWrite: false });
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 0.8), signMat);
-  sign.position.set(x, 3.7, z + 0.4);
-  scene.add(sign);
-}
 
 // ─── Vimeo screen billboard (3D frame + placeholder texture) ─────────────────
 // Real Vimeo video is shown via HTML overlay in CyberCity.jsx

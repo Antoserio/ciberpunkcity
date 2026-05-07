@@ -15,6 +15,14 @@ export default function CyberCity() {
   const [hasClickedOnce, setHasClickedOnce] = useState(false);
   const [nearStand, setNearStand] = useState(null);
   const [openStand, setOpenStand] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const updateMobile = () => setIsMobile(window.innerWidth < 768);
+    updateMobile();
+    window.addEventListener('resize', updateMobile);
+    return () => window.removeEventListener('resize', updateMobile);
+  }, []);
 
   // Track pointer lock state
   useEffect(() => {
@@ -31,6 +39,7 @@ export default function CyberCity() {
 
   const handleCloseStand = useCallback(() => {
     setOpenStand(null);
+    if (window.innerWidth < 768) return;
     // Re-request pointer lock after modal closes
     setTimeout(() => {
       const canvas = document.querySelector('canvas');
@@ -74,10 +83,11 @@ export default function CyberCity() {
 
       {/* HUD overlay */}
       <HUD
-        isLocked={isLocked || hasClickedOnce}
+        isLocked={isMobile ? true : (isLocked || hasClickedOnce)}
         activeZone={activeZone}
         nearStand={null}
         onActivateStand={handleActivateStand}
+        isMobile={isMobile}
       />
 
       {/* Zone info panel */}
@@ -92,7 +102,7 @@ export default function CyberCity() {
       </AnimatePresence>
 
       {/* Mini map */}
-      <MiniMap activeZone={activeZone} />
+      <MiniMap activeZone={activeZone} isMobile={isMobile} />
 
       {/* Stand modal */}
       <AnimatePresence>

@@ -21,7 +21,7 @@ export default function ZonePanel({ zone, onClose }) {
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 60, scale: 0.95 }}
           transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-          className="fixed top-1/2 right-6 -translate-y-1/2 w-80 z-40 rounded border"
+          className="fixed left-3 right-3 bottom-24 sm:top-1/2 sm:left-auto sm:right-6 sm:bottom-auto sm:-translate-y-1/2 w-auto sm:w-80 z-40 rounded border max-h-[60vh] overflow-y-auto"
           style={{ ...borderStyle, ...bgStyle }}
         >
           {/* Scanlines overlay */}

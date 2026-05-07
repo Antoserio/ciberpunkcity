@@ -64,7 +64,7 @@ function ShowcaseContent({ stand }) {
 function ProjectsContent({ stand }) {
   const c = stand.color;
   return (
-    <div className="relative z-10 grid grid-cols-2 gap-3">
+    <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
       {stand.projects.map((p, i) => (
         <motion.div
           key={i}
@@ -110,16 +110,16 @@ export default function StandModal({ stand, onClose }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
         style={{ background: 'rgba(0,3,15,0.88)', backdropFilter: 'blur(16px)' }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={onClose}
       >
         <motion.div
           initial={{ scale: 0.85, y: 40, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
           exit={{ scale: 0.88, y: 20, opacity: 0 }}
           transition={{ type: 'spring', damping: 22, stiffness: 260 }}
-          className="relative w-full mx-4 rounded border overflow-hidden"
+          className="relative w-full rounded border overflow-hidden max-h-[88vh] overflow-y-auto"
           style={{
             maxWidth: stand.type === 'projects' ? '540px' : '600px',
             background: `linear-gradient(135deg, rgba(3,4,20,0.99) 0%, ${c}10 100%)`,
@@ -135,7 +135,7 @@ export default function StandModal({ stand, onClose }) {
 
 
           {/* Header */}
-          <div className="relative z-10 px-6 pt-5 pb-4 border-b flex items-center justify-between"
+          <div className="relative z-10 px-4 sm:px-6 pt-4 sm:pt-5 pb-4 border-b flex items-start justify-between gap-3"
             style={{ borderColor: `${c}30` }}>
             <div className="flex items-center gap-3">
               <span className="text-3xl">{stand.icon}</span>
@@ -143,7 +143,7 @@ export default function StandModal({ stand, onClose }) {
                 <p className="font-orbitron text-[10px] tracking-widest mb-0.5" style={{ color: `${c}80` }}>
                   [{stand.key}] · {stand.subtitle}
                 </p>
-                <h2 className="font-orbitron text-xl font-black tracking-widest"
+                <h2 className="font-orbitron text-base sm:text-xl font-black tracking-widest"
                   style={{ color: c, textShadow: `0 0 20px ${c}` }}>
                   {stand.title}
                 </h2>
@@ -155,7 +155,7 @@ export default function StandModal({ stand, onClose }) {
           </div>
 
           {/* Main content */}
-          <div className="relative z-10 p-6">
+          <div className="relative z-10 p-4 sm:p-6">
             {renderContent()}
 
             {/* Description */}
@@ -185,7 +185,8 @@ export default function StandModal({ stand, onClose }) {
                 color: c,
                 boxShadow: `0 0 20px ${c}30`,
               }}
-            >
+            onClick={(e) => e.stopPropagation()}
+          >
               CONTACTAR SOBRE ESTE SERVICIO →
             </motion.button>
           </div>

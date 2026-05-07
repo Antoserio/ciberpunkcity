@@ -54,7 +54,7 @@ Mensaje: ${form.message}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0, y: 40 }}
             transition={{ type: 'spring', damping: 20 }}
-            className="relative w-full max-w-md rounded border p-6"
+            className="relative w-full max-w-md rounded border p-4 sm:p-6 max-h-[88vh] overflow-y-auto"
             style={{
               background: 'rgba(3,6,18,0.98)',
               ...borderStyle,

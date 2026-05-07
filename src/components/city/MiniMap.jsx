@@ -1,9 +1,9 @@
 import { ZONES } from './cityData';
 
-export default function MiniMap({ activeZone }) {
+export default function MiniMap({ activeZone, isMobile = false }) {
   return (
     <div
-      className="fixed bottom-20 left-6 z-30 w-40 h-40 rounded border"
+      className={`fixed z-30 rounded border ${isMobile ? 'bottom-20 left-3 w-24 h-24' : 'bottom-20 left-6 w-40 h-40'}` }
       style={{
         background: 'rgba(3,6,18,0.9)',
         borderColor: 'rgba(0,255,255,0.3)',
@@ -12,7 +12,7 @@ export default function MiniMap({ activeZone }) {
     >
       {/* Map label */}
       <div
-        className="absolute top-1 left-2 font-orbitron text-[8px] tracking-widest"
+        className={`absolute top-1 left-2 font-orbitron tracking-widest ${isMobile ? 'text-[6px]' : 'text-[8px]'}` }
         style={{ color: 'rgba(0,255,255,0.5)' }}
       >
         MAPA

@@ -330,8 +330,8 @@ function makeNeonSignTexture(text, color) {
   return new THREE.CanvasTexture(canvas);
 }
 
-const MOVE_SPEED = 16;
-const LOOK_SPEED = 0.0032;
+const MOVE_SPEED = 11;
+const LOOK_SPEED = 0.0024;
 const LOOK_SMOOTH = 0.22;
 const MAX_PITCH = Math.PI / 2 - 0.02;
 const BUILDING_COLLIDERS = [
@@ -695,7 +695,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
           euler.set(0, yawRef.current, 0);
           dir.applyEuler(euler);
           camera.position.addScaledVector(dir, (isMobile ? MOVE_SPEED * 0.7 : MOVE_SPEED) * delta);
-          const safeCameraPosition = avoidBuildingCollision(camera.position.x, camera.position.z, 4.2);
+          const safeCameraPosition = avoidBuildingCollision(camera.position.x, camera.position.z, 2.8);
           camera.position.x = safeCameraPosition.x;
           camera.position.z = safeCameraPosition.z;
           camera.position.y = 1.7;
@@ -748,6 +748,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       });
 
       renderer.render(scene, camera);
+      if (document.pointerLockElement && frameCount % 2 === 0) {
+        const menuButton = document.querySelector('[data-agency-menu-button="true"]');
+        if (menuButton) menuButton.style.opacity = '1';
+      }
     };
     animate();
 

@@ -23,8 +23,9 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
       <div className="fixed top-0 left-0 right-0 z-30 pointer-events-none">
         <div className="flex items-start justify-between gap-2 px-3 py-3 sm:px-6">
           {/* Logo */}
-          <div className="pointer-events-auto flex items-center gap-2">
+          <div className="pointer-events-auto flex items-center gap-2 shrink-0">
             <button
+              data-agency-menu-button="true"
               onClick={() => setMenuOpen(true)}
               className="glass-dark flex h-10 w-10 items-center justify-center rounded border border-cyan-400/20 text-cyan-300 transition hover:border-cyan-400/50 hover:text-white"
             >
@@ -39,7 +40,7 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
           </div>
 
           {/* Status bar */}
-          <div className="glass-dark px-3 py-2 rounded flex items-center gap-2 sm:gap-4">
+          <div className="glass-dark hidden sm:flex px-3 py-2 rounded items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
               <span className="text-[10px] sm:text-xs font-orbitron text-cyan-400 tracking-widest max-w-[24vw] sm:max-w-none truncate">
@@ -53,7 +54,7 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
           </div>
 
           {/* Coords display */}
-          <div className="glass-dark px-3 py-2 rounded hidden sm:block">
+          <div className="glass-dark px-3 py-2 rounded hidden lg:block">
             <span className="text-xs font-orbitron text-gray-500 tracking-widest">ZONAS: {ZONES.length}</span>
           </div>
         </div>

@@ -287,7 +287,7 @@ function makeNeonSignTexture(text, color) {
 
 const MOVE_SPEED = 16;
 const LOOK_SPEED = 0.0018;
-const LOOK_SMOOTH = 0.1;
+const LOOK_SMOOTH = 0.10;
 
 const STAND_RADIUS = 9;
 
@@ -421,9 +421,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       // Block all movement and interaction while modal is open
       if (modalOpenRef.current) return;
       keysRef.current[e.code] = true;
-      if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
+      if (['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
         e.preventDefault();
-        if (!isLockedRef.current) canvas.requestPointerLock();
+        isLockedRef.current = true;
       }
       // Stand interaction
       if (nearStandRef.current && e.key.toUpperCase() === nearStandRef.current.key.toUpperCase()) {
@@ -556,13 +556,11 @@ function buildCity(scene, flicker, gt, videoTex) {
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshStandardMaterial({
-      color: 0x060b14,
-      emissive: 0x02060c,
-      emissiveIntensity: 0.16,
-      roughness: 0.2,
-      metalness: 0.92,
+      color: 0x020008,
+      roughness: 0.08,
+      metalness: 0.82,
       transparent: true,
-      opacity: 0.72,
+      opacity: 0.96,
     })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -571,9 +569,9 @@ function buildCity(scene, flicker, gt, videoTex) {
   const groundSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshBasicMaterial({
-      color: 0x8fd6ff,
+      color: 0x220033,
       transparent: true,
-      opacity: 0.05,
+      opacity: 0.08,
       blending: THREE.AdditiveBlending,
     })
   );
@@ -584,7 +582,7 @@ function buildCity(scene, flicker, gt, videoTex) {
   // Plaza central abierta, sin cuadrante marcado
   const plaza = new THREE.Mesh(
     new THREE.CircleGeometry(32, 64),
-    new THREE.MeshBasicMaterial({ color: 0xbfe8ff, transparent: true, opacity: 0.06 })
+    new THREE.MeshBasicMaterial({ color: 0x050014, transparent: true, opacity: 0.45 })
   );
   plaza.rotation.x = -Math.PI / 2;
   plaza.position.y = 0.012;

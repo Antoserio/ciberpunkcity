@@ -1,7 +1,11 @@
 import { motion } from 'framer-motion';
+import { Menu } from 'lucide-react';
+import { useState } from 'react';
 import { ZONES } from './cityData';
+import AgencyMenu from './AgencyMenu';
 
 export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, isMobile = false }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <>
       {/* Crosshair */}
@@ -19,11 +23,19 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
       <div className="fixed top-0 left-0 right-0 z-30 pointer-events-none">
         <div className="flex items-start justify-between gap-2 px-3 py-3 sm:px-6">
           {/* Logo */}
-          <div className="glass-dark px-3 py-2 rounded max-w-[42vw] sm:max-w-none">
-            <span className="font-orbitron text-xs sm:text-sm font-black neon-text-cyan tracking-widest">
-              AGENCY<span className="neon-text-magenta">360</span>
-            </span>
-            <span className="hidden sm:inline text-xs text-gray-500 font-rajdhani ml-2 tracking-widest">CYBERCITY</span>
+          <div className="pointer-events-auto flex items-center gap-2">
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="glass-dark flex h-10 w-10 items-center justify-center rounded border border-cyan-400/20 text-cyan-300 transition hover:border-cyan-400/50 hover:text-white"
+            >
+              <Menu size={18} />
+            </button>
+            <div className="glass-dark px-3 py-2 rounded max-w-[42vw] sm:max-w-none">
+              <span className="font-orbitron text-xs sm:text-sm font-black neon-text-cyan tracking-widest">
+                AGENCY<span className="neon-text-magenta">360</span>
+              </span>
+              <span className="hidden sm:inline text-xs text-gray-500 font-rajdhani ml-2 tracking-widest">CYBERCITY</span>
+            </div>
           </div>
 
           {/* Status bar */}
@@ -131,6 +143,8 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
           </div>
         </motion.div>
       )}
+
+      <AgencyMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </>
   );
 }

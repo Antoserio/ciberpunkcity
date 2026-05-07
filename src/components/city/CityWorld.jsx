@@ -552,12 +552,16 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     }
 
     const ambienceAudio = new Audio('https://cdn.pixabay.com/download/audio/2023/02/28/audio_6e7d1e85f0.mp3?filename=futuristic-atmosphere-141082.mp3');
+    const ambienceLayerTwo = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_c4a7d0b1d1.mp3?filename=ambient-piano-logo-6903.mp3');
     ambienceAudio.loop = true;
+    ambienceLayerTwo.loop = true;
     ambienceAudio.volume = 0.22;
-    audioRef.current = ambienceAudio;
+    ambienceLayerTwo.volume = 0.08;
+    audioRef.current = { ambienceAudio, ambienceLayerTwo };
 
     const startAmbientAudio = () => {
       ambienceAudio.play().catch(() => {});
+      ambienceLayerTwo.play().catch(() => {});
     };
 
     // Controls
@@ -778,7 +782,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         plazaVideoElement.load();
       }
       ambienceAudio.pause();
+      ambienceLayerTwo.pause();
       ambienceAudio.currentTime = 0;
+      ambienceLayerTwo.currentTime = 0;
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };

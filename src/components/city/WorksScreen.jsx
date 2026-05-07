@@ -11,15 +11,15 @@ export default function WorksScreen() {
   if (!activeWork) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col items-center justify-center px-4 pt-24 pb-20 pointer-events-none">
+    <div className="fixed inset-0 z-40 pointer-events-none">
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="pointer-events-auto w-full max-w-5xl"
+        className="absolute left-1/2 top-[17%] w-[min(82vw,860px)] -translate-x-1/2 pointer-events-auto"
       >
-        <div className="mx-auto w-full max-w-4xl overflow-hidden rounded-[2rem] border border-red-500/20 bg-black/35 shadow-[0_0_80px_rgba(255,0,80,0.18)] backdrop-blur-sm">
-          <div className="grid gap-0 md:grid-cols-[1.15fr_0.85fr]">
-            <div className="relative min-h-[380px] bg-black md:min-h-[520px]">
+        <div className="overflow-hidden rounded-[1.6rem] border border-red-500/30 bg-black/30 shadow-[0_0_80px_rgba(255,0,90,0.16)] backdrop-blur-sm">
+          <div className="grid md:grid-cols-[1.2fr_0.8fr]">
+            <div className="relative min-h-[280px] bg-black md:min-h-[400px]">
               {activeWork.type === 'video' ? (
                 <iframe
                   className="absolute inset-0 h-full w-full"
@@ -36,47 +36,47 @@ export default function WorksScreen() {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/15 to-transparent" />
-              <div className="absolute left-6 bottom-6 max-w-md">
-                <p className="font-rajdhani text-xs uppercase tracking-[0.35em] text-white/70">Featured work</p>
-                <h2 className="mt-3 font-orbitron text-4xl text-[#ff315f] sm:text-6xl">{activeWork.title}</h2>
-                <p className="mt-3 font-rajdhani text-sm text-white/80 sm:text-base">{activeWork.description}</p>
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/25 to-transparent" />
+              <div className="absolute left-5 bottom-5 max-w-[70%]">
+                <p className="font-rajdhani text-[11px] uppercase tracking-[0.35em] text-white/65">Works showcase</p>
+                <h2 className="mt-2 font-orbitron text-3xl text-[#ff315f] sm:text-5xl">{activeWork.title}</h2>
+                <p className="mt-2 font-rajdhani text-xs text-white/80 sm:text-sm">{activeWork.description}</p>
               </div>
             </div>
 
-            <div className="flex flex-col justify-between bg-[linear-gradient(180deg,rgba(10,8,18,0.9),rgba(20,8,14,0.95))] p-6">
+            <div className="flex flex-col justify-between bg-[linear-gradient(180deg,rgba(9,8,16,0.9),rgba(20,8,14,0.96))] p-5">
               <div>
-                <p className="font-orbitron text-[10px] tracking-[0.35em] text-cyan-300/80">WORKS / SCREEN</p>
-                <p className="mt-4 font-orbitron text-2xl text-white">{activeWork.subtitle}</p>
-                <div className="mt-6 space-y-3">
+                <p className="font-orbitron text-[10px] tracking-[0.35em] text-cyan-300/80">WORKS / DISPLAY</p>
+                <p className="mt-3 font-orbitron text-xl text-white sm:text-2xl">{activeWork.subtitle}</p>
+                <div className="mt-5 flex flex-wrap gap-2">
                   {activeWork.tags?.map((tag) => (
-                    <div key={tag} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white/80">
+                    <div key={tag} className="rounded-full border border-white/10 bg-white/5 px-3 py-2 font-orbitron text-[10px] tracking-[0.22em] text-white/75">
                       {tag}
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="mt-8 rounded-3xl border border-white/10 bg-black/20 p-4">
-                <p className="font-rajdhani text-xs uppercase tracking-[0.35em] text-white/50">Display</p>
-                <p className="mt-2 font-rajdhani text-sm leading-relaxed text-white/80">Usa la barra inferior para cambiar el trabajo que aparece en la gran pantalla central.</p>
+              <div className="mt-6 rounded-3xl border border-white/10 bg-black/20 p-4">
+                <p className="font-rajdhani text-[11px] uppercase tracking-[0.35em] text-white/50">Orden visual</p>
+                <p className="mt-2 font-rajdhani text-sm leading-relaxed text-white/80">Las obras se muestran centradas en la gran pantalla y puedes recorrerlas desde la barra inferior.</p>
               </div>
             </div>
           </div>
         </div>
       </motion.div>
 
-      <div className="pointer-events-auto fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
-        <div className="flex items-center gap-2 rounded-full border border-red-500/20 bg-black/60 px-3 py-3 backdrop-blur-xl">
-          {WORK_ITEMS.map((item) => {
+      <div className="pointer-events-auto fixed bottom-6 left-1/2 z-50 -translate-x-1/2 w-[min(90vw,980px)]">
+        <div className="flex flex-wrap items-center justify-center gap-2 rounded-full border border-red-500/20 bg-black/60 px-3 py-3 backdrop-blur-xl">
+          {WORK_ITEMS.map((item, index) => {
             const active = item.id === activeWork.id;
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveId(item.id)}
-                className={`rounded-full px-4 py-2 font-orbitron text-[10px] tracking-[0.22em] transition ${active ? 'bg-[#ff315f] text-white' : 'bg-white/5 text-white/65 hover:bg-white/10'}`}
+                className={`rounded-full px-4 py-2 font-orbitron text-[10px] tracking-[0.22em] transition ${active ? 'bg-[#ff315f] text-white shadow-[0_0_18px_rgba(255,49,95,0.45)]' : 'bg-white/5 text-white/65 hover:bg-white/10'}`}
               >
-                {item.key} {item.title}
+                {String(index + 1).padStart(2, '0')} · {item.title}
               </button>
             );
           })}

@@ -658,7 +658,7 @@ function buildCity(scene, flicker, gt, videoTex) {
 
 
   // Pantalla integrada en la fachada izquierda de STUDIO 360
-  addExtraScreen(scene, -20.6, 7.2, -15.92, videoTex, flicker, 0, 5.6, 4.4);
+  addExtraScreen(scene, -20.6, 7.2, -15.92, videoTex, flicker, 0);
 
   // Distant skyline — 16 simple boxes, no glow sprites
   const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });
@@ -796,12 +796,12 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
 
 // ─── Extra canvas screens on mid buildings ────────────────────────────────────
 
-function addExtraScreen(scene, x, y, z, canvasTex, flicker, rotY = 0, widthOverride, heightOverride) {
+function addExtraScreen(scene, x, y, z, canvasTex, flicker, rotY = 0) {
   const texW = canvasTex.image?.videoWidth || canvasTex.image?.width || 512;
   const texH = canvasTex.image?.videoHeight || canvasTex.image?.height || 288;
   const aspect = texW / texH;
-  const h = heightOverride || 5.2;
-  const w = widthOverride || (h * aspect);
+  const h = 5.2;
+  const w = h * aspect;
 
   const frame = new THREE.Mesh(
     new THREE.BoxGeometry(w + 0.5, h + 0.5, 0.18),

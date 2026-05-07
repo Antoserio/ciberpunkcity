@@ -52,28 +52,46 @@ function makeVideoCanvasTexture(label, accentColor) {
     for (let y = 0; y < H; y += 18) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
     const pulse = 0.8 + 0.2 * Math.sin(t * 1.5);
-    ctx.shadowBlur = 30;
+    ctx.save();
+    ctx.globalAlpha = 0.32 + 0.08 * Math.sin(t * 1.4);
+    ctx.fillStyle = '#ff4db8';
+    for (let i = 0; i < 7; i++) {
+      const barX = 40 + i * 70 + Math.sin(t * 0.8 + i) * 8;
+      ctx.fillRect(barX, 20, 18, H - 40);
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(W * 0.32 + Math.sin(t * 1.2) * 14, H * 0.6 + Math.cos(t * 1.5) * 10);
+    ctx.rotate(-0.28 + Math.sin(t * 0.9) * 0.05);
+    ctx.fillStyle = 'rgba(255, 210, 240, 0.92)';
+    ctx.shadowBlur = 35;
     ctx.shadowColor = accentColor;
-    ctx.fillStyle = accentColor;
-    ctx.globalAlpha = pulse;
-    ctx.font = 'bold 52px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(label, W / 2, H / 2 - 18);
-    ctx.globalAlpha = 1;
+    ctx.fillRect(-16, -90, 24, 110);
+    ctx.fillRect(-42, -20, 80, 22);
+    ctx.fillRect(-30, 18, 20, 92);
+    ctx.fillRect(2, 18, 20, 92);
+    ctx.restore();
 
-    ctx.shadowColor = '#00ffff';
-    ctx.shadowBlur = 20;
-    ctx.fillStyle = `rgba(0,255,255,${0.6 + 0.3 * Math.sin(t * 2)})`;
-    ctx.font = '18px monospace';
-    ctx.fillText('AGENCY360 · CREATIVE · XR', W / 2, H / 2 + 18);
+    ctx.save();
+    ctx.translate(W * 0.58 + Math.sin(t * 1.5 + 1.2) * 16, H * 0.58 + Math.cos(t * 1.1 + 0.4) * 12);
+    ctx.rotate(0.22 + Math.sin(t * 1.1) * 0.06);
+    ctx.fillStyle = 'rgba(255, 235, 245, 0.95)';
+    ctx.shadowBlur = 35;
+    ctx.shadowColor = '#ffffff';
+    ctx.fillRect(-12, -84, 22, 102);
+    ctx.fillRect(-34, -12, 66, 20);
+    ctx.fillRect(-24, 18, 18, 84);
+    ctx.fillRect(2, 18, 18, 84);
+    ctx.restore();
 
-    const tickerOffset = (t * 60) % (W + 800);
-    ctx.shadowColor = '#ffff00';
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = 'rgba(255,255,0,0.9)';
-    ctx.font = '13px monospace';
+    const tickerOffset = (t * 90) % (W + 900);
+    ctx.shadowColor = accentColor;
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = 'rgba(255,120,210,0.95)';
+    ctx.font = 'bold 14px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText('◆ SOFTWARE  ◆ VIDEO 360°  ◆ AVATARES 3D  ◆ EVENTOS XR  ◆ METAVERSO  ◆ STREAMING  ', W - tickerOffset, H - 14);
+    ctx.fillText('◆ STUDIO 360 ◆ DANCE MAPPING ◆ PERFORMANCE VISUAL ◆ AGENCY360 ◆', W - tickerOffset, H - 16);
 
     for (let y = 0; y < H; y += 3) {
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
@@ -379,7 +397,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
 
     // Video screen animated canvas
-    const videoScreen = makeVideoCanvasTexture();
+    const videoScreen = makeVideoCanvasTexture('DANCE XR', '#ff00ff');
     videoScreenRef.current = videoScreen;
 
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
@@ -589,7 +607,6 @@ function buildCity(scene, flicker, gt, videoTex) {
   // Canvas screens on zone building faces
   const screenDefs = [
     [20 - 4.05, 8, 20, 5, 2.8, Math.PI/2, 'AVATAR LAB', '#ffff00'],
-    [-20 + 4.65, 9, 20, 4.5, 2.5, 0, 'EVENT DOME', '#ff6600'],
   ];
   screenDefs.forEach(([x, y, z, w, h, rotY, label, color]) => {
     const cv = makeVideoCanvasTexture(label, color);
@@ -712,34 +729,24 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
   const gKey = colorToGlowKey(color);
   addGlowSprite(scene, x, h + 4, z, gt[gKey], 26);
   addGlowSprite(scene, x, h + 1, z, gt[gKey], 12);
-  addGlowSprite(scene, x, 0.6, z, gt[gKey], 10);
 }
 
 // ─── Video screen for HQ building ────────────────────────────────────────────
 
 function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
-  // Big screen on front face
-  const screenW = bw * 1.6;
-  const screenH = screenW * (9 / 16);
+  const facadeW = bw;
+  const facadeH = bh * 0.82;
+  const facadeY = bh * 0.48;
+
   const screenMat = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.FrontSide });
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(screenW, screenH), screenMat);
-  screen.position.set(bx, bh * 0.55, bz + bw / 2 + 0.08);
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW, facadeH), screenMat);
+  screen.position.set(bx, facadeY, bz + bw / 2 + 0.08);
   scene.add(screen);
 
-  // Neon border around screen
-  const borderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(screenW + 0.2, screenH + 0.2, 0.05));
+  const borderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW + 0.12, facadeH + 0.12, 0.05));
   const borderLine = new THREE.LineSegments(borderGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
-  borderLine.position.set(bx, bh * 0.55, bz + bw / 2 + 0.1);
+  borderLine.position.set(bx, facadeY, bz + bw / 2 + 0.1);
   scene.add(borderLine);
-
-  // Sin halo frontal para mantener la pantalla central limpia
-
-  // Side panel screen (smaller)
-  const sideMat = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.FrontSide });
-  const side = new THREE.Mesh(new THREE.PlaneGeometry(screenW * 0.6, screenH * 0.6), sideMat);
-  side.rotation.y = -Math.PI / 2;
-  side.position.set(bx + bw / 2 + 0.08, bh * 0.6, bz);
-  scene.add(side);
 }
 
 // ─── Extra canvas screens on mid buildings ────────────────────────────────────

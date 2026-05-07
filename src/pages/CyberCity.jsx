@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+
+const ROBOT_STORAGE_KEY = 'cybercity-last-robot-model';
 import { AnimatePresence } from 'framer-motion';
 import CityWorld from '../components/city/CityWorld.jsx';
 import HUD from '../components/city/HUD';
@@ -17,7 +19,7 @@ export default function CyberCity() {
   const [nearStand, setNearStand] = useState(null);
   const [openStand, setOpenStand] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [robotModelUrl, setRobotModelUrl] = useState('');
+  const [robotModelUrl, setRobotModelUrl] = useState(() => localStorage.getItem(ROBOT_STORAGE_KEY) || '');
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -25,6 +27,12 @@ export default function CyberCity() {
     window.addEventListener('resize', updateMobile);
     return () => window.removeEventListener('resize', updateMobile);
   }, []);
+
+  useEffect(() => {
+    if (robotModelUrl) {
+      localStorage.setItem(ROBOT_STORAGE_KEY, robotModelUrl);
+    }
+  }, [robotModelUrl]);
 
   // Track pointer lock state
   useEffect(() => {

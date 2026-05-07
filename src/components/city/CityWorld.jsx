@@ -334,10 +334,19 @@ const MOVE_SPEED = 16;
 const LOOK_SPEED = 0.0032;
 const LOOK_SMOOTH = 0.22;
 const MAX_PITCH = Math.PI / 2 - 0.02;
+const BUILDING_COLLIDERS = [
+  ...ZONES.map((zone) => ({ x: zone.position[0], z: zone.position[2], radius: Math.max(zone.buildingWidth * 0.9, 6) })),
+  ...[
+    [-18,-30],[18,-30],[-30,18],[30,18],[-34,-34],[34,-34],[-34,34],[34,34],[-46,-18],[46,-18],[-46,18],[46,18],[-12,-44],[12,-44],[-12,44],[12,44],[-58,-30],[-44,-30],[-30,-30],[30,-30],[44,-30],[58,-30],[-58,30],[-44,30],[-30,30],[30,30],[44,30],[58,30],
+  ].map(([x, z]) => ({ x, z, radius: 6 }))
+];
+const HERO_COLORS = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
 
 
 export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '' }) {
   const mountRef = useRef(null);
+  const heroRobotsRef = useRef([]);
+  const audioRef = useRef(null);
   const keysRef = useRef({});
   const yawRef = useRef(0);
   const pitchRef = useRef(-0.1);
@@ -486,28 +495,52 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     extraCanvasesRef.current = extraCanvases;
 
     const robotSwarm = addFlyingRobots(scene);
-    let heroRobot = null;
+    const heroRobots = [];
+    heroRobotsRef.current = heroRobots;
 
     if (robotModelUrl) {
-    const loader = new GLTFLoader();
-    loader.load(robotModelUrl, (gltf) => {
-      heroRobot = gltf.scene;
-      heroRobot.scale.setScalar(1.4);
-      heroRobot.position.set(24, 8, 24);
+      const loader = new GLTFLoader();
+      HERO_COLORS.forEach((heroColor, index) => {
+        loader.load(robotModelUrl, (gltf) => {
+          const heroRobot = gltf.scene;
+          heroRobot.scale.setScalar(1.2 + index * 0.08);
+          heroRobot.position.set(22 + index * 3.5, 8 + index * 0.45, 20 + index * 2.8);
 
-      heroRobot.traverse((child) => {
-        if (!child.isMesh) return;
-        child.material = child.material.clone();
-        if ('color' in child.material) child.material.color.multiplyScalar(1.35);
-        if ('emissive' in child.material) {
-          child.material.emissive = new THREE.Color(0x7c3aed);
-          child.material.emissiveIntensity = 0.65;
-        }
+          heroRobot.traverse((child) => {
+            if (!child.isMesh) return;
+            child.material = child.material.clone();
+            if ('color' in child.material) {
+              child.material.color = new THREE.Color(heroColor);
+            }
+            if ('emissive' in child.material) {
+              child.material.emissive = new THREE.Color(heroColor);
+              child.material.emissiveIntensity = 1.2;
+            }
+          });
+
+          scene.add(heroRobot);
+          heroRobots.push({
+            mesh: heroRobot,
+            anchorX: 18 + index * 9,
+            anchorZ: 18 + (index % 2 === 0 ? 16 : -16),
+            speed: 0.12 + index * 0.018,
+            driftX: 12 + index * 1.8,
+            driftZ: 10 + index * 1.6,
+            height: 8 + index * 0.7,
+            offset: index * 1.4,
+          });
+        });
       });
-
-      scene.add(heroRobot);
-    });
     }
+
+    const ambienceAudio = new Audio('https://cdn.pixabay.com/download/audio/2023/02/28/audio_6e7d1e85f0.mp3?filename=futuristic-atmosphere-141082.mp3');
+    ambienceAudio.loop = true;
+    ambienceAudio.volume = 0.22;
+    audioRef.current = ambienceAudio;
+
+    const startAmbientAudio = () => {
+      ambienceAudio.play().catch(() => {});
+    };
 
     // Controls
     const handleClick = () => {
@@ -585,6 +618,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
 
     canvas.addEventListener('click', handleClick);
+    canvas.addEventListener('click', startAmbientAudio);
+    canvas.addEventListener('touchstart', startAmbientAudio, { passive: true });
     canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -638,6 +673,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
           euler.set(0, yawRef.current, 0);
           dir.applyEuler(euler);
           camera.position.addScaledVector(dir, (isMobile ? MOVE_SPEED * 0.7 : MOVE_SPEED) * delta);
+          const safeCameraPosition = avoidBuildingCollision(camera.position.x, camera.position.z, 4.2);
+          camera.position.x = safeCameraPosition.x;
+          camera.position.z = safeCameraPosition.z;
           camera.position.y = 1.7;
         }
       }
@@ -673,20 +711,19 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
       const robotTime = frameCount * 0.016;
       updateFlyingRobots(robotSwarm, robotTime);
-      if (heroRobot) {
-        const heroX = 24 + Math.sin(robotTime * 0.22) * 22 + Math.sin(robotTime * 0.51) * 6;
-        const heroZ = 24 + Math.cos(robotTime * 0.18) * 20 + Math.cos(robotTime * 0.43) * 5;
-        const nextX = Math.max(-58, Math.min(58, heroX));
-        const nextZ = Math.max(-58, Math.min(58, heroZ));
-        const prevX = heroRobot.position.x;
-        const prevZ = heroRobot.position.z;
+      heroRobots.forEach((heroRobot, index) => {
+        const targetX = heroRobot.anchorX + Math.sin(robotTime * heroRobot.speed + heroRobot.offset) * heroRobot.driftX + Math.sin(robotTime * 0.42 + index) * 4;
+        const targetZ = heroRobot.anchorZ + Math.cos(robotTime * (heroRobot.speed * 0.9) + heroRobot.offset) * heroRobot.driftZ;
+        const safeTarget = avoidBuildingCollision(targetX, targetZ, 5.5);
+        const prevX = heroRobot.mesh.position.x;
+        const prevZ = heroRobot.mesh.position.z;
 
-        heroRobot.position.x += (nextX - heroRobot.position.x) * 0.02;
-        heroRobot.position.z += (nextZ - heroRobot.position.z) * 0.02;
-        heroRobot.position.y = 9 + Math.sin(robotTime * 1.4) * 1.2 + Math.cos(robotTime * 0.7) * 0.6;
-        heroRobot.rotation.y = Math.atan2(heroRobot.position.x - prevX, heroRobot.position.z - prevZ);
-        heroRobot.rotation.z = Math.sin(robotTime * 1.1) * 0.08;
-      }
+        heroRobot.mesh.position.x += (safeTarget.x - heroRobot.mesh.position.x) * 0.02;
+        heroRobot.mesh.position.z += (safeTarget.z - heroRobot.mesh.position.z) * 0.02;
+        heroRobot.mesh.position.y = heroRobot.height + Math.sin(robotTime * 1.3 + heroRobot.offset) * 1.3 + Math.cos(robotTime * 0.6 + index) * 0.5;
+        heroRobot.mesh.rotation.y = Math.atan2(heroRobot.mesh.position.x - prevX, heroRobot.mesh.position.z - prevZ);
+        heroRobot.mesh.rotation.z = Math.sin(robotTime * 1.15 + heroRobot.offset) * 0.07;
+      });
 
       renderer.render(scene, camera);
     };
@@ -702,6 +739,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     return () => {
       cancelAnimationFrame(animFrameRef.current);
       canvas.removeEventListener('click', handleClick);
+      canvas.removeEventListener('click', startAmbientAudio);
+      canvas.removeEventListener('touchstart', startAmbientAudio);
       canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);
@@ -714,12 +753,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       plazaVideoScreen?.dispose();
       plazaVideoTexture?.dispose();
       robotSwarm.forEach((robot) => scene.remove(robot.group));
-      if (heroRobot) scene.remove(heroRobot);
+      heroRobots.forEach((heroRobot) => scene.remove(heroRobot.mesh));
       if (plazaVideoElement) {
         plazaVideoElement.pause();
         plazaVideoElement.removeAttribute('src');
         plazaVideoElement.load();
       }
+      ambienceAudio.pause();
+      ambienceAudio.currentTime = 0;
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };

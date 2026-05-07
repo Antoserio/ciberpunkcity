@@ -420,8 +420,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     if (audioRef.current) {
       audioRef.current.ambienceAudio.muted = !audioEnabled;
       audioRef.current.ambienceLayerTwo.muted = !audioEnabled;
-      audioRef.current.ambienceAudio.volume = audioEnabled ? 0.22 : 0;
-      audioRef.current.ambienceLayerTwo.volume = audioEnabled ? 0.08 : 0;
+      audioRef.current.ambienceAudio.volume = audioEnabled ? 0.5 : 0;
+      audioRef.current.ambienceLayerTwo.volume = audioEnabled ? 0.14 : 0;
     }
   }, [audioEnabled]);
 
@@ -513,16 +513,16 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     const robotSwarm = addFlyingRobots(scene);
 
-    const ambienceAudio = new Audio('https://cdn.pixabay.com/download/audio/2023/02/28/audio_6e7d1e85f0.mp3?filename=futuristic-atmosphere-141082.mp3');
-    const ambienceLayerTwo = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_c4a7d0b1d1.mp3?filename=ambient-piano-logo-6903.mp3');
+    const ambienceAudio = new Audio('https://media.base44.com/files/public/69fa345f1e88257c77c4e49b/b7918b98e_efecto-de-sonido-tecnologia-tecno-sound-effect-128-ytshortssavetubeme.mp3');
+    const ambienceLayerTwo = new Audio('https://cdn.pixabay.com/download/audio/2023/02/28/audio_6e7d1e85f0.mp3?filename=futuristic-atmosphere-141082.mp3');
     ambienceAudio.loop = true;
     ambienceLayerTwo.loop = true;
     ambienceAudio.preload = 'auto';
     ambienceLayerTwo.preload = 'auto';
     ambienceAudio.crossOrigin = 'anonymous';
     ambienceLayerTwo.crossOrigin = 'anonymous';
-    ambienceAudio.volume = audioEnabled ? 0.22 : 0;
-    ambienceLayerTwo.volume = audioEnabled ? 0.08 : 0;
+    ambienceAudio.volume = audioEnabled ? 0.5 : 0;
+    ambienceLayerTwo.volume = audioEnabled ? 0.14 : 0;
     ambienceAudio.muted = !audioEnabled;
     ambienceLayerTwo.muted = !audioEnabled;
     audioRef.current = { ambienceAudio, ambienceLayerTwo };
@@ -532,8 +532,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       ambienceLayerTwo.currentTime = ambienceLayerTwo.currentTime || 0;
       ambienceAudio.muted = !audioEnabled;
       ambienceLayerTwo.muted = !audioEnabled;
-      ambienceAudio.volume = audioEnabled ? 0.22 : 0;
-      ambienceLayerTwo.volume = audioEnabled ? 0.08 : 0;
+      ambienceAudio.volume = audioEnabled ? 0.5 : 0;
+      ambienceLayerTwo.volume = audioEnabled ? 0.14 : 0;
       const playMain = ambienceAudio.play();
       const playLayer = ambienceLayerTwo.play();
       Promise.allSettled([playMain, playLayer]).then(() => {});
@@ -577,8 +577,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
             anchorX: anchor.x,
             anchorZ: anchor.z,
             speed: 0.08 + index * 0.012,
-            driftX: 5 + index * 0.8,
-            driftZ: 4 + index * 0.7,
+            driftX: 12 + index * 1.8,
+            driftZ: 10 + index * 1.5,
             height: 4.5 + index * 0.45,
             offset: index * 1.7,
           });
@@ -756,8 +756,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       const robotTime = frameCount * 0.016;
       updateFlyingRobots(robotSwarm, robotTime);
       heroRobots.forEach((heroRobot, index) => {
-        const targetX = heroRobot.anchorX + Math.sin(robotTime * heroRobot.speed + heroRobot.offset) * heroRobot.driftX + Math.sin(robotTime * 0.42 + index) * 4;
-        const targetZ = heroRobot.anchorZ + Math.cos(robotTime * (heroRobot.speed * 0.9) + heroRobot.offset) * heroRobot.driftZ;
+        const targetX = heroRobot.anchorX + Math.sin(robotTime * heroRobot.speed + heroRobot.offset) * heroRobot.driftX + Math.sin(robotTime * 0.42 + index) * 8;
+        const targetZ = heroRobot.anchorZ + Math.cos(robotTime * (heroRobot.speed * 0.9) + heroRobot.offset) * heroRobot.driftZ + Math.sin(robotTime * 0.33 + index * 1.2) * 6;
         const safeTarget = avoidBuildingCollision(targetX, targetZ, 5.5);
         const prevX = heroRobot.mesh.position.x;
         const prevZ = heroRobot.mesh.position.z;
@@ -1264,8 +1264,8 @@ function addFlyingRobots(scene) {
     const lane = lanes[i % lanes.length];
     const originX = lane.minX + Math.random() * (lane.maxX - lane.minX);
     const originZ = lane.minZ + Math.random() * (lane.maxZ - lane.minZ);
-    const driftX = 3 + Math.random() * Math.min(8, (lane.maxX - lane.minX) * 0.35);
-    const driftZ = 3 + Math.random() * Math.min(8, (lane.maxZ - lane.minZ) * 0.35);
+    const driftX = 8 + Math.random() * Math.min(14, (lane.maxX - lane.minX) * 0.6);
+    const driftZ = 8 + Math.random() * Math.min(14, (lane.maxZ - lane.minZ) * 0.6);
     const speed = 0.1 + Math.random() * 0.12;
     const height = 5 + Math.random() * 5;
     const offset = Math.random() * Math.PI * 2;

@@ -10,7 +10,7 @@ import MiniMap from '../components/city/MiniMap';
 import StandModal from '../components/city/StandModal';
 import RobotUploadPanel from '../components/city/RobotUploadPanel.jsx';
 import TopNav from '../components/city/TopNav.jsx';
-import WorksOverlay from '../components/city/WorksOverlay.jsx';
+import WorksScreen from '../components/city/WorksScreen.jsx';
 import AboutOverlay from '../components/city/AboutOverlay.jsx';
 
 export default function CyberCity() {
@@ -129,6 +129,7 @@ export default function CyberCity() {
           isMobile={isMobile}
           robotModelUrl={robotModelUrl}
           audioEnabled={audioEnabled}
+          activeView={activeView}
         />
       </div>
 
@@ -178,13 +179,17 @@ export default function CyberCity() {
       </AnimatePresence>
 
       <button
-        onClick={() => setAudioEnabled((value) => !value)}
+        onClick={() => {
+          setAudioEnabled((value) => !value);
+          const sounds = Array.from(document.querySelectorAll('audio'));
+          sounds.forEach((audio) => audio.play?.().catch(() => {}));
+        }}
         className="fixed bottom-28 left-4 z-40 rounded-full border border-white/10 bg-black/60 px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white backdrop-blur-md transition hover:border-cyan-400/40 hover:text-cyan-300 sm:bottom-6 sm:left-6"
       >
         {audioEnabled ? 'SONIDO ON' : 'SONIDO OFF'}
       </button>
 
-      <WorksOverlay open={activeView === 'works'} onClose={() => setActiveView('explore')} />
+      {activeView === 'works' && <WorksScreen />}
       <AboutOverlay open={activeView === 'about'} onClose={() => setActiveView('explore')} />
 
       {/* Avatar AI Assistant */}

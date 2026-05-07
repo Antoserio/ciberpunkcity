@@ -343,7 +343,7 @@ const BUILDING_COLLIDERS = [
 const HERO_COLORS = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
 
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore' }) {
   const mountRef = useRef(null);
   const heroRobotsRef = useRef([]);
   const audioRef = useRef(null);
@@ -422,6 +422,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       audioRef.current.ambienceLayerTwo.muted = !audioEnabled;
       audioRef.current.ambienceAudio.volume = audioEnabled ? 0.5 : 0;
       audioRef.current.ambienceLayerTwo.volume = audioEnabled ? 0.14 : 0;
+      if (audioEnabled) {
+        audioRef.current.ambienceAudio.play().catch(() => {});
+        audioRef.current.ambienceLayerTwo.play().catch(() => {});
+      }
     }
   }, [audioEnabled]);
 
@@ -438,6 +442,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     // Camera
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
     camera.position.set(0, 1.7, 14);
+
+    if (activeView === 'works') {
+      camera.position.set(0, 8.5, 22);
+      targetYawRef.current = 0;
+      yawRef.current = 0;
+      targetPitchRef.current = -0.18;
+      pitchRef.current = -0.18;
+    }
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -696,7 +708,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
       // Movement
       const k = keysRef.current;
-      const moving = k['KeyW'] || k['ArrowUp'] || k['KeyS'] || k['ArrowDown'] || k['KeyA'] || k['ArrowLeft'] || k['KeyD'] || k['ArrowRight'] || (isMobile && touchStateRef.current.moving);
+      const moving = activeView === 'explore' && (k['KeyW'] || k['ArrowUp'] || k['KeyS'] || k['ArrowDown'] || k['KeyA'] || k['ArrowLeft'] || k['KeyD'] || k['ArrowRight'] || (isMobile && touchStateRef.current.moving));
       if ((isLockedRef.current || isMobile) && moving) {
         dir.set(0, 0, 0);
         if (isMobile && touchStateRef.current.moving) {
@@ -726,9 +738,17 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
       euler.set(pitchRef.current, yawRef.current, 0);
       camera.quaternion.setFromEuler(euler);
+      if (activeView === 'works') {
+        camera.position.x += (0 - camera.position.x) * 0.06;
+        camera.position.y += (8.5 - camera.position.y) * 0.06;
+        camera.position.z += (22 - camera.position.z) * 0.06;
+      }
+
       camera.position.x = Math.max(-72, Math.min(72, camera.position.x));
       camera.position.z = Math.max(-72, Math.min(72, camera.position.z));
-      checkZoneProximity(camera.position);
+      if (activeView === 'explore') {
+        checkZoneProximity(camera.position);
+      }
 
       // Flicker — update every 6th frame for perf
       if (frameCount % 6 === 0) {
@@ -813,7 +833,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
-  }, [checkZoneProximity, plazaVideoUrl, robotModelUrl]);
+  }, [checkZoneProximity, plazaVideoUrl, robotModelUrl, activeView]);
 
   return <div ref={mountRef} className="w-full h-full cursor-crosshair" />;
 }

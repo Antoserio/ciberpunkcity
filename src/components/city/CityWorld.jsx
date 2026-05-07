@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { ZONES } from './cityData';
+import { createPlazaVideoBuilding } from './plazaVideoBuilding';
 
 // Radial glow sprite texture
 function makeGlowTexture(hex) {
@@ -333,7 +334,7 @@ const LOOK_SMOOTH = 0.22;
 const MAX_PITCH = Math.PI / 2 - 0.02;
 
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl }) {
   const mountRef = useRef(null);
   const keysRef = useRef({});
   const yawRef = useRef(0);
@@ -424,6 +425,31 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     // Video screen texture
     const videoScreen = makeVideoCanvasTexture('DANCE XR', '#ff00ff', 'dance');
     videoScreenRef.current = videoScreen;
+
+    let plazaVideoElement = null;
+    let plazaVideoTexture = null;
+    let plazaVideoBuilding = null;
+
+    if (plazaVideoUrl) {
+      plazaVideoElement = document.createElement('video');
+      plazaVideoElement.src = plazaVideoUrl;
+      plazaVideoElement.crossOrigin = 'anonymous';
+      plazaVideoElement.muted = true;
+      plazaVideoElement.loop = true;
+      plazaVideoElement.playsInline = true;
+      plazaVideoElement.autoplay = true;
+      plazaVideoElement.setAttribute('muted', '');
+      plazaVideoElement.setAttribute('playsinline', '');
+      plazaVideoElement.play().catch(() => {});
+
+      plazaVideoTexture = new THREE.VideoTexture(plazaVideoElement);
+      plazaVideoTexture.colorSpace = THREE.SRGBColorSpace;
+      plazaVideoTexture.minFilter = THREE.LinearFilter;
+      plazaVideoTexture.magFilter = THREE.LinearFilter;
+      plazaVideoTexture.generateMipmaps = false;
+
+      plazaVideoBuilding = createPlazaVideoBuilding(scene, plazaVideoTexture);
+    }
 
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
     extraCanvasesRef.current = extraCanvases;
@@ -535,10 +561,17 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('resize', handleResize);
+      plazaVideoBuilding?.dispose();
+      plazaVideoTexture?.dispose();
+      if (plazaVideoElement) {
+        plazaVideoElement.pause();
+        plazaVideoElement.src = '';
+        plazaVideoElement.load();
+      }
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
-  }, [checkZoneProximity]);
+  }, [checkZoneProximity, plazaVideoUrl]);
 
   return <div ref={mountRef} className="w-full h-full cursor-crosshair" />;
 }

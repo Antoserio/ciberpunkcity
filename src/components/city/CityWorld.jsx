@@ -286,7 +286,8 @@ function makeNeonSignTexture(text, color) {
 
 const MOVE_SPEED = 16;
 const LOOK_SPEED = 0.0018;
-const LOOK_SMOOTH = 0.10;
+const LOOK_SMOOTH = 0.12;
+const MAX_PITCH = Math.PI / 2 - 0.05;
 
 
 export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen }) {
@@ -424,11 +425,13 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (isLockedRef.current && (mouseDeltaRef.current.x !== 0 || mouseDeltaRef.current.y !== 0)) {
         targetYawRef.current -= mouseDeltaRef.current.x * LOOK_SPEED;
         targetPitchRef.current -= mouseDeltaRef.current.y * LOOK_SPEED;
+        targetPitchRef.current = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, targetPitchRef.current));
         mouseDeltaRef.current.x = 0;
         mouseDeltaRef.current.y = 0;
       }
       yawRef.current += (targetYawRef.current - yawRef.current) * LOOK_SMOOTH;
       pitchRef.current += (targetPitchRef.current - pitchRef.current) * LOOK_SMOOTH;
+      pitchRef.current = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, pitchRef.current));
 
       // Movement
       const k = keysRef.current;

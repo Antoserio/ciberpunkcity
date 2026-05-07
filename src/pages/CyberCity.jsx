@@ -12,6 +12,7 @@ import RobotUploadPanel from '../components/city/RobotUploadPanel.jsx';
 import TopNav from '../components/city/TopNav.jsx';
 import WorksScreen from '../components/city/WorksScreen.jsx';
 import AboutOverlay from '../components/city/AboutOverlay.jsx';
+import { STANDS } from '../components/city/standsData';
 
 export default function CyberCity() {
   const [started, setStarted] = useState(false);
@@ -25,6 +26,7 @@ export default function CyberCity() {
   const [robotFileName, setRobotFileName] = useState('');
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [activeView, setActiveView] = useState('explore');
+  const [activeWork, setActiveWork] = useState(() => STANDS.find((stand) => stand.type === 'video' || stand.type === 'showcase') || null);
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -129,6 +131,7 @@ export default function CyberCity() {
           robotModelUrl={robotModelUrl}
           audioEnabled={audioEnabled}
           activeView={activeView}
+          activeWork={activeWork}
         />
       </div>
 
@@ -183,7 +186,7 @@ export default function CyberCity() {
         {audioEnabled ? 'SONIDO ON' : 'SONIDO OFF'}
       </button>
 
-      {activeView === 'works' && <WorksScreen />}
+      {activeView === 'works' && <WorksScreen onChangeActiveWork={setActiveWork} />}
       <AboutOverlay open={activeView === 'about'} onClose={() => setActiveView('explore')} />
       <AvatarAssistant />
     </div>

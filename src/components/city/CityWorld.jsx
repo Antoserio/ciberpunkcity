@@ -343,7 +343,7 @@ const BUILDING_COLLIDERS = [
 const HERO_COLORS = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
 
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore' }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null }) {
   const mountRef = useRef(null);
   const heroRobotsRef = useRef([]);
   const audioRef = useRef(null);
@@ -489,6 +489,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     let plazaVideoElement = null;
     let plazaVideoTexture = null;
     let plazaVideoScreen = null;
+    let worksMediaElement = null;
+    let worksMediaTexture = null;
 
     if (plazaVideoUrl) {
       plazaVideoElement = document.createElement('video');
@@ -520,7 +522,37 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       plazaVideoScreen = addPlazaVideoScreen(scene, plazaVideoTexture);
     }
 
-    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
+    if (activeWork) {
+      const worksImageUrl = activeWork.type === 'showcase' ? activeWork.showcaseItems?.[0]?.img : null;
+      if (activeWork.type === 'video' && activeWork.videoUrl?.includes('/embed/')) {
+        const match = activeWork.videoUrl.match(/\/embed\/([^?&]+)/);
+        const videoId = match?.[1];
+        if (videoId) {
+          worksMediaElement = document.createElement('video');
+          worksMediaElement.crossOrigin = 'anonymous';
+          worksMediaElement.muted = true;
+          worksMediaElement.loop = true;
+          worksMediaElement.playsInline = true;
+          worksMediaElement.autoplay = true;
+          worksMediaElement.preload = 'auto';
+          worksMediaElement.src = `https://www.youtube.com/watch?v=${videoId}`;
+        }
+      }
+
+      if (worksImageUrl) {
+        worksMediaTexture = new THREE.TextureLoader().load(worksImageUrl);
+        worksMediaTexture.colorSpace = THREE.SRGBColorSpace;
+      } else if (worksMediaElement) {
+        worksMediaTexture = new THREE.VideoTexture(worksMediaElement);
+        worksMediaTexture.colorSpace = THREE.SRGBColorSpace;
+        worksMediaTexture.minFilter = THREE.LinearFilter;
+        worksMediaTexture.magFilter = THREE.LinearFilter;
+        worksMediaTexture.generateMipmaps = false;
+        worksMediaElement.play().catch(() => {});
+      }
+    }
+
+    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture);
     extraCanvasesRef.current = extraCanvases;
 
     const robotSwarm = addFlyingRobots(scene);
@@ -819,12 +851,18 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       window.removeEventListener('resize', handleResize);
       plazaVideoScreen?.dispose();
       plazaVideoTexture?.dispose();
+      worksMediaTexture?.dispose?.();
       robotSwarm.forEach((robot) => scene.remove(robot.group));
       heroRobots.forEach((heroRobot) => scene.remove(heroRobot.mesh));
       if (plazaVideoElement) {
         plazaVideoElement.pause();
         plazaVideoElement.removeAttribute('src');
         plazaVideoElement.load();
+      }
+      if (worksMediaElement) {
+        worksMediaElement.pause();
+        worksMediaElement.removeAttribute('src');
+        worksMediaElement.load();
       }
       ambienceAudio.pause();
       ambienceLayerTwo.pause();
@@ -833,7 +871,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
-  }, [checkZoneProximity, plazaVideoUrl, robotModelUrl, activeView]);
+  }, [checkZoneProximity, plazaVideoUrl, robotModelUrl, activeView, activeWork]);
 
   return <div ref={mountRef} className="w-full h-full cursor-crosshair" />;
 }
@@ -864,7 +902,7 @@ function colorToGlowKey(color) {
 
 // ─── Main city builder ────────────────────────────────────────────────────────
 
-function buildCity(scene, flicker, gt, videoTex) {
+function buildCity(scene, flicker, gt, videoTex, worksTex) {
   const extraCanvases = [];
   // Ground — plaza oscura abierta
   const ground = new THREE.Mesh(
@@ -909,7 +947,7 @@ function buildCity(scene, flicker, gt, videoTex) {
   scene.add(plaza);
 
   // Zone buildings
-  ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex));
+  ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex));
 
   // Mid-range buildings — perímetro abierto con fondo más denso
   const midPositions = [
@@ -970,7 +1008,7 @@ function buildCity(scene, flicker, gt, videoTex) {
 
 // ─── Zone building ────────────────────────────────────────────────────────────
 
-function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
+function createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex) {
   const [x, , z] = zone.position;
   const h = zone.buildingHeight || 16;
   const w = zone.buildingWidth || 8;
@@ -1027,7 +1065,7 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
 
   // HQ gets the big video screen billboard
   if (isHQ && videoTex) {
-    addVideoScreen(scene, x, z, w, h, videoTex, flicker);
+    addVideoScreen(scene, x, z, w, h, videoTex, flicker, worksTex);
   }
 
   // Zone billboard name above building
@@ -1047,20 +1085,36 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex) {
 
 // ─── Video screen for HQ building ────────────────────────────────────────────
 
-function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
+function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex) {
   const facadeW = bw;
   const facadeH = bh * 0.82;
   const facadeY = bh * 0.48;
 
-  const screenMat = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.FrontSide });
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW, facadeH), screenMat);
-  screen.position.set(bx, facadeY, bz + bw / 2 + 0.08);
-  scene.add(screen);
+  const frontMat = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.FrontSide });
+  const frontScreen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW, facadeH), frontMat);
+  frontScreen.position.set(bx, facadeY, bz + bw / 2 + 0.08);
+  scene.add(frontScreen);
 
-  const borderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW + 0.12, facadeH + 0.12, 0.05));
-  const borderLine = new THREE.LineSegments(borderGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
-  borderLine.position.set(bx, facadeY, bz + bw / 2 + 0.1);
-  scene.add(borderLine);
+  const rearMat = new THREE.MeshBasicMaterial({
+    map: worksTex || null,
+    color: worksTex ? 0xffffff : 0x000000,
+    side: THREE.FrontSide,
+  });
+  const rearScreen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW, facadeH), rearMat);
+  rearScreen.position.set(bx, facadeY, bz - bw / 2 - 0.08);
+  rearScreen.rotation.y = Math.PI;
+  scene.add(rearScreen);
+
+  const frontBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW + 0.12, facadeH + 0.12, 0.05));
+  const frontBorderLine = new THREE.LineSegments(frontBorderGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
+  frontBorderLine.position.set(bx, facadeY, bz + bw / 2 + 0.1);
+  scene.add(frontBorderLine);
+
+  const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW + 0.12, facadeH + 0.12, 0.05));
+  const rearBorderLine = new THREE.LineSegments(rearBorderGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
+  rearBorderLine.position.set(bx, facadeY, bz - bw / 2 - 0.1);
+  rearBorderLine.rotation.y = Math.PI;
+  scene.add(rearBorderLine);
 }
 
 // ─── Extra canvas screens on mid buildings ────────────────────────────────────

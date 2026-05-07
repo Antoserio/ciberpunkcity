@@ -66,7 +66,6 @@ export default function CyberCity() {
           onLeaveStand={() => setNearStand(null)}
           onActivateStand={handleActivateStand}
           modalOpen={!!openStand}
-          screenVideoUrl="https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/641418395.mp4"
         />
       </div>
 

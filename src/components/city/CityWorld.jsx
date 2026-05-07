@@ -333,7 +333,7 @@ const LOOK_SMOOTH = 0.22;
 const MAX_PITCH = Math.PI / 2 - 0.02;
 
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, screenVideoUrl }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen }) {
   const mountRef = useRef(null);
   const keysRef = useRef({});
   const yawRef = useRef(0);
@@ -422,28 +422,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
 
     // Video screen texture
-    let screenTexture;
-    if (screenVideoUrl) {
-      const video = document.createElement('video');
-      video.src = screenVideoUrl;
-      video.crossOrigin = 'anonymous';
-      video.muted = true;
-      video.loop = true;
-      video.playsInline = true;
-      video.autoplay = true;
-      video.play();
-      screenTexture = new THREE.VideoTexture(video);
-      screenTexture.colorSpace = THREE.SRGBColorSpace;
-      screenTexture.minFilter = THREE.LinearFilter;
-      screenTexture.magFilter = THREE.LinearFilter;
-      screenTexture.generateMipmaps = false;
-    } else {
-      const videoScreen = makeVideoCanvasTexture('DANCE XR', '#ff00ff', 'dance');
-      videoScreenRef.current = videoScreen;
-      screenTexture = videoScreen.tex;
-    }
+    const videoScreen = makeVideoCanvasTexture('DANCE XR', '#ff00ff', 'dance');
+    videoScreenRef.current = videoScreen;
 
-    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, screenTexture);
+    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
     extraCanvasesRef.current = extraCanvases;
 
     // Controls

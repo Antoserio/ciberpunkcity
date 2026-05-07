@@ -608,15 +608,10 @@ function buildCity(scene, flicker, gt, videoTex) {
     createMidBuilding(scene, x, z, w, h, nc, flicker);
   });
 
-  // Billboard signs — 2 only
-  addBillboard(scene, 14, 5, -3, '◆ SOFTWARE', '#00ffff');
-  addBillboard(scene, -14, 5, 3, '◆ VIDEO 360', '#ff00ff');
 
 
   // Canvas screens on zone building faces
   const screenDefs = [
-    [20 + 4.05, 10, -20, 5.5, 3.1, -Math.PI/2, 'SOFTWARE HUB', '#00ffff'],
-    [-20, 12, -20 - 4.65, 6.5, 3.7, Math.PI, 'STUDIO 360', '#ff00ff'],
     [20 - 4.05, 8, 20, 5, 2.8, Math.PI/2, 'AVATAR LAB', '#ffff00'],
     [-20 + 4.65, 9, 20, 4.5, 2.5, 0, 'EVENT DOME', '#ff6600'],
   ];
@@ -625,7 +620,6 @@ function buildCity(scene, flicker, gt, videoTex) {
     extraCanvases.push(cv);
     addExtraScreen(scene, x, y, z, w, h, cv.tex, flicker, rotY);
   });
-
   // Los videos de Vimeo se volverán a integrar después, sin placeholders 3D intrusivos.
 
   // Distant skyline — 16 simple boxes, no glow sprites

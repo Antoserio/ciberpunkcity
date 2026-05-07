@@ -69,7 +69,6 @@ export default function CyberCity() {
         />
       </div>
 
-
       {/* HUD overlay */}
       <HUD
         isLocked={isLocked || hasClickedOnce}

@@ -422,7 +422,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
 
     // Video screen animated canvas
-    const videoScreen = makeVideoCanvasTexture('STUDIO 360', '#ff00ff', 'dance');
+    const videoScreen = makeVideoCanvasTexture('DANCE XR', '#ff00ff', 'dance');
     videoScreenRef.current = videoScreen;
 
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex);
@@ -629,7 +629,11 @@ function buildCity(scene, flicker, gt, videoTex) {
 
 
 
-  // STUDIO 360 facade stays clean; real video is rendered as HTML overlay.
+  // Canvas screen on STUDIO 360 front facade
+  const studioScreen = makeVideoCanvasTexture('DANCE XR', '#ff00ff', 'dance');
+  extraCanvases.push(studioScreen);
+  addExtraScreen(scene, -20, 10, -15.42, 7.2, 8.8, studioScreen.tex, flicker, 0);
+  // Los videos de Vimeo se volverán a integrar después, sin placeholders 3D intrusivos.
 
   // Distant skyline — 16 simple boxes, no glow sprites
   const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });
@@ -754,21 +758,14 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
   const facadeH = bh * 0.82;
   const facadeY = bh * 0.48;
 
-  const frameBack = new THREE.Mesh(
-    new THREE.BoxGeometry(facadeW + 0.18, facadeH + 0.18, 0.12),
-    new THREE.MeshBasicMaterial({ color: 0x050008 })
-  );
-  frameBack.position.set(bx, facadeY, bz + bw / 2 + 0.03);
-  scene.add(frameBack);
-
   const screenMat = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.FrontSide });
   const screen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW, facadeH), screenMat);
-  screen.position.set(bx, facadeY, bz + bw / 2 + 0.1);
+  screen.position.set(bx, facadeY, bz + bw / 2 + 0.08);
   scene.add(screen);
 
   const borderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW + 0.12, facadeH + 0.12, 0.05));
   const borderLine = new THREE.LineSegments(borderGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
-  borderLine.position.set(bx, facadeY, bz + bw / 2 + 0.11);
+  borderLine.position.set(bx, facadeY, bz + bw / 2 + 0.1);
   scene.add(borderLine);
 }
 

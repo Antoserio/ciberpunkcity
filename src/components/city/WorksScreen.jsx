@@ -15,11 +15,11 @@ export default function WorksScreen() {
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="absolute left-1/2 top-[17%] w-[min(82vw,860px)] -translate-x-1/2 pointer-events-auto"
+        className="absolute left-1/2 top-[22%] w-[min(56vw,620px)] -translate-x-1/2 pointer-events-auto"
       >
         <div className="overflow-hidden rounded-[1.6rem] border border-red-500/30 bg-black/30 shadow-[0_0_80px_rgba(255,0,90,0.16)] backdrop-blur-sm">
           <div className="grid md:grid-cols-[1.2fr_0.8fr]">
-            <div className="relative min-h-[280px] bg-black md:min-h-[400px]">
+            <div className="relative min-h-[220px] bg-black md:min-h-[300px]">
               {activeWork.type === 'video' ? (
                 <iframe
                   className="absolute inset-0 h-full w-full"

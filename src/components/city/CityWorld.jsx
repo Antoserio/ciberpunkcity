@@ -444,11 +444,11 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     camera.position.set(0, 1.7, 14);
 
     if (activeView === 'works') {
-      camera.position.set(0, 7.2, 14.5);
+      camera.position.set(0, 2.4, 2.8);
       targetYawRef.current = 0;
       yawRef.current = 0;
-      targetPitchRef.current = -0.08;
-      pitchRef.current = -0.08;
+      targetPitchRef.current = -0.02;
+      pitchRef.current = -0.02;
     }
 
     // Renderer
@@ -740,8 +740,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       camera.quaternion.setFromEuler(euler);
       if (activeView === 'works') {
         camera.position.x += (0 - camera.position.x) * 0.06;
-        camera.position.y += (7.2 - camera.position.y) * 0.06;
-        camera.position.z += (14.5 - camera.position.z) * 0.06;
+        camera.position.y += (2.4 - camera.position.y) * 0.06;
+        camera.position.z += (2.8 - camera.position.z) * 0.06;
       }
 
       camera.position.x = Math.max(-72, Math.min(72, camera.position.x));

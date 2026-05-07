@@ -471,9 +471,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         euler.set(0, yawRef.current, 0);
         dir.applyEuler(euler);
         camera.position.addScaledVector(dir, MOVE_SPEED * delta);
-        // Clamp position — plaza abierta con movimiento libre en toda la escena
-        camera.position.x = Math.max(-96, Math.min(96, camera.position.x));
-        camera.position.z = Math.max(-96, Math.min(96, camera.position.z));
+        // Clamp position — rango más amplio para recorrer toda la plaza
+        camera.position.x = Math.max(-110, Math.min(110, camera.position.x));
+        camera.position.z = Math.max(-110, Math.min(110, camera.position.z));
         camera.position.y = 1.7;
       }
 
@@ -758,13 +758,7 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker) {
   borderLine.position.set(bx, bh * 0.55, bz + bw / 2 + 0.1);
   scene.add(borderLine);
 
-  // Glow around screen
-  const sprMat = new THREE.SpriteMaterial({ color: 0xff00ff, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending });
-  const spr = new THREE.Sprite(sprMat);
-  spr.scale.set(screenW * 1.5, screenH * 1.5, 1);
-  spr.position.set(bx, bh * 0.55, bz + bw / 2 + 0.5);
-  scene.add(spr);
-  flicker.push({ material: spr.material, baseIntensity: 0.25, flickerSpeed: 0.8, flickerOffset: 0 });
+  // Sin halo frontal para mantener la pantalla central limpia
 
   // Side panel screen (smaller)
   const sideMat = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.FrontSide });

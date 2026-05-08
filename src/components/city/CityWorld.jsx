@@ -608,13 +608,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     targetPitchRef.current = -0.1;
     pitchRef.current = -0.1;
 
-    if (activeView === 'works') {
-      camera.position.set(0, 2.6, -10.5);
-      targetYawRef.current = Math.PI;
-      yawRef.current = Math.PI;
-      targetPitchRef.current = -0.03;
-      pitchRef.current = -0.03;
-    }
 
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const handleJoystickTouchMove = () => {};
@@ -1211,7 +1204,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
-  }, [checkZoneProximity, plazaVideoUrl, robotModelUrl, activeView, activeWork, worksTransitionToken]);
+  }, [checkZoneProximity, plazaVideoUrl, robotModelUrl, activeWork]);
 
   return <div ref={mountRef} className="w-full h-full cursor-crosshair" />;
 }

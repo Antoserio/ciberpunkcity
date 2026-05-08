@@ -648,7 +648,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const canvas = renderer.domElement;
 
     const vignette = document.createElement('div');
-    vignette.style.cssText = `position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 150px 50px rgba(0,0,0,0.6); z-index: 100;`;
+    vignette.style.cssText = `position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 150px 50px rgba(0,0,0,0.3); z-index: 100;`;
     document.body.appendChild(vignette);
 
     const composer = new EffectComposer(renderer);
@@ -1315,47 +1315,49 @@ function makeWorksCarouselScreen() {
     ctx.fillStyle = accent;
     ctx.shadowColor = accent;
     ctx.shadowBlur = 26;
-    ctx.font = '900 82px Orbitron, monospace';
+    ctx.font = work.title.length > 12 ? '900 66px Orbitron, monospace' : '900 76px Orbitron, monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(work.title, 1230, canvas.height / 2 - 80);
+    ctx.fillText(work.title, 1230, canvas.height / 2 - 150);
     ctx.shadowBlur = 0;
 
     ctx.fillStyle = '#f7f3ff';
-    ctx.font = 'bold 28px monospace';
-    ctx.fillText(work.description, 1230, canvas.height / 2 + 20);
+    ctx.font = 'bold 24px monospace';
+    wrapText(ctx, work.description, 1230, canvas.height / 2 - 50, 560, 34);
     ctx.fillStyle = '#d7cfff';
-    ctx.fillText(work.subtitle, 1230, canvas.height / 2 + 60);
+    ctx.font = 'bold 24px monospace';
+    wrapText(ctx, work.subtitle, 1230, canvas.height / 2 + 36, 560, 32);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '800 58px Rajdhani, sans-serif';
+    ctx.font = '800 52px Rajdhani, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`PROYECTO ${activeIndex + 1} / ${WORKS.length}`, canvas.width / 2, canvas.height - 80);
-    ctx.textAlign = 'left';
+    ctx.fillText(`PROYECTO ${activeIndex + 1} / ${WORKS.length}`, canvas.width / 2, canvas.height - 120);
     for (let i = 0; i < WORKS.length; i++) {
       ctx.fillStyle = i === activeIndex ? WORKS[i].color : '#ffffff33';
       ctx.beginPath();
-      ctx.arc(1255 + i * 42, 805, i === activeIndex ? 12 : 8, 0, Math.PI * 2);
+      ctx.arc(canvas.width / 2 - 63 + i * 42, 910, i === activeIndex ? 12 : 8, 0, Math.PI * 2);
       ctx.fill();
     }
 
     const controlOpacity = controlsVisible ? 1 : 0.98;
     ctx.globalAlpha = controlOpacity;
     ctx.fillStyle = '#02020a';
-    ctx.fillRect(90, 835, 620, 150);
-    ctx.fillRect(1210, 835, 620, 150);
+    ctx.fillRect(90, 860, 520, 120);
+    ctx.fillRect(1310, 860, 520, 120);
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 8;
-    ctx.strokeRect(90, 835, 620, 150);
-    ctx.strokeRect(1210, 835, 620, 150);
+    ctx.strokeRect(90, 860, 520, 120);
+    ctx.strokeRect(1310, 860, 520, 120);
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 84px Rajdhani, sans-serif';
-    ctx.fillText('◄ ANTERIOR', 150, 935);
-    ctx.fillText('SIGUIENTE ►', 1270, 935);
+    ctx.font = '900 72px Rajdhani, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('◄ ANTERIOR', 350, 940);
+    ctx.fillText('SIGUIENTE ►', 1570, 940);
     ctx.globalAlpha = 1;
 
     ctx.fillStyle = '#d9d9ff';
-    ctx.font = '700 28px Rajdhani, sans-serif';
-    ctx.fillText('USA ← → PARA CAMBIAR', 1330, 975);
+    ctx.font = '700 24px Rajdhani, sans-serif';
+    ctx.fillText('USA ← → PARA CAMBIAR', canvas.width / 2, 990);
+    ctx.textAlign = 'left';
 
     ctx.strokeStyle = `rgba(255,255,255,${0.08 + pulse * 0.08})`;
     ctx.lineWidth = 2;

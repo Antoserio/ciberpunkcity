@@ -647,16 +647,16 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
     keyLight.position.set(24, 30, 14);
     scene.add(keyLight);
-    const fillLight = new THREE.PointLight(0xff44cc, 12, 120, 2);
+    const fillLight = new THREE.PointLight(0xff44cc, 8, 120, 2);
     fillLight.position.set(0, 22, 0);
     scene.add(fillLight);
-    const cyanWash = new THREE.PointLight(0x00e5ff, 5, 90, 2);
+    const cyanWash = new THREE.PointLight(0x00e5ff, 4, 90, 2);
     cyanWash.position.set(-24, 14, -8);
     scene.add(cyanWash);
-    const magentaWash = new THREE.PointLight(0xff00c8, 5.5, 100, 2);
+    const magentaWash = new THREE.PointLight(0xff00c8, 4.5, 100, 2);
     magentaWash.position.set(24, 16, 6);
     scene.add(magentaWash);
-    const violetWash = new THREE.PointLight(0x7c3aed, 4.5, 80, 2);
+    const violetWash = new THREE.PointLight(0x7c3aed, 4, 80, 2);
     violetWash.position.set(0, 18, -24);
     scene.add(violetWash);
 
@@ -869,7 +869,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       // Block all movement and interaction while modal is open
       if (modalOpenRef.current) return;
 
-      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 10, 15)) < 12;
+      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(-25, 5, 5)) < 12;
       if (isNearCarousel && e.code === 'ArrowLeft') {
         e.preventDefault();
         worksCarousel.prev();
@@ -1052,7 +1052,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         }
       }
 
-      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 10, 15)) < 12;
+      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(-25, 5, 5)) < 12;
       worksCarousel.setProximity(isNearCarousel);
       worksCarousel.update(frameCount * 0.016);
 
@@ -1236,31 +1236,35 @@ function makeWorksCarouselScreen() {
     ctx.font = '500 36px Rajdhani, sans-serif';
     wrapText(ctx, work.description, 1180, 500, 560, 54);
 
-    ctx.fillStyle = `${accent}cc`;
-    ctx.font = '700 34px Rajdhani, sans-serif';
-    ctx.fillText(`${String(activeIndex + 1).padStart(2, '0')} / ${String(WORKS.length).padStart(2, '0')}`, 1180, 760);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 58px Rajdhani, sans-serif';
+    ctx.fillText(`PROYECTO ${activeIndex + 1} / ${WORKS.length}`, 1180, 770);
 
     for (let i = 0; i < WORKS.length; i++) {
       ctx.fillStyle = i === activeIndex ? WORKS[i].color : '#ffffff33';
       ctx.beginPath();
-      ctx.arc(1195 + i * 34, 825, i === activeIndex ? 10 : 7, 0, Math.PI * 2);
+      ctx.arc(1195 + i * 34, 835, i === activeIndex ? 10 : 7, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    const controlOpacity = controlsVisible ? 1 : 0.38;
+    const controlOpacity = controlsVisible ? 1 : 0.92;
     ctx.globalAlpha = controlOpacity;
-    ctx.fillStyle = '#00000099';
-    ctx.fillRect(1220, 900, 220, 92);
-    ctx.fillRect(1485, 900, 220, 92);
+    ctx.fillStyle = '#050510';
+    ctx.fillRect(140, 860, 520, 140);
+    ctx.fillRect(1260, 860, 520, 140);
     ctx.strokeStyle = accent;
-    ctx.lineWidth = 3;
-    ctx.strokeRect(1220, 900, 220, 92);
-    ctx.strokeRect(1485, 900, 220, 92);
+    ctx.lineWidth = 6;
+    ctx.strokeRect(140, 860, 520, 140);
+    ctx.strokeRect(1260, 860, 520, 140);
     ctx.fillStyle = '#ffffff';
-    ctx.font = '700 28px Rajdhani, sans-serif';
-    ctx.fillText('← ANTERIOR', 1260, 956);
-    ctx.fillText('SIGUIENTE →', 1520, 956);
+    ctx.font = '800 72px Rajdhani, sans-serif';
+    ctx.fillText('◄ ANTERIOR', 200, 950);
+    ctx.fillText('SIGUIENTE ►', 1320, 950);
     ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#e9e9ff';
+    ctx.font = '700 42px Rajdhani, sans-serif';
+    ctx.fillText('← → FLECHAS DEL TECLADO PARA NAVEGAR', 1180, 1010);
 
     ctx.strokeStyle = `rgba(255,255,255,${0.08 + pulse * 0.08})`;
     ctx.lineWidth = 2;
@@ -1371,32 +1375,37 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   plaza.position.y = 0.012;
   scene.add(plaza);
 
+  const carouselRotation = Math.PI / 4;
+
   const carouselFrame = new THREE.Mesh(
-    new THREE.BoxGeometry(18.8, 10.8, 0.55),
+    new THREE.BoxGeometry(12.8, 8.8, 0.55),
     new THREE.MeshBasicMaterial({ color: 0x04040a })
   );
-  carouselFrame.position.set(0, 10, 15);
+  carouselFrame.position.set(-25, 5, 5);
+  carouselFrame.rotation.y = carouselRotation;
   scene.add(carouselFrame);
 
   const carouselScreen = new THREE.Mesh(
-    new THREE.PlaneGeometry(18, 10),
+    new THREE.PlaneGeometry(12, 8),
     new THREE.MeshBasicMaterial({ map: worksCarousel.texture, toneMapped: false, side: THREE.DoubleSide })
   );
-  carouselScreen.position.set(0, 10, 14.78);
+  carouselScreen.position.set(-25, 5, 5.28);
+  carouselScreen.rotation.y = carouselRotation;
   carouselScreen.userData.onClick = (event) => {
     const point = event?.point;
     if (!point) return;
-    const localX = point.x - carouselScreen.position.x;
-    if (localX < -4) worksCarousel.prev();
-    if (localX > 4) worksCarousel.next();
+    const localPoint = carouselScreen.worldToLocal(point.clone());
+    if (localPoint.x < -1.5) worksCarousel.prev();
+    if (localPoint.x > 1.5) worksCarousel.next();
   };
   scene.add(carouselScreen);
 
   const carouselGlow = new THREE.Mesh(
-    new THREE.PlaneGeometry(19.8, 11.2),
-    new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.12, side: THREE.DoubleSide })
+    new THREE.PlaneGeometry(13.2, 8.6),
+    new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
   );
-  carouselGlow.position.set(0, 10, 14.62);
+  carouselGlow.position.set(-25, 5, 5.12);
+  carouselGlow.rotation.y = carouselRotation;
   scene.add(carouselGlow);
 
   // Zone buildings

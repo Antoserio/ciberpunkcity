@@ -65,6 +65,15 @@ function createCityVideoScreen(scene, config, texture) {
   glow.position.z = 0.02;
   group.add(glow);
 
+  // DEBUG: Añadir esfera gigante de color para ver dónde está la pantalla
+  const debugSphere = new THREE.Mesh(
+    new THREE.SphereGeometry(2, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true })
+  );
+  debugSphere.position.set(0, 0, 0);
+  group.add(debugSphere);
+  console.log('Screen created at:', config.x, config.y, config.z, 'rotation:', config.rotationY);
+
   group.position.set(config.x, config.y, config.z);
   group.rotation.y = config.rotationY || 0;
   group.userData.screen = screen;
@@ -531,11 +540,13 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
-    camera.position.set(lastExploreCameraRef.current.x, lastExploreCameraRef.current.y, lastExploreCameraRef.current.z);
-    targetYawRef.current = lastExploreCameraRef.current.yaw;
-    yawRef.current = lastExploreCameraRef.current.yaw;
-    targetPitchRef.current = lastExploreCameraRef.current.pitch;
-    pitchRef.current = lastExploreCameraRef.current.pitch;
+    camera.position.set(0, 10, 0);  // Arriba en el centro
+    targetYawRef.current = 0;
+    yawRef.current = 0;
+    targetPitchRef.current = -0.3;
+    pitchRef.current = -0.3;
+    console.log('Camera starting position:', camera.position);
+    console.log('Camera looking at yaw:', yawRef.current, 'pitch:', pitchRef.current);
 
     if (activeView === 'works') {
       camera.position.set(0, 2.6, -10.5);

@@ -526,7 +526,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const modalOpenRef = useRef(false);
   const touchStateRef = useRef({ moving: false, looking: false, moveId: null, lookId: null, moveStartX: 0, moveStartY: 0, moveX: 0, moveY: 0 });
   const mobileMovementRef = useRef({ x: 0, z: 0 });
-  const worksTransitionRef = useRef({ active: false, startTime: 0, duration: WORKS_CAMERA_TRANSITION_MS, startPos: null, targetPos: null, startYaw: 0, targetYaw: Math.PI, startPitch: 0, targetPitch: -0.03, token: 0 });
+  const worksTransitionRef = useRef({ active: activeView === 'works', startTime: performance.now(), duration: WORKS_CAMERA_TRANSITION_MS, startPos: new THREE.Vector3(0, 1.7, 20), targetPos: activeView === 'works' ? WORKS_CAMERA_POSITION.clone() : null, startYaw: 0, targetYaw: Math.PI, startPitch: -0.1, targetPitch: -0.03, token: worksTransitionToken });
 
   // When modal opens: freeze movement immediately by clearing pressed keys and unlocking
   useEffect(() => {
@@ -1014,6 +1014,28 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       yawRef.current += (targetYawRef.current - yawRef.current) * LOOK_SMOOTH;
       pitchRef.current += (targetPitchRef.current - pitchRef.current) * LOOK_SMOOTH;
       pitchRef.current = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, pitchRef.current));
+
+      const worksTransition = worksTransitionRef.current;
+      if (worksTransition.active && worksTransition.startPos && worksTransition.targetPos) {
+        const elapsed = performance.now() - worksTransition.startTime;
+        const progress = Math.min(elapsed / worksTransition.duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        camera.position.lerpVectors(worksTransition.startPos, worksTransition.targetPos, eased);
+        yawRef.current = worksTransition.startYaw + (worksTransition.targetYaw - worksTransition.startYaw) * eased;
+        pitchRef.current = worksTransition.startPitch + (worksTransition.targetPitch - worksTransition.startPitch) * eased;
+        targetYawRef.current = yawRef.current;
+        targetPitchRef.current = pitchRef.current;
+
+        if (progress >= 1) {
+          worksTransition.active = false;
+          camera.position.copy(worksTransition.targetPos);
+          yawRef.current = worksTransition.targetYaw;
+          pitchRef.current = worksTransition.targetPitch;
+          targetYawRef.current = worksTransition.targetYaw;
+          targetPitchRef.current = worksTransition.targetPitch;
+        }
+      }
 
       const k = keysRef.current;
       const mobileMovement = mobileMovementRef.current;

@@ -99,10 +99,10 @@ export default function CyberCity() {
   }, [started, openStand, handleCloseStand]);
 
   const handleChangeView = useCallback((view) => {
-    setActiveView(view);
     if (view === 'works') {
       setWorksTransitionToken((value) => value + 1);
     }
+    setActiveView(view);
     if (document.pointerLockElement) {
       document.exitPointerLock();
     }

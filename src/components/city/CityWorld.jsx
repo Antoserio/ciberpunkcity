@@ -274,11 +274,12 @@ const WALL_TEXTS = [
   ['360°','3D','AR/VR','LIVE'],
 ];
 const WALL_PALETTES = [
-  ['#3a5f8f','#5a7fa0','#e0e0e0'],
-  ['#2a4a3a','#4a6a5a','#d0d0d0'],
-  ['#6a4a3a','#8a6a5a','#f0f0f0'],
-  ['#4a4a5a','#6a6a7a','#ffffff'],
-  ['#5a3a2a','#7a5a4a','#e8e8e8'],
+  ['#ff0044','#ff4488','#ffffff'],
+  ['#00ffff','#0088ff','#ffffff'],
+  ['#ff00ff','#ff44cc','#ffffff'],
+  ['#ffff00','#ffaa00','#ffffff'],
+  ['#ff6600','#ff9900','#ffffff'],
+  ['#00ff88','#00ffcc','#ffffff'],
 ];
 
 function makeBuildingWallTexture(accentColor, seed) {
@@ -471,7 +472,7 @@ const BUILDING_COLLIDERS = [
     [-18,-30],[18,-30],[-30,18],[30,18],[-34,-34],[34,-34],[-34,34],[34,34],[-46,-18],[46,-18],[-46,18],[46,18],[-12,-44],[12,-44],[-12,44],[12,44],[-58,-30],[-44,-30],[-30,-30],[30,-30],[44,-30],[58,-30],[-58,30],[-44,30],[-30,30],[30,30],[44,30],[58,30],
   ].map(([x, z]) => ({ x, z, radius: 6 }))
 ];
-const HERO_COLORS = [0x4a9faa, 0xaa4a9f, 0xaaaa55, 0x6b5f8f, 0x5a79a0];
+const HERO_COLORS = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
 
 
 export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null }) {
@@ -568,8 +569,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     // Scene
     const scene = new THREE.Scene();
-    const fogColor = new THREE.Color(0x0a0a15);
-    scene.fog = new THREE.FogExp2(0x0a0a15, 0.008);
+    const fogColor = new THREE.Color(0x030008);
+    scene.fog = new THREE.FogExp2(0x030008, 0.012);
     scene.background = fogColor;
 
     // Camera
@@ -607,15 +608,23 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     composer.addPass(bloomPass);
 
     // Luces
-    const ambientLight = new THREE.AmbientLight(0x4a5a7a, 1.2);
-    scene.add(ambientLight);
-    scene.add(new THREE.HemisphereLight(0x7a8ca5, 0x101018, 0.8));
-    const moonLight = new THREE.DirectionalLight(0xb0c4de, 0.8);
-    moonLight.position.set(-50, 80, 30);
-    scene.add(moonLight);
-    const fillLight = new THREE.PointLight(0x6f7c94, 4, 120, 2);
+    scene.add(new THREE.AmbientLight(0x3a2a68, 1.5));
+    scene.add(new THREE.HemisphereLight(0x66ccff, 0x12051f, 1.0));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
+    keyLight.position.set(24, 30, 14);
+    scene.add(keyLight);
+    const fillLight = new THREE.PointLight(0xff44cc, 10, 120, 2);
     fillLight.position.set(0, 22, 0);
     scene.add(fillLight);
+    const cyanWash = new THREE.PointLight(0x00e5ff, 5, 90, 2);
+    cyanWash.position.set(-24, 14, -8);
+    scene.add(cyanWash);
+    const magentaWash = new THREE.PointLight(0xff00c8, 5.5, 100, 2);
+    magentaWash.position.set(24, 16, 6);
+    scene.add(magentaWash);
+    const violetWash = new THREE.PointLight(0x7c3aed, 4.5, 80, 2);
+    violetWash.position.set(0, 18, -24);
+    scene.add(violetWash);
 
     // Glow textures
     const gt = {
@@ -1108,7 +1117,7 @@ function addGlowSprite(scene, x, y, z, texture, size = 6) {
 }
 
 function colorToGlowKey(color) {
-  const map = { 0x4a9faa: 'cyan', 0xaa4a9f: 'magenta', 0xaaaa55: 'yellow', 0x5a79a0: 'blue', 0x0088ff: 'blue', 0x7a5a4a: 'orange', 0x8f5f88: 'pink' };
+  const map = { 0x00ffff: 'cyan', 0xff00ff: 'magenta', 0xffff00: 'yellow', 0x4488ff: 'blue', 0x0088ff: 'blue', 0xff6600: 'orange', 0xff44aa: 'pink' };
   return map[color] || 'magenta';
 }
 
@@ -1120,9 +1129,12 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) 
   const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(220, 220, 80, 80),
   new THREE.MeshStandardMaterial({
-    color: 0x1a1a22,
-    roughness: 0.9,
-    metalness: 0.1,
+    color: 0x080610,
+    roughness: 0.06,
+    metalness: 0.96,
+    transparent: true,
+    opacity: 0.94,
+    envMapIntensity: 1.35,
   })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -1131,9 +1143,9 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) 
   const groundSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshBasicMaterial({
-      color: 0x2a2a36,
+      color: 0x7d4dff,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.28,
       blending: THREE.AdditiveBlending,
     })
   );
@@ -1141,10 +1153,10 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) 
   groundSheen.position.y = 0.015;
   scene.add(groundSheen);
 
-  const grid = new THREE.GridHelper(180, 48, 0x3a3a4a, 0x2a2a3a);
+  const grid = new THREE.GridHelper(180, 48, 0x7ef9ff, 0xff4dd8);
   grid.position.y = 0.04;
   grid.material.transparent = true;
-  grid.material.opacity = 0.3;
+  grid.material.opacity = 0.24;
   scene.add(grid);
 
   // Plaza central abierta, sin cuadrante marcado
@@ -1158,7 +1170,6 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) 
 
   // Zone buildings
   ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky));
-  addStreetLights(scene);
 
   // Mid-range buildings — perímetro abierto con fondo más denso
   const midPositions = [
@@ -1169,7 +1180,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) 
     [-58,-30],[-44,-30],[-30,-30],[30,-30],[44,-30],[58,-30],
     [-58,30],[-44,30],[-30,30],[30,30],[44,30],[58,30],
   ];
-  const neonPalette = [0x4a9faa, 0xaa4a9f, 0xaaaa55, 0x5a79a0, 0x8f5f88];
+  const neonPalette = [0x00ffff, 0xff00ff, 0xffff00, 0x4488ff, 0xff44aa];
   midPositions.forEach(([x, z], i) => {
     const h = 10 + (i * 4.1 % 22);
     const w = 4 + (i * 1.7 % 6);
@@ -1537,33 +1548,6 @@ function addBillboard(scene, x, y, z, text, colorHex) {
   );
   pole.position.set(x, y / 2, z);
   scene.add(pole);
-}
-
-function addStreetLights(scene) {
-  const positions = [
-    [-20, 0, -20], [20, 0, -20], [-20, 0, 20], [20, 0, 20],
-    [-40, 0, 0], [40, 0, 0], [0, 0, -40], [0, 0, 40]
-  ];
-
-  positions.forEach(([x, y, z]) => {
-    const pole = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.1, 0.1, 5),
-      new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9, metalness: 0.2 })
-    );
-    pole.position.set(x, 2.5, z);
-    scene.add(pole);
-
-    const light = new THREE.PointLight(0xffaa55, 3, 15);
-    light.position.set(x, 5, z);
-    scene.add(light);
-
-    const halo = new THREE.Mesh(
-      new THREE.SphereGeometry(0.3, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0xffaa55, transparent: true, opacity: 0.6 })
-    );
-    halo.position.set(x, 5, z);
-    scene.add(halo);
-  });
 }
 
 function createFlyingRobot(color = 0x00ffff) {

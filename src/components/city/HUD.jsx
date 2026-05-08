@@ -20,15 +20,15 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
         <div className="flex items-start justify-between gap-2 px-3 py-3 sm:px-6">
           {/* Logo */}
           <div className="pointer-events-none px-1 py-1">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <span className="font-orbitron text-sm sm:text-base font-black neon-text-cyan tracking-[0.22em]">
+            <div className="max-w-[230px] sm:max-w-[280px]">
+              <div className="flex items-baseline gap-2">
+                <span className="font-orbitron text-base sm:text-xl font-black neon-text-cyan tracking-[0.24em]">
                   AGENCY<span className="neon-text-magenta">360</span>
                 </span>
-                <span className="text-[10px] sm:text-xs font-orbitron tracking-[0.28em] text-white/55">CYBERCITY</span>
+                <span className="text-[10px] sm:text-xs font-orbitron tracking-[0.24em] text-white/50">CYBERCITY</span>
               </div>
-              <p className="max-w-[280px] sm:max-w-[420px] font-rajdhani text-xs sm:text-sm leading-tight text-white/70">
-                Agencia creativa y desarrollo de soluciones digitales.
+              <p className="mt-1 font-rajdhani text-[12px] sm:text-[13px] font-bold uppercase leading-[1.15] tracking-[0.12em] text-white/88">
+                Agencia creativa de soluciones digitales
               </p>
             </div>
           </div>

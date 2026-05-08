@@ -648,15 +648,33 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     }
 
     CITY_VIDEO_SCREEN_CONFIGS.forEach((config) => {
-      const video = createCityVideoElement(CITY_VIDEO_SOURCES[config.sourceIndex]);
+      const video = document.createElement('video');
+      video.src = 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4';
+      video.crossOrigin = 'anonymous';
+      video.loop = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.autoplay = true;
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.setAttribute('muted', '');
+      video.load();
+      
+      video.addEventListener('loadeddata', () => {
+        console.log('✓ Video loaded successfully');
+        video.play().catch(e => console.error('Play error:', e));
+      });
+      
       const texture = new THREE.VideoTexture(video);
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
       texture.generateMipmaps = false;
-
+      
       const group = createCityVideoScreen(scene, config, texture);
       cityVideos.push({ video, texture, group });
+      
+      setTimeout(() => video.play().catch(() => {}), 200);
     });
 
     if (activeWork) {

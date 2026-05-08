@@ -779,9 +779,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
     const handlePointerLockChange = () => {
       isLockedRef.current = isMobile ? true : document.pointerLockElement === canvas;
+      console.log('Pointer lock changed, locked:', isLockedRef.current);
     };
     const handleMouseMove = (e) => {
-      if (!isLockedRef.current) return;
+      if (!isLockedRef.current) {
+        console.log('Mouse move pero NO locked');
+        return;
+      }
+      console.log('Mouse delta:', e.movementX, e.movementY);
       mouseDeltaRef.current.x += e.movementX;
       mouseDeltaRef.current.y += e.movementY;
     };

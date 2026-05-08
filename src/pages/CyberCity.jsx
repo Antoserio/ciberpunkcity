@@ -125,7 +125,7 @@ export default function CyberCity() {
           onLeaveStand={() => setNearStand(null)}
           onActivateStand={handleActivateStand}
           modalOpen={!!openStand}
-          plazaVideoUrl="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
+          plazaVideoUrl=""
           isMobile={isMobile}
           robotModelUrl={robotModelUrl}
           audioEnabled={audioEnabled}

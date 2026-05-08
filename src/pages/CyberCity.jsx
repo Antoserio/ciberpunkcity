@@ -108,7 +108,7 @@ export default function CyberCity() {
       // Mover cámara delante del carousel
       setCameraTarget({
         position: { x: 0, y: 4.5, z: 15 },
-        rotation: 0
+        rotation: Math.PI
       });
     } else if (view === 'explore') {
       // Volver a posición inicial diagonal

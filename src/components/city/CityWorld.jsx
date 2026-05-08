@@ -1004,30 +1004,25 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         (isMobileDevice && (Math.abs(mobileMovement.x) > 0.1 || Math.abs(mobileMovement.z) > 0.1))
       );
 
-      if (activeView === 'explore' && !worksTransitionRef.current.active) {
-        const moveDir = new THREE.Vector3();
-        const speed = 15;
+      if (moving && !worksTransitionRef.current.active) {
+        dir.set(0, 0, 0);
 
-        if (k['KeyW'] || k['ArrowUp']) moveDir.z -= 1;
-        if (k['KeyS'] || k['ArrowDown']) moveDir.z += 1;
-        if (k['KeyA'] || k['ArrowLeft']) moveDir.x -= 1;
-        if (k['KeyD'] || k['ArrowRight']) moveDir.x += 1;
+        if (k['KeyW'] || k['ArrowUp']) dir.z = -1;
+        if (k['KeyS'] || k['ArrowDown']) dir.z = 1;
+        if (k['KeyA'] || k['ArrowLeft']) dir.x = -1;
+        if (k['KeyD'] || k['ArrowRight']) dir.x = 1;
 
-        if (isMobileDevice) {
-          moveDir.x += mobileMovement.x;
-          moveDir.z += mobileMovement.z;
+        if (isMobileDevice && (Math.abs(mobileMovement.x) > 0.1 || Math.abs(mobileMovement.z) > 0.1)) {
+          dir.x = mobileMovement.x;
+          dir.z = mobileMovement.z;
         }
 
-        if (moveDir.lengthSq() > 0) {
-          moveDir.normalize();
-          moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yawRef.current);
-          camera.position.x += moveDir.x * speed * delta;
-          camera.position.z += moveDir.z * speed * delta;
+        if (dir.lengthSq() > 0) {
+          dir.normalize();
+          dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yawRef.current);
+          camera.position.addScaledVector(dir, 15 * delta);
           camera.position.y = 1.7;
         }
-
-        camera.position.x = Math.max(-100, Math.min(100, camera.position.x));
-        camera.position.z = Math.max(-100, Math.min(100, camera.position.z));
       }
 
       if (activeView === 'works' && worksTransitionToken > 0 && worksTransitionRef.current.token !== worksTransitionToken) {
@@ -1067,6 +1062,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       camera.rotation.y = yawRef.current;
       camera.rotation.x = pitchRef.current;
 
+      camera.position.x = Math.max(-70, Math.min(70, camera.position.x));
+      camera.position.z = Math.max(-70, Math.min(70, camera.position.z));
       if (activeView === 'explore') {
         checkZoneProximity(camera.position);
       }
@@ -1114,9 +1111,11 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       const targetZ = heroRobot.anchorZ + Math.cos(robotTime * (heroRobot.speed * 0.9) + heroRobot.offset) * heroRobot.driftZ + Math.sin(robotTime * 0.33 + index * 1.2) * 6;
       const prevX = heroRobot.mesh.position.x;
       const prevZ = heroRobot.mesh.position.z;
+      const clampedTargetX = Math.max(-64, Math.min(64, targetX));
+      const clampedTargetZ = Math.max(-64, Math.min(64, targetZ));
 
-      heroRobot.mesh.position.x += (targetX - heroRobot.mesh.position.x) * 0.02;
-      heroRobot.mesh.position.z += (targetZ - heroRobot.mesh.position.z) * 0.02;
+      heroRobot.mesh.position.x += (clampedTargetX - heroRobot.mesh.position.x) * 0.02;
+      heroRobot.mesh.position.z += (clampedTargetZ - heroRobot.mesh.position.z) * 0.02;
       heroRobot.mesh.position.y = heroRobot.height + Math.sin(robotTime * 1.3 + heroRobot.offset) * 1.3 + Math.cos(robotTime * 0.6 + index) * 0.5;
       heroRobot.mesh.rotation.y = Math.atan2(heroRobot.mesh.position.x - prevX, heroRobot.mesh.position.z - prevZ);
       heroRobot.mesh.rotation.z = Math.sin(robotTime * 1.15 + heroRobot.offset) * 0.07;
@@ -1381,7 +1380,11 @@ function makeWorksCarouselScreen() {
   };
 
   const update = (time) => {
-    draw(time);
+    if (performance.now() - lastAdvance > 8000) {
+      next();
+    } else {
+      draw(time);
+    }
   };
 
   const setProximity = (value) => {
@@ -1963,9 +1966,4 @@ function updateFlyingRobots(robots, time) {
     robot.group.rotation.z = Math.sin(time * 1.8 + index) * 0.05;
     robot.trail.scale.y = 0.6 + Math.sin(time * 2.2 + index) * 0.08;
   });
-}
-
-
-
-  return safe;
 }

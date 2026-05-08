@@ -478,28 +478,28 @@ const WORKS = [
     title: 'CLONEX AVATAR',
     subtitle: 'RTFKT x NIKE - Metahumano Realista',
     description: 'Avatar fotorrealista para experiencias inmersivas',
-    videoUrl: null,
+    videoUrl: 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
     color: '#ff0066'
   },
   {
     title: 'DANCE MAPPING',
     subtitle: 'Video Mapping Interactivo 360°',
     description: 'Proyección arquitectónica sincronizada con música',
-    videoUrl: null,
+    videoUrl: 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/0cbcd588c_Viky-EventoMayo-GoogleChrome2026-05-0811-15-57.mp4',
     color: '#00ffff'
   },
   {
     title: 'METAVERSO XR',
     subtitle: 'Eventos Live en Realidad Extendida',
     description: 'Espacios virtuales para conferencias y eventos',
-    videoUrl: null,
+    videoUrl: 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
     color: '#ffff00'
   },
   {
     title: 'STUDIO 360',
     subtitle: 'Producción Audiovisual Inmersiva',
     description: 'Contenido 360° para experiencias VR',
-    videoUrl: null,
+    videoUrl: 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/0cbcd588c_Viky-EventoMayo-GoogleChrome2026-05-0811-15-57.mp4',
     color: '#ff00ff'
   }
 ];
@@ -869,7 +869,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       // Block all movement and interaction while modal is open
       if (modalOpenRef.current) return;
 
-      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(-25, 5, 5)) < 12;
+      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 4.5, 26)) < 16;
       if (isNearCarousel && e.code === 'ArrowLeft') {
         e.preventDefault();
         worksCarousel.prev();
@@ -1052,7 +1052,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         }
       }
 
-      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(-25, 5, 5)) < 12;
+      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 4.5, 26)) < 16;
       worksCarousel.setProximity(isNearCarousel);
       worksCarousel.update(frameCount * 0.016);
 
@@ -1136,7 +1136,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         vikyVideoElement.load();
       }
       vikyTexture?.dispose?.();
-      worksCarousel.texture.dispose();
+      worksCarousel.dispose();
       composer.dispose();
       vignette.remove();
       ambienceAudio.pause();
@@ -1181,9 +1181,33 @@ function makeWorksCarouselScreen() {
   canvas.height = 1080;
   const ctx = canvas.getContext('2d');
   const texture = new THREE.CanvasTexture(canvas);
+  const video = document.createElement('video');
+  video.crossOrigin = 'anonymous';
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.autoplay = true;
+  video.setAttribute('playsinline', '');
+  video.setAttribute('webkit-playsinline', '');
+  video.setAttribute('muted', '');
+  const videoTexture = new THREE.VideoTexture(video);
+  videoTexture.colorSpace = THREE.SRGBColorSpace;
+  videoTexture.minFilter = THREE.LinearFilter;
+  videoTexture.magFilter = THREE.LinearFilter;
+  videoTexture.generateMipmaps = false;
   let activeIndex = 0;
-  let controlsVisible = false;
+  let controlsVisible = true;
   let lastAdvance = performance.now();
+
+  const loadVideo = () => {
+    const work = WORKS[activeIndex];
+    if (!work.videoUrl) return;
+    if (video.src !== work.videoUrl) {
+      video.src = work.videoUrl;
+      video.load();
+      video.play().catch(() => {});
+    }
+  };
 
   const draw = (time = 0) => {
     const work = WORKS[activeIndex];
@@ -1191,80 +1215,86 @@ function makeWorksCarouselScreen() {
     const pulse = 0.82 + Math.sin(time * 1.6) * 0.08;
 
     const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    bg.addColorStop(0, '#060010');
-    bg.addColorStop(0.5, '#140428');
+    bg.addColorStop(0, '#03030a');
+    bg.addColorStop(0.5, '#12051f');
     bg.addColorStop(1, '#020008');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = `${accent}22`;
-    ctx.fillRect(110, 120, 980, 840);
-    ctx.strokeStyle = `${accent}aa`;
-    ctx.lineWidth = 4;
-    ctx.strokeRect(110, 120, 980, 840);
+    ctx.fillRect(70, 90, 1080, 690);
+    ctx.strokeStyle = `${accent}dd`;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(70, 90, 1080, 690);
 
-    const mediaGradient = ctx.createLinearGradient(110, 120, 1090, 960);
-    mediaGradient.addColorStop(0, `${accent}55`);
-    mediaGradient.addColorStop(1, '#ffffff10');
-    ctx.fillStyle = mediaGradient;
-    ctx.fillRect(150, 160, 900, 620);
+    if (video.readyState >= 2) {
+      ctx.drawImage(video, 110, 130, 1000, 610);
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.fillRect(110, 130, 1000, 610);
+    } else {
+      const mediaGradient = ctx.createLinearGradient(70, 90, 1150, 780);
+      mediaGradient.addColorStop(0, `${accent}66`);
+      mediaGradient.addColorStop(1, '#ffffff12');
+      ctx.fillStyle = mediaGradient;
+      ctx.fillRect(110, 130, 1000, 610);
+    }
 
     ctx.save();
-    ctx.strokeStyle = accent;
-    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 12;
     ctx.shadowColor = accent;
-    ctx.shadowBlur = 28;
-    ctx.strokeRect(190, 200, 820, 540);
+    ctx.shadowBlur = 34;
+    ctx.strokeRect(110, 130, 1000, 610);
     ctx.restore();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '700 46px Orbitron, monospace';
-    ctx.fillText('WORKS CAROUSEL', 1280, 170);
+    ctx.font = '700 44px Orbitron, monospace';
+    ctx.fillText('SHOWCASE WORKS', 1230, 150);
 
     ctx.fillStyle = accent;
     ctx.shadowColor = accent;
-    ctx.shadowBlur = 24;
-    ctx.font = '900 92px Orbitron, monospace';
-    ctx.fillText(work.title, 1180, 310);
+    ctx.shadowBlur = 26;
+    ctx.font = '900 88px Orbitron, monospace';
+    ctx.fillText(work.title, 1230, 285);
     ctx.shadowBlur = 0;
 
     ctx.fillStyle = '#d7cfff';
-    ctx.font = '600 40px Rajdhani, sans-serif';
-    ctx.fillText(work.subtitle, 1180, 390);
+    ctx.font = '700 38px Rajdhani, sans-serif';
+    ctx.fillText(work.subtitle, 1230, 360);
 
-    ctx.fillStyle = '#f3ecff';
-    ctx.font = '500 36px Rajdhani, sans-serif';
-    wrapText(ctx, work.description, 1180, 500, 560, 54);
+    ctx.fillStyle = '#f7f3ff';
+    ctx.font = '600 34px Rajdhani, sans-serif';
+    wrapText(ctx, work.description, 1230, 455, 590, 48);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '800 58px Rajdhani, sans-serif';
-    ctx.fillText(`PROYECTO ${activeIndex + 1} / ${WORKS.length}`, 1180, 770);
+    ctx.font = '800 64px Rajdhani, sans-serif';
+    ctx.fillText(`PROYECTO ${activeIndex + 1} / ${WORKS.length}`, 1230, 740);
 
     for (let i = 0; i < WORKS.length; i++) {
       ctx.fillStyle = i === activeIndex ? WORKS[i].color : '#ffffff33';
       ctx.beginPath();
-      ctx.arc(1195 + i * 34, 835, i === activeIndex ? 10 : 7, 0, Math.PI * 2);
+      ctx.arc(1255 + i * 42, 805, i === activeIndex ? 12 : 8, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    const controlOpacity = controlsVisible ? 1 : 0.92;
+    const controlOpacity = controlsVisible ? 1 : 0.98;
     ctx.globalAlpha = controlOpacity;
-    ctx.fillStyle = '#050510';
-    ctx.fillRect(140, 860, 520, 140);
-    ctx.fillRect(1260, 860, 520, 140);
-    ctx.strokeStyle = accent;
-    ctx.lineWidth = 6;
-    ctx.strokeRect(140, 860, 520, 140);
-    ctx.strokeRect(1260, 860, 520, 140);
+    ctx.fillStyle = '#02020a';
+    ctx.fillRect(90, 835, 620, 170);
+    ctx.fillRect(1210, 835, 620, 170);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(90, 835, 620, 170);
+    ctx.strokeRect(1210, 835, 620, 170);
     ctx.fillStyle = '#ffffff';
-    ctx.font = '800 72px Rajdhani, sans-serif';
-    ctx.fillText('◄ ANTERIOR', 200, 950);
-    ctx.fillText('SIGUIENTE ►', 1320, 950);
+    ctx.font = '900 84px Rajdhani, sans-serif';
+    ctx.fillText('◄ ANTERIOR', 150, 940);
+    ctx.fillText('SIGUIENTE ►', 1270, 940);
     ctx.globalAlpha = 1;
 
-    ctx.fillStyle = '#e9e9ff';
-    ctx.font = '700 42px Rajdhani, sans-serif';
-    ctx.fillText('← → FLECHAS DEL TECLADO PARA NAVEGAR', 1180, 1010);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 46px Rajdhani, sans-serif';
+    ctx.fillText('← → FLECHAS DEL TECLADO PARA NAVEGAR', 1230, 1015);
 
     ctx.strokeStyle = `rgba(255,255,255,${0.08 + pulse * 0.08})`;
     ctx.lineWidth = 2;
@@ -1276,17 +1306,22 @@ function makeWorksCarouselScreen() {
     }
 
     texture.needsUpdate = true;
+    if (video.readyState >= 2) {
+      videoTexture.needsUpdate = true;
+    }
   };
 
   const next = () => {
     activeIndex = (activeIndex + 1) % WORKS.length;
     lastAdvance = performance.now();
+    loadVideo();
     draw(performance.now() * 0.001);
   };
 
   const prev = () => {
     activeIndex = (activeIndex - 1 + WORKS.length) % WORKS.length;
     lastAdvance = performance.now();
+    loadVideo();
     draw(performance.now() * 0.001);
   };
 
@@ -1302,9 +1337,16 @@ function makeWorksCarouselScreen() {
     controlsVisible = value;
   };
 
+  loadVideo();
   draw(0);
 
-  return { texture, next, prev, update, setProximity };
+  return { texture, next, prev, update, setProximity, dispose: () => {
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    videoTexture.dispose();
+    texture.dispose();
+  } };
 }
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -1375,36 +1417,36 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   plaza.position.y = 0.012;
   scene.add(plaza);
 
-  const carouselRotation = Math.PI / 4;
+  const carouselRotation = Math.PI;
 
   const carouselFrame = new THREE.Mesh(
-    new THREE.BoxGeometry(12.8, 8.8, 0.55),
+    new THREE.BoxGeometry(14.8, 9.2, 0.55),
     new THREE.MeshBasicMaterial({ color: 0x04040a })
   );
-  carouselFrame.position.set(-25, 5, 5);
+  carouselFrame.position.set(0, 4.5, 26);
   carouselFrame.rotation.y = carouselRotation;
   scene.add(carouselFrame);
 
   const carouselScreen = new THREE.Mesh(
-    new THREE.PlaneGeometry(12, 8),
+    new THREE.PlaneGeometry(14, 8.4),
     new THREE.MeshBasicMaterial({ map: worksCarousel.texture, toneMapped: false, side: THREE.DoubleSide })
   );
-  carouselScreen.position.set(-25, 5, 5.28);
+  carouselScreen.position.set(0, 4.5, 25.7);
   carouselScreen.rotation.y = carouselRotation;
   carouselScreen.userData.onClick = (event) => {
     const point = event?.point;
     if (!point) return;
     const localPoint = carouselScreen.worldToLocal(point.clone());
-    if (localPoint.x < -1.5) worksCarousel.prev();
-    if (localPoint.x > 1.5) worksCarousel.next();
+    if (localPoint.x < -1.2) worksCarousel.prev();
+    if (localPoint.x > 1.2) worksCarousel.next();
   };
   scene.add(carouselScreen);
 
   const carouselGlow = new THREE.Mesh(
-    new THREE.PlaneGeometry(13.2, 8.6),
+    new THREE.PlaneGeometry(15.2, 9),
     new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
   );
-  carouselGlow.position.set(-25, 5, 5.12);
+  carouselGlow.position.set(0, 4.5, 25.5);
   carouselGlow.rotation.y = carouselRotation;
   scene.add(carouselGlow);
 

@@ -498,6 +498,10 @@ const WORKS = [
   }
 ];
 
+const WORKS_CAMERA_POSITION = new THREE.Vector3(0, 4.5, 15);
+const WORKS_CAMERA_LOOK_AT = new THREE.Vector3(0, 4.5, 26);
+const WORKS_CAMERA_TRANSITION_MS = 1000;
+
 
 export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null, worksTransitionToken = 0 }) {
   const mountRef = useRef(null);
@@ -522,7 +526,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const modalOpenRef = useRef(false);
   const touchStateRef = useRef({ moving: false, looking: false, moveId: null, lookId: null, moveStartX: 0, moveStartY: 0, moveX: 0, moveY: 0 });
   const mobileMovementRef = useRef({ x: 0, z: 0 });
-  const worksTransitionRef = useRef({ active: false, startTime: 0, duration: 1500, startPos: null, targetPos: null, startYaw: 0, targetYaw: Math.PI, startPitch: 0, targetPitch: -0.03, token: 0 });
+  const worksTransitionRef = useRef({ active: false, startTime: 0, duration: WORKS_CAMERA_TRANSITION_MS, startPos: null, targetPos: null, startYaw: 0, targetYaw: Math.PI, startPitch: 0, targetPitch: -0.03, token: 0 });
 
   // When modal opens: freeze movement immediately by clearing pressed keys and unlocking
   useEffect(() => {

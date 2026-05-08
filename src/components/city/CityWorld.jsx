@@ -489,7 +489,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const animFrameRef = useRef(null);
   const activeZoneRef = useRef(null);
   const nearStandRef = useRef(null);
-  const lastExploreCameraRef = useRef({ x: 0, y: 1.7, z: 14, yaw: 0, pitch: -0.1 });
+
   const clockRef = useRef(new THREE.Clock());
   const flickerObjectsRef = useRef([]);
   const videoScreenRef = useRef(null);
@@ -569,8 +569,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     // Scene
     const scene = new THREE.Scene();
-    const fogColor = new THREE.Color(0x1a0a2e);
-    scene.fog = new THREE.Fog(fogColor, 12, 150);
+    const fogColor = new THREE.Color(0x030008);
+    scene.fog = new THREE.FogExp2(0x030008, 0.012);
     scene.background = fogColor;
 
     // Camera
@@ -604,25 +604,25 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     composer.setSize(W, H);
     const renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 1.05, 0.55, 0.72);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 0.8, 0.5, 0.78);
     composer.addPass(bloomPass);
 
     // Luces
-    scene.add(new THREE.AmbientLight(0x3a2a68, 3.1));
-    scene.add(new THREE.HemisphereLight(0x66ccff, 0x12051f, 2.1));
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.9);
+    scene.add(new THREE.AmbientLight(0x3a2a68, 1.5));
+    scene.add(new THREE.HemisphereLight(0x66ccff, 0x12051f, 1.0));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
     keyLight.position.set(24, 30, 14);
     scene.add(keyLight);
-    const fillLight = new THREE.PointLight(0xff44cc, 22, 120, 2);
+    const fillLight = new THREE.PointLight(0xff44cc, 10, 120, 2);
     fillLight.position.set(0, 22, 0);
     scene.add(fillLight);
-    const cyanWash = new THREE.PointLight(0x00e5ff, 16, 90, 2);
+    const cyanWash = new THREE.PointLight(0x00e5ff, 5, 90, 2);
     cyanWash.position.set(-24, 14, -8);
     scene.add(cyanWash);
-    const magentaWash = new THREE.PointLight(0xff00c8, 18, 100, 2);
+    const magentaWash = new THREE.PointLight(0xff00c8, 5.5, 100, 2);
     magentaWash.position.set(24, 16, 6);
     scene.add(magentaWash);
-    const violetWash = new THREE.PointLight(0x7c3aed, 14, 80, 2);
+    const violetWash = new THREE.PointLight(0x7c3aed, 4.5, 80, 2);
     violetWash.position.set(0, 18, -24);
     scene.add(violetWash);
 
@@ -969,21 +969,11 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (activeView === 'works') {
         targetYawRef.current = Math.PI;
         targetPitchRef.current = -0.03;
-        camera.position.x += (0 - camera.position.x) * 0.06;
-        camera.position.y += (2.6 - camera.position.y) * 0.06;
-        camera.position.z += (-10.5 - camera.position.z) * 0.06;
       }
 
       camera.position.x = Math.max(-72, Math.min(72, camera.position.x));
       camera.position.z = Math.max(-72, Math.min(72, camera.position.z));
       if (activeView === 'explore') {
-        lastExploreCameraRef.current = {
-          x: camera.position.x,
-          y: camera.position.y,
-          z: camera.position.z,
-          yaw: yawRef.current,
-          pitch: pitchRef.current,
-        };
         checkZoneProximity(camera.position);
       }
 
@@ -1114,7 +1104,7 @@ function basicMat(params) {
 }
 
 function emissiveMat(color, intensity = 1.0) {
-  return new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity * 1.75, roughness: 0.08, metalness: 0.15 });
+  return new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity * 0.6, roughness: 0.08, metalness: 0.15 });
 }
 
 function addGlowSprite(scene, x, y, z, texture, size = 6) {
@@ -1235,7 +1225,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) 
   pGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   const particles = new THREE.Points(
     pGeo,
-    new THREE.PointsMaterial({ size: 0.11, vertexColors: true, transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false })
+    new THREE.PointsMaterial({ size: 0.11, vertexColors: true, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false })
   );
   scene.add(particles);
 

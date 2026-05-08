@@ -13,10 +13,10 @@ const CITY_VIDEO_SOURCES = [
 ];
 
 const CITY_VIDEO_SCREEN_CONFIGS = [
-  { x: -30, y: 10.5, z: -25.4, width: 7.2, height: 4.05, rotationY: 0, frameColor: 0x00ffff, glowColor: 0x00ffff, sourceIndex: 0 },
-  { x: 30, y: 11.5, z: -25.4, width: 7.2, height: 4.05, rotationY: 0, frameColor: 0xff00ff, glowColor: 0xff00ff, sourceIndex: 1 },
-  { x: -34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: Math.PI / 2, frameColor: 0xffff00, glowColor: 0xffff00, sourceIndex: 2 },
-  { x: 34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: -Math.PI / 2, frameColor: 0x4488ff, glowColor: 0x4488ff, sourceIndex: 3 },
+  { x: -30, y: 10.5, z: -25.4, width: 7.2, height: 4.05, rotationY: Math.PI, frameColor: 0x00ffff, glowColor: 0x00ffff, sourceIndex: 0 },
+  { x: 30, y: 11.5, z: -25.4, width: 7.2, height: 4.05, rotationY: Math.PI, frameColor: 0xff00ff, glowColor: 0xff00ff, sourceIndex: 1 },
+  { x: -34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: -Math.PI / 2, frameColor: 0xffff00, glowColor: 0xffff00, sourceIndex: 2 },
+  { x: 34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: Math.PI / 2, frameColor: 0x4488ff, glowColor: 0x4488ff, sourceIndex: 3 },
 ];
 
 function createCityVideoElement(src) {
@@ -48,7 +48,7 @@ function createCityVideoScreen(scene, config, texture) {
     new THREE.PlaneGeometry(config.width, config.height),
     new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, toneMapped: false, color: 0xffffff })
   );
-  screen.position.z = depth * 0.55;
+  screen.position.z = depth * 0.62;
   group.add(screen);
 
   const border = new THREE.LineSegments(
@@ -62,7 +62,7 @@ function createCityVideoScreen(scene, config, texture) {
     new THREE.PlaneGeometry(config.width + 0.8, config.height + 0.8),
     new THREE.MeshBasicMaterial({ color: config.glowColor, transparent: true, opacity: 0.09, side: THREE.DoubleSide })
   );
-  glow.position.z = 0.02;
+  glow.position.z = -0.02;
   group.add(glow);
 
   group.position.set(config.x, config.y, config.z);
@@ -75,11 +75,11 @@ function createCityVideoScreen(scene, config, texture) {
 function syncCityVideos(cityVideos, camera) {
   cityVideos.forEach((item) => {
     const distance = camera.position.distanceTo(item.group.position);
-    if (distance < 30) {
+    if (distance < 55) {
       if (item.video.paused) item.video.play().catch(() => {});
       if (item.texture) item.texture.needsUpdate = true;
       item.group.visible = true;
-    } else if (distance > 38) {
+    } else if (distance > 65) {
       if (!item.video.paused) item.video.pause();
       item.group.visible = false;
     }
@@ -724,6 +724,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (isMobile) return;
       canvas.requestPointerLock();
       startAmbientAudio();
+      cityVideos.forEach((item) => item.video.play().catch(() => {}));
+      plazaVideoElement?.play?.().catch(() => {});
     };
     const handlePointerLockChange = () => {
       isLockedRef.current = isMobile ? true : document.pointerLockElement === canvas;
@@ -797,6 +799,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     canvas.addEventListener('click', handleClick);
     canvas.addEventListener('touchstart', startAmbientAudio, { passive: true });
+    canvas.addEventListener('touchstart', () => {
+      cityVideos.forEach((item) => item.video.play().catch(() => {}));
+      plazaVideoElement?.play?.().catch(() => {});
+    }, { passive: true });
     canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: true });

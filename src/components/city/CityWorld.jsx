@@ -23,16 +23,32 @@ function createCityVideoElement(src) {
   const video = document.createElement('video');
   video.crossOrigin = 'anonymous';
   video.muted = true;
+  video.defaultMuted = true;
   video.loop = true;
   video.playsInline = true;
   video.autoplay = true;
-  video.preload = 'metadata';
+  video.preload = 'auto';
   video.setAttribute('muted', '');
   video.setAttribute('playsinline', '');
   video.setAttribute('webkit-playsinline', '');
   video.src = src;
   video.load();
   return video;
+}
+
+function createCityVideoTexture(video) {
+  const texture = new THREE.VideoTexture(video);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function startCityVideo(video) {
+  if (!video) return;
+  video.play().catch(() => {});
 }
 
 function createCityVideoScreen(scene, config, texture) {
@@ -44,10 +60,13 @@ function createCityVideoScreen(scene, config, texture) {
   );
   group.add(frame);
 
-  const screen = new THREE.Mesh(
-    new THREE.PlaneGeometry(config.width, config.height),
-    new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, toneMapped: false, color: 0xffffff })
-  );
+  const screenMaterial = new THREE.MeshBasicMaterial({
+    map: texture,
+    side: THREE.DoubleSide,
+    toneMapped: false,
+    color: 0xffffff,
+  });
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(config.width, config.height), screenMaterial);
   screen.position.z = depth * 0.62;
   group.add(screen);
 
@@ -67,7 +86,9 @@ function createCityVideoScreen(scene, config, texture) {
 
   group.position.set(config.x, config.y, config.z);
   group.rotation.y = config.rotationY || 0;
+  group.visible = true;
   group.userData.screen = screen;
+  group.userData.screenMaterial = screenMaterial;
   scene.add(group);
   return group;
 }
@@ -75,13 +96,20 @@ function createCityVideoScreen(scene, config, texture) {
 function syncCityVideos(cityVideos, camera) {
   cityVideos.forEach((item) => {
     const distance = camera.position.distanceTo(item.group.position);
+    item.group.visible = distance < 65;
+
     if (distance < 55) {
-      if (item.video.paused) item.video.play().catch(() => {});
-      if (item.texture) item.texture.needsUpdate = true;
-      item.group.visible = true;
-    } else if (distance > 65) {
-      if (!item.video.paused) item.video.pause();
-      item.group.visible = false;
+      startCityVideo(item.video);
+    } else if (distance > 65 && !item.video.paused) {
+      item.video.pause();
+    }
+
+    if (item.video.readyState >= 2) {
+      item.texture.needsUpdate = true;
+      if (item.group.userData.screenMaterial) {
+        item.group.userData.screenMaterial.map = item.texture;
+        item.group.userData.screenMaterial.needsUpdate = true;
+      }
     }
   });
 }
@@ -582,14 +610,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     if (plazaVideoUrl) {
       plazaVideoElement = createCityVideoElement(plazaVideoUrl);
 
-      plazaVideoTexture = new THREE.VideoTexture(plazaVideoElement);
-      plazaVideoTexture.colorSpace = THREE.SRGBColorSpace;
-      plazaVideoTexture.minFilter = THREE.LinearFilter;
-      plazaVideoTexture.magFilter = THREE.LinearFilter;
-      plazaVideoTexture.generateMipmaps = false;
+      plazaVideoTexture = createCityVideoTexture(plazaVideoElement);
 
       const startVideoPlayback = () => {
-        plazaVideoElement.play().catch(() => {});
+        startCityVideo(plazaVideoElement);
       };
 
       plazaVideoElement.addEventListener('canplay', startVideoPlayback);
@@ -601,14 +625,11 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     CITY_VIDEO_SCREEN_CONFIGS.forEach((config) => {
       const video = createCityVideoElement(CITY_VIDEO_SOURCES[config.sourceIndex]);
-      const texture = new THREE.VideoTexture(video);
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.minFilter = THREE.LinearFilter;
-      texture.magFilter = THREE.LinearFilter;
-      texture.generateMipmaps = false;
+      const texture = createCityVideoTexture(video);
 
       const group = createCityVideoScreen(scene, config, texture);
       cityVideos.push({ video, texture, group });
+      startCityVideo(video);
     });
 
     if (activeWork) {
@@ -724,8 +745,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (isMobile) return;
       canvas.requestPointerLock();
       startAmbientAudio();
-      cityVideos.forEach((item) => item.video.play().catch(() => {}));
-      plazaVideoElement?.play?.().catch(() => {});
+      cityVideos.forEach((item) => startCityVideo(item.video));
+      startCityVideo(plazaVideoElement);
     };
     const handlePointerLockChange = () => {
       isLockedRef.current = isMobile ? true : document.pointerLockElement === canvas;
@@ -800,8 +821,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     canvas.addEventListener('click', handleClick);
     canvas.addEventListener('touchstart', startAmbientAudio, { passive: true });
     canvas.addEventListener('touchstart', () => {
-      cityVideos.forEach((item) => item.video.play().catch(() => {}));
-      plazaVideoElement?.play?.().catch(() => {});
+      cityVideos.forEach((item) => startCityVideo(item.video));
+      startCityVideo(plazaVideoElement);
     }, { passive: true });
     canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
@@ -901,6 +922,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       syncCityVideos(cityVideos, camera);
       if (plazaVideoTexture && plazaVideoElement && plazaVideoElement.readyState >= 2) {
         plazaVideoTexture.needsUpdate = true;
+      }
+      if (plazaVideoElement && plazaVideoElement.paused && isLockedRef.current) {
+        startCityVideo(plazaVideoElement);
       }
       // Extra canvases update every 4 frames staggered
       if (frameCount % 4 === 0) {

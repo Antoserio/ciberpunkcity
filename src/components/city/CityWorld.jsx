@@ -33,6 +33,13 @@ function createCityVideoElement(src) {
   video.setAttribute('webkit-playsinline', '');
   video.src = src;
   video.load();
+  video.addEventListener('loadedmetadata', () => {
+    video.play().catch(() => {});
+  });
+
+  video.addEventListener('canplaythrough', () => {
+    if (video.paused) video.play().catch(() => {});
+  });
   return video;
 }
 
@@ -98,14 +105,19 @@ function syncCityVideos(cityVideos, camera) {
     const distance = camera.position.distanceTo(item.group.position);
     item.group.visible = distance < 65;
 
-    if (distance < 55) {
-      startCityVideo(item.video);
+    if (distance < 55 && item.video.paused) {
+      item.video.muted = true;
+      item.video.play().catch(() => {
+        console.log('Retrying video play...');
+        setTimeout(() => item.video.play().catch(() => {}), 500);
+      });
     } else if (distance > 65 && !item.video.paused) {
       item.video.pause();
     }
 
-    if (item.video.readyState >= 2) {
+    if (item.video.readyState >= item.video.HAVE_CURRENT_DATA) {
       item.texture.needsUpdate = true;
+      item.group.userData.screenMaterial.needsUpdate = true;
       if (item.group.userData.screenMaterial) {
         item.group.userData.screenMaterial.map = item.texture;
         item.group.userData.screenMaterial.needsUpdate = true;
@@ -629,37 +641,18 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
       const group = createCityVideoScreen(scene, config, texture);
       cityVideos.push({ video, texture, group });
-      startCityVideo(video);
+
+      setTimeout(() => {
+        video.muted = true;
+        video.play().then(() => {
+          console.log('City video started:', config.sourceIndex);
+        }).catch(() => {});
+      }, 100);
     });
 
-    if (activeWork) {
-      const worksImageUrl = activeWork.type === 'showcase' ? activeWork.showcaseItems?.[0]?.img : null;
-      if (activeWork.type === 'video' && activeWork.videoUrl?.includes('/embed/')) {
-        const match = activeWork.videoUrl.match(/\/embed\/([^?&]+)/);
-        const videoId = match?.[1];
-        if (videoId) {
-          worksMediaElement = document.createElement('video');
-          worksMediaElement.crossOrigin = 'anonymous';
-          worksMediaElement.muted = true;
-          worksMediaElement.loop = true;
-          worksMediaElement.playsInline = true;
-          worksMediaElement.autoplay = true;
-          worksMediaElement.preload = 'auto';
-          worksMediaElement.src = `https://www.youtube.com/watch?v=${videoId}`;
-        }
-      }
-
-      if (worksImageUrl) {
-        worksMediaTexture = new THREE.TextureLoader().load(worksImageUrl);
-        worksMediaTexture.colorSpace = THREE.SRGBColorSpace;
-      } else if (worksMediaElement) {
-        worksMediaTexture = new THREE.VideoTexture(worksMediaElement);
-        worksMediaTexture.colorSpace = THREE.SRGBColorSpace;
-        worksMediaTexture.minFilter = THREE.LinearFilter;
-        worksMediaTexture.magFilter = THREE.LinearFilter;
-        worksMediaTexture.generateMipmaps = false;
-        worksMediaElement.play().catch(() => {});
-      }
+    if (activeWork?.showcaseItems?.[0]?.img) {
+      worksMediaTexture = new THREE.TextureLoader().load(activeWork.showcaseItems[0].img);
+      worksMediaTexture.colorSpace = THREE.SRGBColorSpace;
     }
 
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture);

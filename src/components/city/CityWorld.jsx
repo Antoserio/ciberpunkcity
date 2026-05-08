@@ -489,6 +489,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const mountRef = useRef(null);
   const heroRobotsRef = useRef([]);
   const audioRef = useRef(null);
+  const audioUnlockedRef = useRef(false);
   const keysRef = useRef({});
   const yawRef = useRef(0);
   const pitchRef = useRef(-0.1);
@@ -576,19 +577,24 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   }, [onEnterZone, onExitZone, onNearStand, onLeaveStand]);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.ambienceAudio.muted = !audioEnabled;
-      audioRef.current.ambienceLayerTwo.muted = !audioEnabled;
-      audioRef.current.ambienceAudio.volume = audioEnabled ? 0.5 : 0;
-      audioRef.current.ambienceLayerTwo.volume = audioEnabled ? 0.14 : 0;
-      if (audioEnabled) {
-        audioRef.current.ambienceAudio.play().catch(() => {});
-        audioRef.current.ambienceLayerTwo.play().catch(() => {});
-      } else {
-        audioRef.current.ambienceAudio.pause();
-        audioRef.current.ambienceLayerTwo.pause();
-      }
+    if (!audioRef.current) return;
+
+    const { ambienceAudio, ambienceLayerTwo } = audioRef.current;
+    ambienceAudio.muted = !audioEnabled;
+    ambienceLayerTwo.muted = !audioEnabled;
+    ambienceAudio.volume = audioEnabled ? 0.5 : 0;
+    ambienceLayerTwo.volume = audioEnabled ? 0.14 : 0;
+
+    if (!audioEnabled) {
+      ambienceAudio.pause();
+      ambienceLayerTwo.pause();
+      return;
     }
+
+    if (!audioUnlockedRef.current) return;
+
+    ambienceAudio.play().catch(() => {});
+    ambienceLayerTwo.play().catch(() => {});
   }, [audioEnabled]);
 
   useEffect(() => {
@@ -773,12 +779,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     audioRef.current = { ambienceAudio, ambienceLayerTwo };
 
     const startAmbientAudio = () => {
-      ambienceAudio.currentTime = ambienceAudio.currentTime || 0;
-      ambienceLayerTwo.currentTime = ambienceLayerTwo.currentTime || 0;
+      audioUnlockedRef.current = true;
       ambienceAudio.muted = !audioEnabled;
       ambienceLayerTwo.muted = !audioEnabled;
       ambienceAudio.volume = audioEnabled ? 0.5 : 0;
       ambienceLayerTwo.volume = audioEnabled ? 0.14 : 0;
+
+      if (!audioEnabled) return;
+
       const playMain = ambienceAudio.play();
       const playLayer = ambienceLayerTwo.play();
       Promise.allSettled([playMain, playLayer]).then(() => {});
@@ -1207,7 +1215,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
   }, [stableAmbienceAudio, stableAmbienceLayerTwo]);
 
-  return <div ref={mountRef} className="w-full h-full cursor-crosshair" />;
+  return <div ref={mountRef} data-city-world="true" className="w-full h-full cursor-crosshair" />;
 }
 
 function basicMat(params) {
@@ -1660,6 +1668,8 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
     color: 0xffffff,
     side: THREE.FrontSide,
     toneMapped: false,
+    transparent: true,
+    opacity: 0.92,
   });
 
   const rearScreen = new THREE.Mesh(
@@ -1668,7 +1678,6 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
   );
   rearScreen.position.set(bx, facadeY, bz - bw / 2 - 0.18);
   rearScreen.rotation.y = Math.PI;
-  rearScreen.userData.onClick = () => onOpenViky?.();
   rearScreen.userData.vikyVideo = vikyVideo;
   scene.add(rearScreen);
 
@@ -1678,10 +1687,18 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
   scene.add(frontBorderLine);
 
   const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW * 1.3 + 0.12, facadeH * 0.95 + 0.12, 0.08));
-  const rearBorderLine = new THREE.LineSegments(rearBorderGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
+  const rearBorderLine = new THREE.LineSegments(rearBorderGeo, new THREE.LineBasicMaterial({ color: 0x8aefff }));
   rearBorderLine.position.copy(rearScreen.position);
   rearBorderLine.rotation.y = Math.PI;
   scene.add(rearBorderLine);
+
+  const rearGlow = new THREE.Mesh(
+    new THREE.PlaneGeometry(facadeW * 1.4, facadeH),
+    new THREE.MeshBasicMaterial({ color: 0xb8f7ff, transparent: true, opacity: 0.12, side: THREE.DoubleSide })
+  );
+  rearGlow.position.set(bx, facadeY, bz - bw / 2 - 0.22);
+  rearGlow.rotation.y = Math.PI;
+  scene.add(rearGlow);
 
   vikyVideo.addEventListener('loadeddata', () => {
     console.log('✓ Viky video loaded');

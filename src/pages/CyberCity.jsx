@@ -232,6 +232,8 @@ export default function CyberCity() {
           e.preventDefault();
           e.stopPropagation();
           setHasClickedOnce(true);
+          const world = document.querySelector('[data-city-world="true"]');
+          world?.click();
           setAudioEnabled((value) => !value);
         }}
         className="fixed bottom-28 left-4 z-[60] rounded-full border border-white/10 bg-black/60 px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white backdrop-blur-md transition hover:border-cyan-400/40 hover:text-cyan-300 sm:bottom-6 sm:left-6"

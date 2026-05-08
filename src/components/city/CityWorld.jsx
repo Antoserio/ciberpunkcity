@@ -473,6 +473,36 @@ const BUILDING_COLLIDERS = [
   ].map(([x, z]) => ({ x, z, radius: 6 }))
 ];
 const HERO_COLORS = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
+const WORKS = [
+  {
+    title: 'CLONEX AVATAR',
+    subtitle: 'RTFKT x NIKE - Metahumano Realista',
+    description: 'Avatar fotorrealista para experiencias inmersivas',
+    videoUrl: null,
+    color: '#ff0066'
+  },
+  {
+    title: 'DANCE MAPPING',
+    subtitle: 'Video Mapping Interactivo 360°',
+    description: 'Proyección arquitectónica sincronizada con música',
+    videoUrl: null,
+    color: '#00ffff'
+  },
+  {
+    title: 'METAVERSO XR',
+    subtitle: 'Eventos Live en Realidad Extendida',
+    description: 'Espacios virtuales para conferencias y eventos',
+    videoUrl: null,
+    color: '#ffff00'
+  },
+  {
+    title: 'STUDIO 360',
+    subtitle: 'Producción Audiovisual Inmersiva',
+    description: 'Contenido 360° para experiencias VR',
+    videoUrl: null,
+    color: '#ff00ff'
+  }
+];
 
 
 export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null }) {
@@ -650,6 +680,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     let worksMediaElement = null;
     let worksMediaTexture = null;
     const cityVideos = [];
+    const worksCarousel = makeWorksCarouselScreen();
 
     if (plazaVideoUrl) {
       plazaVideoElement = createCityVideoElement(plazaVideoUrl);
@@ -724,7 +755,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     vikyTexture.magFilter = THREE.LinearFilter;
     vikyTexture.generateMipmaps = false;
 
-    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture, vikyTexture, onOpenViky);
+    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture, vikyTexture, onOpenViky, worksCarousel);
     extraCanvasesRef.current = extraCanvases;
 
     const robotSwarm = addFlyingRobots(scene);
@@ -837,6 +868,19 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const handleKeyDown = (e) => {
       // Block all movement and interaction while modal is open
       if (modalOpenRef.current) return;
+
+      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 10, 15)) < 12;
+      if (isNearCarousel && e.code === 'ArrowLeft') {
+        e.preventDefault();
+        worksCarousel.prev();
+        return;
+      }
+      if (isNearCarousel && e.code === 'ArrowRight') {
+        e.preventDefault();
+        worksCarousel.next();
+        return;
+      }
+
       keysRef.current[e.code] = true;
       if (['KeyW','KeyS','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) {
         e.preventDefault();
@@ -1008,6 +1052,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         }
       }
 
+      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 10, 15)) < 12;
+      worksCarousel.setProximity(isNearCarousel);
+      worksCarousel.update(frameCount * 0.016);
+
       const particles = scene.children.find((child) => child.isPoints);
       if (particles) {
         particles.rotation.y += 0.00035;
@@ -1088,6 +1136,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         vikyVideoElement.load();
       }
       vikyTexture?.dispose?.();
+      worksCarousel.texture.dispose();
       composer.dispose();
       vignette.remove();
       ambienceAudio.pause();
@@ -1126,9 +1175,158 @@ function colorToGlowKey(color) {
   return map[color] || 'magenta';
 }
 
+function makeWorksCarouselScreen() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1920;
+  canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+  const texture = new THREE.CanvasTexture(canvas);
+  let activeIndex = 0;
+  let controlsVisible = false;
+  let lastAdvance = performance.now();
+
+  const draw = (time = 0) => {
+    const work = WORKS[activeIndex];
+    const accent = work.color;
+    const pulse = 0.82 + Math.sin(time * 1.6) * 0.08;
+
+    const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    bg.addColorStop(0, '#060010');
+    bg.addColorStop(0.5, '#140428');
+    bg.addColorStop(1, '#020008');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = `${accent}22`;
+    ctx.fillRect(110, 120, 980, 840);
+    ctx.strokeStyle = `${accent}aa`;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(110, 120, 980, 840);
+
+    const mediaGradient = ctx.createLinearGradient(110, 120, 1090, 960);
+    mediaGradient.addColorStop(0, `${accent}55`);
+    mediaGradient.addColorStop(1, '#ffffff10');
+    ctx.fillStyle = mediaGradient;
+    ctx.fillRect(150, 160, 900, 620);
+
+    ctx.save();
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 10;
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = 28;
+    ctx.strokeRect(190, 200, 820, 540);
+    ctx.restore();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 46px Orbitron, monospace';
+    ctx.fillText('WORKS CAROUSEL', 1280, 170);
+
+    ctx.fillStyle = accent;
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = 24;
+    ctx.font = '900 92px Orbitron, monospace';
+    ctx.fillText(work.title, 1180, 310);
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#d7cfff';
+    ctx.font = '600 40px Rajdhani, sans-serif';
+    ctx.fillText(work.subtitle, 1180, 390);
+
+    ctx.fillStyle = '#f3ecff';
+    ctx.font = '500 36px Rajdhani, sans-serif';
+    wrapText(ctx, work.description, 1180, 500, 560, 54);
+
+    ctx.fillStyle = `${accent}cc`;
+    ctx.font = '700 34px Rajdhani, sans-serif';
+    ctx.fillText(`${String(activeIndex + 1).padStart(2, '0')} / ${String(WORKS.length).padStart(2, '0')}`, 1180, 760);
+
+    for (let i = 0; i < WORKS.length; i++) {
+      ctx.fillStyle = i === activeIndex ? WORKS[i].color : '#ffffff33';
+      ctx.beginPath();
+      ctx.arc(1195 + i * 34, 825, i === activeIndex ? 10 : 7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const controlOpacity = controlsVisible ? 1 : 0.38;
+    ctx.globalAlpha = controlOpacity;
+    ctx.fillStyle = '#00000099';
+    ctx.fillRect(1220, 900, 220, 92);
+    ctx.fillRect(1485, 900, 220, 92);
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(1220, 900, 220, 92);
+    ctx.strokeRect(1485, 900, 220, 92);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 28px Rajdhani, sans-serif';
+    ctx.fillText('← ANTERIOR', 1260, 956);
+    ctx.fillText('SIGUIENTE →', 1520, 956);
+    ctx.globalAlpha = 1;
+
+    ctx.strokeStyle = `rgba(255,255,255,${0.08 + pulse * 0.08})`;
+    ctx.lineWidth = 2;
+    for (let y = 0; y < canvas.height; y += 6) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+
+    texture.needsUpdate = true;
+  };
+
+  const next = () => {
+    activeIndex = (activeIndex + 1) % WORKS.length;
+    lastAdvance = performance.now();
+    draw(performance.now() * 0.001);
+  };
+
+  const prev = () => {
+    activeIndex = (activeIndex - 1 + WORKS.length) % WORKS.length;
+    lastAdvance = performance.now();
+    draw(performance.now() * 0.001);
+  };
+
+  const update = (time) => {
+    if (performance.now() - lastAdvance > 8000) {
+      next();
+    } else {
+      draw(time);
+    }
+  };
+
+  const setProximity = (value) => {
+    controlsVisible = value;
+  };
+
+  draw(0);
+
+  return { texture, next, prev, update, setProximity };
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  let currentY = y;
+
+  words.forEach((word) => {
+    const testLine = `${line}${word} `;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      ctx.fillText(line.trim(), x, currentY);
+      line = `${word} `;
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  });
+
+  if (line) {
+    ctx.fillText(line.trim(), x, currentY);
+  }
+}
+
 // ─── Main city builder ────────────────────────────────────────────────────────
 
-function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) {
+function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, worksCarousel) {
   const extraCanvases = [];
   // Ground — plaza oscura abierta
   const ground = new THREE.Mesh(
@@ -1172,6 +1370,34 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) 
   plaza.rotation.x = -Math.PI / 2;
   plaza.position.y = 0.012;
   scene.add(plaza);
+
+  const carouselFrame = new THREE.Mesh(
+    new THREE.BoxGeometry(18.8, 10.8, 0.55),
+    new THREE.MeshBasicMaterial({ color: 0x04040a })
+  );
+  carouselFrame.position.set(0, 10, 15);
+  scene.add(carouselFrame);
+
+  const carouselScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(18, 10),
+    new THREE.MeshBasicMaterial({ map: worksCarousel.texture, toneMapped: false, side: THREE.DoubleSide })
+  );
+  carouselScreen.position.set(0, 10, 14.78);
+  carouselScreen.userData.onClick = (event) => {
+    const point = event?.point;
+    if (!point) return;
+    const localX = point.x - carouselScreen.position.x;
+    if (localX < -4) worksCarousel.prev();
+    if (localX > 4) worksCarousel.next();
+  };
+  scene.add(carouselScreen);
+
+  const carouselGlow = new THREE.Mesh(
+    new THREE.PlaneGeometry(19.8, 11.2),
+    new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.12, side: THREE.DoubleSide })
+  );
+  carouselGlow.position.set(0, 10, 14.62);
+  scene.add(carouselGlow);
 
   // Zone buildings
   ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky));

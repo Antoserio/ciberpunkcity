@@ -593,7 +593,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         audioRef.current.ambienceLayerTwo.play().catch(() => {});
       }
     }
-  }, [audioEnabled, activateAudioSignal]);
+  }, [audioEnabled]);
 
   useEffect(() => {
     const mount = mountRef.current;

@@ -27,7 +27,6 @@ export default function CyberCity() {
   const [robotFileName, setRobotFileName] = useState('');
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [activeView, setActiveView] = useState('explore');
-  const [activateAudioSignal, setActivateAudioSignal] = useState(0);
   const [activeWork, setActiveWork] = useState(() => STANDS.find((stand) => stand.type === 'video' || stand.type === 'showcase') || null);
   const [vikyOpen, setVikyOpen] = useState(false);
   const [worksTransitionToken, setWorksTransitionToken] = useState(0);

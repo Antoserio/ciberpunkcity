@@ -25,7 +25,7 @@ export default function CyberCity() {
   const [isMobile, setIsMobile] = useState(false);
   const [robotModelUrl, setRobotModelUrl] = useState('');
   const [robotFileName, setRobotFileName] = useState('');
-  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [audioEnabled, setAudioEnabled] = useState(false);
   const [activeView, setActiveView] = useState('explore');
   const [activateAudioSignal, setActivateAudioSignal] = useState(0);
   const [activeWork, setActiveWork] = useState(() => STANDS.find((stand) => stand.type === 'video' || stand.type === 'showcase') || null);
@@ -105,11 +105,6 @@ export default function CyberCity() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!started || !audioEnabled || activateAudioSignal === 0) return;
-    const canvas = document.querySelector('canvas');
-    canvas?.dispatchEvent(new Event('click'));
-  }, [started, audioEnabled, activateAudioSignal]);
 
   if (!started) {
     return <SplashScreen onEnter={() => setStarted(true)} />;
@@ -132,7 +127,6 @@ export default function CyberCity() {
           audioEnabled={audioEnabled}
           activeView={activeView}
           activeWork={activeWork}
-          activateAudioSignal={activateAudioSignal}
         />
       </div>
 
@@ -171,7 +165,6 @@ export default function CyberCity() {
                 setShowWelcomeOverlay(false);
                 setActiveView('explore');
                 setHasClickedOnce(true);
-                setActivateAudioSignal((value) => value + 1);
               }}
               className="rounded-full border border-cyan-400/50 bg-gradient-to-r from-cyan-400/20 to-fuchsia-500/20 px-10 py-4 font-orbitron text-sm font-light uppercase tracking-[0.3em] text-white backdrop-blur-[10px] transition-all duration-300 hover:border-cyan-300/80 hover:from-cyan-400/40 hover:to-fuchsia-500/40"
             >
@@ -213,7 +206,8 @@ export default function CyberCity() {
       {activeView === 'explore' && !isMobile && <MiniMap activeZone={activeZone} isMobile={isMobile} />}
 
       <button
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
           setAudioEnabled((value) => !value);
         }}
         className="fixed bottom-28 left-4 z-[60] rounded-full border border-white/10 bg-black/60 px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white backdrop-blur-md transition hover:border-cyan-400/40 hover:text-cyan-300 sm:bottom-6 sm:left-6"

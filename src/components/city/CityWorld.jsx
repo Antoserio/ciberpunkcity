@@ -868,13 +868,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       const deltaX = e.clientX - dragStateRef.current.lastMouseX;
       const deltaY = e.clientY - dragStateRef.current.lastMouseY;
 
-      console.log('Mouse drag:', {
-        deltaX,
-        deltaY,
-        yaw: yawRef.current,
-        pitch: pitchRef.current,
-      });
-
       yawRef.current -= deltaX * 0.003;
       pitchRef.current -= deltaY * 0.003;
       targetYawRef.current = yawRef.current;
@@ -1084,11 +1077,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       heroRobot.mesh.rotation.z = Math.sin(robotTime * 1.15 + heroRobot.offset) * 0.07;
       });
 
-      if (camera.position.distanceTo(prevPos) > 0.1) {
-        console.log('⚠️ Cámara movida por código:', {
-          antes: prevPos,
-          después: camera.position.clone(),
-        });
+      if (camera.position.distanceTo(prevPos) > 0.01 && !moving) {
+        console.error('⚠️ BUG: Algo movió la cámara sin WASD:', camera.position);
       }
 
       composer.render();
@@ -1418,11 +1408,6 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   groundSheen.position.y = 0.015;
   scene.add(groundSheen);
 
-  const grid = new THREE.GridHelper(180, 48, 0x7ef9ff, 0xff4dd8);
-  grid.position.y = 0.04;
-  grid.material.transparent = true;
-  grid.material.opacity = 0.24;
-  scene.add(grid);
 
   // Plaza central abierta, sin cuadrante marcado
   const plaza = new THREE.Mesh(

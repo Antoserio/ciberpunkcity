@@ -1327,10 +1327,10 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
   });
 
   const rearScreen = new THREE.Mesh(
-    new THREE.PlaneGeometry(facadeW * 2.2, facadeH * 1.6),
+    new THREE.PlaneGeometry(facadeW * 1.3, facadeH * 0.95),
     rearMaterial
   );
-  rearScreen.position.set(bx, facadeY, bz - bw / 2 - 1.2);
+  rearScreen.position.set(bx, facadeY, bz - bw / 2 - 0.18);
   rearScreen.rotation.y = Math.PI;
   rearScreen.userData.onClick = () => onOpenViky?.();
   rearScreen.userData.vikyVideo = vikyVideo;
@@ -1341,7 +1341,7 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
   frontBorderLine.position.set(bx, facadeY, bz + bw / 2 + 0.1);
   scene.add(frontBorderLine);
 
-  const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW * 2.2 + 0.2, facadeH * 1.6 + 0.2, 0.1));
+  const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW * 1.3 + 0.12, facadeH * 0.95 + 0.12, 0.08));
   const rearBorderLine = new THREE.LineSegments(rearBorderGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
   rearBorderLine.position.copy(rearScreen.position);
   rearBorderLine.rotation.y = Math.PI;

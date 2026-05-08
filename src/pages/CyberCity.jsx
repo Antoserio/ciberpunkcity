@@ -165,7 +165,7 @@ export default function CyberCity() {
         )}
       </AnimatePresence>
 
-      {activeView === 'explore' && <MiniMap activeZone={activeZone} isMobile={isMobile} />}
+      {activeView === 'explore' && !isMobile && <MiniMap activeZone={activeZone} isMobile={isMobile} />}
 
       <button
         onClick={() => {

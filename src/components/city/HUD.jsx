@@ -17,18 +17,18 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
 
       {/* Top bar */}
       <div className="fixed top-0 left-0 right-0 z-30 pointer-events-none">
-        <div className="flex items-start justify-between gap-2 px-3 py-3 sm:px-6">
+        <div className="flex items-start justify-between gap-3 px-3 py-3 sm:px-6">
           {/* Logo */}
-          <div className="pointer-events-none px-1 py-1">
-            <div className="max-w-[230px] sm:max-w-[280px]">
-              <div className="flex items-baseline gap-2">
-                <span className="font-orbitron text-base sm:text-xl font-black neon-text-cyan tracking-[0.24em]">
+          <div className="pointer-events-none min-w-0 flex-1 px-1 py-1">
+            <div className="max-w-[200px] sm:max-w-[280px]">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="font-orbitron text-[15px] sm:text-xl font-black neon-text-cyan tracking-[0.18em] sm:tracking-[0.24em] leading-none">
                   AGENCY<span className="neon-text-magenta">360</span>
                 </span>
-                <span className="text-[10px] sm:text-xs font-orbitron tracking-[0.24em] text-white/50">CYBERCITY</span>
+                <span className="text-[9px] sm:text-xs font-orbitron tracking-[0.18em] sm:tracking-[0.24em] text-white/50 leading-none">CYBERCITY</span>
               </div>
-              <p className="mt-1 font-rajdhani text-[12px] sm:text-[13px] font-bold uppercase leading-[1.15] tracking-[0.12em] text-white/88">
-                Agencia creativa de soluciones digitales
+              <p className="mt-1 max-w-[180px] sm:max-w-none font-rajdhani text-[10px] sm:text-[13px] font-bold uppercase leading-[1.1] sm:leading-[1.15] tracking-[0.08em] sm:tracking-[0.12em] text-white/88">
+                Agencia creativa digital
               </p>
             </div>
           </div>
@@ -49,8 +49,8 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
       </div>
 
       {/* Zone indicator bar - bottom */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none max-w-[92vw]">
-        <div className="glass-dark px-4 py-2 rounded flex items-center gap-3 sm:gap-6">
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none max-w-[92vw] sm:max-w-[92vw]">
+        <div className="glass-dark px-3 sm:px-4 py-2 rounded flex items-center gap-2 sm:gap-6 overflow-x-hidden">
           {ZONES.map(zone => (
             <div
               key={zone.id}

@@ -13,49 +13,26 @@ const CITY_VIDEO_SOURCES = [
 ];
 
 const CITY_VIDEO_SCREEN_CONFIGS = [
-  { x: -30, y: 10.5, z: -25.4, width: 7.2, height: 4.05, rotationY: Math.PI, frameColor: 0x00ffff, glowColor: 0x00ffff, sourceIndex: 0 },
-  { x: 30, y: 11.5, z: -25.4, width: 7.2, height: 4.05, rotationY: Math.PI, frameColor: 0xff00ff, glowColor: 0xff00ff, sourceIndex: 1 },
-  { x: -34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: -Math.PI / 2, frameColor: 0xffff00, glowColor: 0xffff00, sourceIndex: 2 },
-  { x: 34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: Math.PI / 2, frameColor: 0x4488ff, glowColor: 0x4488ff, sourceIndex: 3 },
+  { x: -30, y: 10.5, z: -25.4, width: 7.2, height: 4.05, rotationY: 0, frameColor: 0x00ffff, glowColor: 0x00ffff, sourceIndex: 0 },
+  { x: 30, y: 11.5, z: -25.4, width: 7.2, height: 4.05, rotationY: 0, frameColor: 0xff00ff, glowColor: 0xff00ff, sourceIndex: 1 },
+  { x: -34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: Math.PI / 2, frameColor: 0xffff00, glowColor: 0xffff00, sourceIndex: 2 },
+  { x: 34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: -Math.PI / 2, frameColor: 0x4488ff, glowColor: 0x4488ff, sourceIndex: 3 },
 ];
 
 function createCityVideoElement(src) {
   const video = document.createElement('video');
   video.crossOrigin = 'anonymous';
   video.muted = true;
-  video.defaultMuted = true;
   video.loop = true;
   video.playsInline = true;
   video.autoplay = true;
-  video.preload = 'auto';
+  video.preload = 'metadata';
   video.setAttribute('muted', '');
   video.setAttribute('playsinline', '');
   video.setAttribute('webkit-playsinline', '');
   video.src = src;
   video.load();
-  video.addEventListener('loadedmetadata', () => {
-    video.play().catch(() => {});
-  });
-
-  video.addEventListener('canplaythrough', () => {
-    if (video.paused) video.play().catch(() => {});
-  });
   return video;
-}
-
-function createCityVideoTexture(video) {
-  const texture = new THREE.VideoTexture(video);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.minFilter = THREE.LinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.generateMipmaps = false;
-  texture.needsUpdate = true;
-  return texture;
-}
-
-function startCityVideo(video) {
-  if (!video) return;
-  video.play().catch(() => {});
 }
 
 function createCityVideoScreen(scene, config, texture) {
@@ -67,14 +44,11 @@ function createCityVideoScreen(scene, config, texture) {
   );
   group.add(frame);
 
-  const screenMaterial = new THREE.MeshBasicMaterial({
-    map: texture,
-    side: THREE.DoubleSide,
-    toneMapped: false,
-    color: 0xffffff,
-  });
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(config.width, config.height), screenMaterial);
-  screen.position.z = depth * 0.62;
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(config.width, config.height),
+    new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, toneMapped: false, color: 0xffffff })
+  );
+  screen.position.z = depth * 0.55;
   group.add(screen);
 
   const border = new THREE.LineSegments(
@@ -88,14 +62,12 @@ function createCityVideoScreen(scene, config, texture) {
     new THREE.PlaneGeometry(config.width + 0.8, config.height + 0.8),
     new THREE.MeshBasicMaterial({ color: config.glowColor, transparent: true, opacity: 0.09, side: THREE.DoubleSide })
   );
-  glow.position.z = -0.02;
+  glow.position.z = 0.02;
   group.add(glow);
 
   group.position.set(config.x, config.y, config.z);
   group.rotation.y = config.rotationY || 0;
-  group.visible = true;
   group.userData.screen = screen;
-  group.userData.screenMaterial = screenMaterial;
   scene.add(group);
   return group;
 }
@@ -103,25 +75,13 @@ function createCityVideoScreen(scene, config, texture) {
 function syncCityVideos(cityVideos, camera) {
   cityVideos.forEach((item) => {
     const distance = camera.position.distanceTo(item.group.position);
-    item.group.visible = distance < 65;
-
-    if (distance < 55 && item.video.paused) {
-      item.video.muted = true;
-      item.video.play().catch(() => {
-        console.log('Retrying video play...');
-        setTimeout(() => item.video.play().catch(() => {}), 500);
-      });
-    } else if (distance > 65 && !item.video.paused) {
-      item.video.pause();
-    }
-
-    if (item.video.readyState >= item.video.HAVE_CURRENT_DATA) {
-      item.texture.needsUpdate = true;
-      item.group.userData.screenMaterial.needsUpdate = true;
-      if (item.group.userData.screenMaterial) {
-        item.group.userData.screenMaterial.map = item.texture;
-        item.group.userData.screenMaterial.needsUpdate = true;
-      }
+    if (distance < 30) {
+      if (item.video.paused) item.video.play().catch(() => {});
+      if (item.texture) item.texture.needsUpdate = true;
+      item.group.visible = true;
+    } else if (distance > 38) {
+      if (!item.video.paused) item.video.pause();
+      item.group.visible = false;
     }
   });
 }
@@ -622,10 +582,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     if (plazaVideoUrl) {
       plazaVideoElement = createCityVideoElement(plazaVideoUrl);
 
-      plazaVideoTexture = createCityVideoTexture(plazaVideoElement);
+      plazaVideoTexture = new THREE.VideoTexture(plazaVideoElement);
+      plazaVideoTexture.colorSpace = THREE.SRGBColorSpace;
+      plazaVideoTexture.minFilter = THREE.LinearFilter;
+      plazaVideoTexture.magFilter = THREE.LinearFilter;
+      plazaVideoTexture.generateMipmaps = false;
 
       const startVideoPlayback = () => {
-        startCityVideo(plazaVideoElement);
+        plazaVideoElement.play().catch(() => {});
       };
 
       plazaVideoElement.addEventListener('canplay', startVideoPlayback);
@@ -637,22 +601,44 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     CITY_VIDEO_SCREEN_CONFIGS.forEach((config) => {
       const video = createCityVideoElement(CITY_VIDEO_SOURCES[config.sourceIndex]);
-      const texture = createCityVideoTexture(video);
+      const texture = new THREE.VideoTexture(video);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.generateMipmaps = false;
 
       const group = createCityVideoScreen(scene, config, texture);
       cityVideos.push({ video, texture, group });
-
-      setTimeout(() => {
-        video.muted = true;
-        video.play().then(() => {
-          console.log('City video started:', config.sourceIndex);
-        }).catch(() => {});
-      }, 100);
     });
 
-    if (activeWork?.showcaseItems?.[0]?.img) {
-      worksMediaTexture = new THREE.TextureLoader().load(activeWork.showcaseItems[0].img);
-      worksMediaTexture.colorSpace = THREE.SRGBColorSpace;
+    if (activeWork) {
+      const worksImageUrl = activeWork.type === 'showcase' ? activeWork.showcaseItems?.[0]?.img : null;
+      if (activeWork.type === 'video' && activeWork.videoUrl?.includes('/embed/')) {
+        const match = activeWork.videoUrl.match(/\/embed\/([^?&]+)/);
+        const videoId = match?.[1];
+        if (videoId) {
+          worksMediaElement = document.createElement('video');
+          worksMediaElement.crossOrigin = 'anonymous';
+          worksMediaElement.muted = true;
+          worksMediaElement.loop = true;
+          worksMediaElement.playsInline = true;
+          worksMediaElement.autoplay = true;
+          worksMediaElement.preload = 'auto';
+          worksMediaElement.src = `https://www.youtube.com/watch?v=${videoId}`;
+        }
+      }
+
+      if (worksImageUrl) {
+        worksMediaTexture = new THREE.TextureLoader().load(worksImageUrl);
+        worksMediaTexture.colorSpace = THREE.SRGBColorSpace;
+      } else if (worksMediaElement) {
+        worksMediaTexture = new THREE.VideoTexture(worksMediaElement);
+        worksMediaTexture.colorSpace = THREE.SRGBColorSpace;
+        worksMediaTexture.minFilter = THREE.LinearFilter;
+        worksMediaTexture.magFilter = THREE.LinearFilter;
+        worksMediaTexture.generateMipmaps = false;
+        worksMediaElement.play().catch(() => {});
+      }
     }
 
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture);
@@ -738,8 +724,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (isMobile) return;
       canvas.requestPointerLock();
       startAmbientAudio();
-      cityVideos.forEach((item) => startCityVideo(item.video));
-      startCityVideo(plazaVideoElement);
     };
     const handlePointerLockChange = () => {
       isLockedRef.current = isMobile ? true : document.pointerLockElement === canvas;
@@ -813,10 +797,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     canvas.addEventListener('click', handleClick);
     canvas.addEventListener('touchstart', startAmbientAudio, { passive: true });
-    canvas.addEventListener('touchstart', () => {
-      cityVideos.forEach((item) => startCityVideo(item.video));
-      startCityVideo(plazaVideoElement);
-    }, { passive: true });
     canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -915,9 +895,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       syncCityVideos(cityVideos, camera);
       if (plazaVideoTexture && plazaVideoElement && plazaVideoElement.readyState >= 2) {
         plazaVideoTexture.needsUpdate = true;
-      }
-      if (plazaVideoElement && plazaVideoElement.paused && isLockedRef.current) {
-        startCityVideo(plazaVideoElement);
       }
       // Extra canvases update every 4 frames staggered
       if (frameCount % 4 === 0) {

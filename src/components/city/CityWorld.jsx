@@ -20,18 +20,57 @@ const CITY_VIDEO_SCREEN_CONFIGS = [
 ];
 
 function createCityVideoElement(src) {
+  console.log('🎬 Creating video element for:', src);
+  
   const video = document.createElement('video');
+  video.src = src;
   video.crossOrigin = 'anonymous';
-  video.muted = true;
   video.loop = true;
+  video.muted = true;
   video.playsInline = true;
   video.autoplay = true;
-  video.preload = 'metadata';
-  video.setAttribute('muted', '');
   video.setAttribute('playsinline', '');
   video.setAttribute('webkit-playsinline', '');
-  video.src = src;
+  video.setAttribute('muted', '');
+  
+  console.log('🎬 Video element created, calling load()...');
   video.load();
+  
+  video.addEventListener('loadstart', () => {
+    console.log('✓ loadstart:', src);
+  });
+  
+  video.addEventListener('loadedmetadata', () => {
+    console.log('✓ loadedmetadata:', src, 'duration:', video.duration);
+  });
+  
+  video.addEventListener('loadeddata', () => {
+    console.log('✓ loadeddata:', src);
+    video.play().then(() => {
+      console.log('✓✓ Video PLAYING after loadeddata:', src);
+    }).catch(e => console.error('✗ Play error after loadeddata:', e));
+  });
+  
+  video.addEventListener('canplay', () => {
+    console.log('✓ canplay:', src);
+    if (video.paused) {
+      video.play().catch(e => console.error('✗ Canplay play error:', e));
+    }
+  });
+  
+  video.addEventListener('error', (e) => {
+    console.error('✗✗ VIDEO ERROR:', src, e);
+  });
+  
+  setTimeout(() => {
+    console.log('⏱️ Attempting immediate play for:', src);
+    video.play().then(() => {
+      console.log('✓ Immediate play SUCCESS:', src);
+    }).catch(e => {
+      console.log('✗ Immediate play blocked (normal):', e.message);
+    });
+  }, 100);
+  
   return video;
 }
 

@@ -46,42 +46,56 @@ export default function AboutOverlay({ open, onClose }) {
                   <h2 className="max-w-[8ch] font-rajdhani text-6xl font-bold uppercase leading-[0.88] tracking-[-0.04em] text-white sm:text-8xl lg:text-[7rem]">
                     {content.title}
                   </h2>
-                  <p className="mt-6 max-w-xl font-rajdhani text-base font-semibold uppercase leading-7 tracking-[0.06em] text-cyan-100/88 sm:text-lg sm:leading-8">
+                  <p className="mt-6 max-w-xl font-rajdhani text-2xl font-bold uppercase leading-[1.05] tracking-[-0.03em] text-cyan-100/92 sm:text-3xl lg:text-4xl">
                     {content.lead}
                   </p>
-                  <p className="mt-5 max-w-xl font-rajdhani text-sm uppercase leading-7 tracking-[0.08em] text-white/72 sm:text-base sm:leading-8">
+                  <p className="mt-6 max-w-xl font-rajdhani text-lg font-bold uppercase leading-[1.25] tracking-[0.02em] text-white/78 sm:text-xl lg:text-2xl">
                     {content.body}
                   </p>
                 </div>
 
-                <div className="relative flex min-h-[340px] items-end justify-center lg:min-h-[560px]">
-                  <div className="absolute inset-x-[18%] bottom-6 h-24 rounded-full bg-cyan-300/20 blur-3xl" />
+                <div className="relative flex min-h-[340px] items-center justify-center lg:min-h-[560px]">
+                  <div className="absolute inset-x-[18%] bottom-10 h-24 rounded-full bg-cyan-300/20 blur-3xl" />
                   <motion.div
-                    animate={{ y: [0, -12, 0], rotate: [0, 1.5, 0, -1.5, 0] }}
-                    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                    className="relative flex h-[320px] w-[220px] items-end justify-center sm:h-[420px] sm:w-[280px] lg:h-[520px] lg:w-[340px]"
+                    animate={{ y: [0, -18, 0], x: [0, 6, 0, -6, 0], rotateZ: [0, 2, 0, -2, 0] }}
+                    transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+                    className="relative h-[260px] w-[260px] sm:h-[320px] sm:w-[320px] lg:h-[380px] lg:w-[380px]"
                   >
-                    <div className="absolute inset-0 rounded-[999px] border border-cyan-300/15 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.12),rgba(0,255,255,0.06)_32%,transparent_68%)] blur-[2px]" />
-                    <div className="absolute top-[12%] h-16 w-16 rounded-full border border-cyan-200/40 bg-cyan-100/10 shadow-[0_0_35px_rgba(0,255,255,0.22)] sm:h-20 sm:w-20 lg:h-24 lg:w-24" />
-                    <div className="absolute top-[24%] h-28 w-20 rounded-[999px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(0,255,255,0.05))] shadow-[0_0_40px_rgba(255,255,255,0.08)] sm:h-36 sm:w-24 lg:h-44 lg:w-28" />
-                    <div className="absolute top-[30%] left-[8%] h-3 w-20 rounded-full bg-cyan-200/70 shadow-[0_0_24px_rgba(0,255,255,0.45)] sm:w-28 lg:left-[6%] lg:w-32" />
-                    <div className="absolute top-[30%] right-[8%] h-3 w-20 rounded-full bg-fuchsia-300/70 shadow-[0_0_24px_rgba(255,0,255,0.4)] sm:w-28 lg:right-[6%] lg:w-32" />
-                    <div className="absolute top-[54%] left-[22%] h-28 w-3 rounded-full bg-cyan-100/70 shadow-[0_0_20px_rgba(255,255,255,0.2)] sm:h-36 lg:h-44" />
-                    <div className="absolute top-[54%] right-[22%] h-28 w-3 rounded-full bg-cyan-100/70 shadow-[0_0_20px_rgba(255,255,255,0.2)] sm:h-36 lg:h-44" />
-                    <div className="absolute bottom-[10%] left-[34%] h-24 w-3 rounded-full bg-white/65 shadow-[0_0_20px_rgba(255,255,255,0.18)] sm:h-28 lg:h-36" />
-                    <div className="absolute bottom-[10%] right-[34%] h-24 w-3 rounded-full bg-white/65 shadow-[0_0_20px_rgba(255,255,255,0.18)] sm:h-28 lg:h-36" />
-                    <div className="absolute top-[15%] flex gap-3">
-                      <span className="h-2.5 w-2.5 rounded-full bg-cyan-200 shadow-[0_0_14px_rgba(0,255,255,0.9)]" />
-                      <span className="h-2.5 w-2.5 rounded-full bg-fuchsia-300 shadow-[0_0_14px_rgba(255,0,255,0.85)]" />
-                    </div>
+                    <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-200/40 bg-[radial-gradient(circle_at_35%_35%,rgba(255,255,255,0.9),rgba(0,255,255,0.2)_45%,rgba(3,8,20,0.9)_70%)] shadow-[0_0_35px_rgba(0,255,255,0.24)] sm:h-28 sm:w-28 lg:h-32 lg:w-32" />
+                    <div className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 shadow-[0_0_20px_rgba(255,255,255,0.12)]" />
+                    <div className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-200 shadow-[0_0_14px_rgba(0,255,255,0.9)]" />
+
+                    <div className="absolute left-[8%] top-1/2 h-2.5 w-[32%] -translate-y-1/2 rounded-full bg-cyan-200/75 shadow-[0_0_24px_rgba(0,255,255,0.45)]" />
+                    <div className="absolute right-[8%] top-1/2 h-2.5 w-[32%] -translate-y-1/2 rounded-full bg-fuchsia-300/75 shadow-[0_0_24px_rgba(255,0,255,0.4)]" />
+                    <div className="absolute left-1/2 top-[10%] h-[32%] w-2.5 -translate-x-1/2 rounded-full bg-cyan-100/75 shadow-[0_0_20px_rgba(255,255,255,0.18)]" />
+                    <div className="absolute left-1/2 bottom-[10%] h-[32%] w-2.5 -translate-x-1/2 rounded-full bg-cyan-100/75 shadow-[0_0_20px_rgba(255,255,255,0.18)]" />
+
+                    <div className="absolute left-[6%] top-1/2 h-12 w-12 -translate-y-1/2 rounded-full border border-cyan-200/40 bg-cyan-100/10 shadow-[0_0_30px_rgba(0,255,255,0.24)] sm:h-14 sm:w-14 lg:h-16 lg:w-16" />
+                    <div className="absolute right-[6%] top-1/2 h-12 w-12 -translate-y-1/2 rounded-full border border-fuchsia-300/40 bg-fuchsia-200/10 shadow-[0_0_30px_rgba(255,0,255,0.22)] sm:h-14 sm:w-14 lg:h-16 lg:w-16" />
+                    <div className="absolute left-1/2 top-[6%] h-12 w-12 -translate-x-1/2 rounded-full border border-cyan-200/35 bg-cyan-100/10 shadow-[0_0_30px_rgba(0,255,255,0.18)] sm:h-14 sm:w-14 lg:h-16 lg:w-16" />
+                    <div className="absolute bottom-[6%] left-1/2 h-12 w-12 -translate-x-1/2 rounded-full border border-white/20 bg-white/5 shadow-[0_0_28px_rgba(255,255,255,0.14)] sm:h-14 sm:w-14 lg:h-16 lg:w-16" />
+
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+                      className="absolute inset-[13%] rounded-full border border-cyan-300/15"
+                    />
                   </motion.div>
                 </div>
               </div>
 
-              <a href={language === 'es' ? 'mailto:info@immerso.live' : 'mailto:info@girasomnis.com'} className="absolute bottom-5 left-5 inline-flex items-center gap-3 rounded-full border border-white/10 bg-black/35 px-5 py-3 font-rajdhani text-xs font-bold uppercase tracking-[0.28em] text-white transition hover:border-cyan-300/50 hover:text-cyan-200">
-                <Mail size={16} className="text-cyan-200" />
-                {content.contact}
-              </a>
+              <div className="relative mt-14 flex justify-start pb-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = language === 'es' ? 'mailto:info@immerso.live' : 'mailto:info@girasomnis.com';
+                  }}
+                  className="inline-flex items-center gap-3 rounded-full border border-white/12 bg-black/35 px-6 py-4 font-rajdhani text-sm font-bold uppercase tracking-[0.28em] text-white transition hover:border-cyan-300/50 hover:text-cyan-200"
+                >
+                  <Mail size={16} className="text-cyan-200" />
+                  {content.contact}
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

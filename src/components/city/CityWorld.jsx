@@ -590,6 +590,11 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   }, [audioEnabled]);
 
   useEffect(() => {
+    // Guardar posición actual de cámara si existe
+    const savedCameraPos = camera?.position?.clone?.() || null;
+    const savedYaw = yawRef.current;
+    const savedPitch = pitchRef.current;
+
     const mount = mountRef.current;
     const W = mount.clientWidth;
     const H = mount.clientHeight;
@@ -602,11 +607,19 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
-    camera.position.set(0, 1.7, 20);
-    targetYawRef.current = 0;
-    yawRef.current = 0;
-    targetPitchRef.current = -0.1;
-    pitchRef.current = -0.1;
+    if (savedCameraPos) {
+      camera.position.copy(savedCameraPos);
+      targetYawRef.current = savedYaw;
+      yawRef.current = savedYaw;
+      targetPitchRef.current = savedPitch;
+      pitchRef.current = savedPitch;
+    } else {
+      camera.position.set(0, 1.7, 20);
+      targetYawRef.current = 0;
+      yawRef.current = 0;
+      targetPitchRef.current = -0.1;
+      pitchRef.current = -0.1;
+    }
 
 
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);

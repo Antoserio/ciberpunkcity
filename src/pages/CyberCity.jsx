@@ -13,6 +13,7 @@ import WorksScreen from '../components/city/WorksScreen.jsx';
 import AboutOverlay from '../components/city/AboutOverlay.jsx';
 import VikyModal from '../components/city/VikyModal.jsx';
 import { STANDS } from '../components/city/standsData';
+import useAmbientAudio from '../components/city/useAmbientAudio';
 
 export default function CyberCity() {
   const [started, setStarted] = useState(false);
@@ -26,7 +27,6 @@ export default function CyberCity() {
   const [robotModelUrl, setRobotModelUrl] = useState('');
   const [robotFileName, setRobotFileName] = useState('');
   const [audioEnabled, setAudioEnabled] = useState(false);
-  const [audioTrigger, setAudioTrigger] = useState(0);
   const [activeView, setActiveView] = useState('explore');
   const [activeWork, setActiveWork] = useState(() => STANDS.find((stand) => stand.type === 'video' || stand.type === 'showcase') || null);
   const [vikyOpen, setVikyOpen] = useState(false);
@@ -35,6 +35,8 @@ export default function CyberCity() {
     position: { x: 15, y: 1.7, z: 15 }, 
     rotation: 2.4 
   });
+
+  useAmbientAudio(audioEnabled);
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -144,8 +146,6 @@ export default function CyberCity() {
           plazaVideoUrl=""
           isMobile={isMobile}
           robotModelUrl={robotModelUrl}
-          audioEnabled={audioEnabled}
-          audioTrigger={audioTrigger}
           activeView={activeView}
           activeWork={activeWork}
           worksTransitionToken={worksTransitionToken}
@@ -234,9 +234,6 @@ export default function CyberCity() {
           e.preventDefault();
           e.stopPropagation();
           setHasClickedOnce(true);
-          const world = document.querySelector('[data-city-world="true"]');
-          world?.click();
-          setAudioTrigger((value) => value + 1);
           setAudioEnabled((value) => !value);
         }}
         className="fixed bottom-28 left-4 z-[60] rounded-full border border-white/10 bg-black/60 px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white backdrop-blur-md transition hover:border-cyan-400/40 hover:text-cyan-300 sm:bottom-6 sm:left-6"

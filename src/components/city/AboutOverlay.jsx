@@ -30,9 +30,32 @@ export default function AboutOverlay({ open, onClose }) {
               </button>
             </div>
 
-            <div className="rounded-3xl border border-dashed border-cyan-400/20 bg-cyan-400/5 p-8 text-center">
-              <p className="font-orbitron text-sm tracking-[0.25em] text-cyan-300">SECCIÓN EN PREPARACIÓN</p>
-              <p className="mt-3 font-rajdhani text-base text-slate-300">Aquí dejaremos el contenido de About cuando queráis completarlo.</p>
+            <div className="rounded-[30px] border border-cyan-400/30 bg-[rgba(10,10,30,0.6)] p-8 sm:p-12 backdrop-blur-[20px]">
+              <h3 className="mb-6 bg-gradient-to-r from-cyan-300 to-fuchsia-400 bg-clip-text font-orbitron text-3xl font-light tracking-[0.2em] text-transparent sm:text-4xl">
+                AGENCY 360
+              </h3>
+
+              <div className="space-y-6 font-mono text-base leading-8 text-white/90 sm:text-lg">
+                <p>
+                  <strong className="text-cyan-300">LA UNIÓN PERFECTA:</strong><br />
+                  Creativos + Técnicos = Experiencias Inmersivas Únicas
+                </p>
+
+                <p>
+                  <strong className="text-fuchsia-400">IMMERSO + GIRASOMNIS</strong><br />
+                  Dos agencias creativas líderes se han unido para crear el top absoluto en eventos inmersivos, tecnología audiovisual y experiencias digitales.
+                </p>
+
+                <p>
+                  <strong className="text-yellow-300">NUESTRO ADN:</strong><br />
+                  🎵 Música • 🎪 Eventos Inmersivos • 💻 Tecnología de Vanguardia<br />
+                  🎨 Creatividad Visual • ⚡ Innovación Técnica
+                </p>
+
+                <p className="text-base text-white/70">
+                  Transformamos ideas en experiencias inolvidables que fusionan el mundo físico y digital.
+                </p>
+              </div>
             </div>
           </motion.div>
         </motion.div>

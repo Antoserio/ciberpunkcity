@@ -1319,11 +1319,11 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
   frontBorderLine.position.set(bx, facadeY, bz + bw / 2 + 0.1);
   scene.add(frontBorderLine);
 
-  const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW * 2.5 + 0.12, facadeH * 1.8 + 0.12, 0.05));
-  const rearBorderLine = new THREE.LineSegments(rearBorderGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
-  rearBorderLine.position.set(bx, facadeY, bz - bw / 2 - 0.82);
-  rearBorderLine.rotation.y = Math.PI;
-  scene.add(rearBorderLine);
+  // const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW * 2.5 + 0.12, facadeH * 1.8 + 0.12, 0.05));
+  // const rearBorderLine = new THREE.LineSegments(rearBorderGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
+  // rearBorderLine.position.set(bx, facadeY, bz - bw / 2 - 0.82);
+  // rearBorderLine.rotation.y = Math.PI;
+  // scene.add(rearBorderLine);
 }
 
 // ─── Extra canvas screens on mid buildings ────────────────────────────────────

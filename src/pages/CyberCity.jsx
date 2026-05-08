@@ -11,6 +11,7 @@ import StandModal from '../components/city/StandModal';
 import TopNav from '../components/city/TopNav.jsx';
 import WorksScreen from '../components/city/WorksScreen.jsx';
 import AboutOverlay from '../components/city/AboutOverlay.jsx';
+import VikyModal from '../components/city/VikyModal.jsx';
 import { STANDS } from '../components/city/standsData';
 
 export default function CyberCity() {
@@ -26,6 +27,7 @@ export default function CyberCity() {
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [activeView, setActiveView] = useState('explore');
   const [activeWork, setActiveWork] = useState(() => STANDS.find((stand) => stand.type === 'video' || stand.type === 'showcase') || null);
+  const [vikyOpen, setVikyOpen] = useState(false);
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -124,7 +126,8 @@ export default function CyberCity() {
           onNearStand={setNearStand}
           onLeaveStand={() => setNearStand(null)}
           onActivateStand={handleActivateStand}
-          modalOpen={!!openStand}
+          onOpenViky={() => setVikyOpen(true)}
+          modalOpen={!!openStand || vikyOpen}
           plazaVideoUrl=""
           isMobile={isMobile}
           robotModelUrl={robotModelUrl}
@@ -178,6 +181,7 @@ export default function CyberCity() {
 
       {activeView === 'works' && <WorksScreen onChangeActiveWork={setActiveWork} />}
       <AboutOverlay open={activeView === 'about'} onClose={() => setActiveView('explore')} />
+      <VikyModal open={vikyOpen} onClose={() => setVikyOpen(false)} />
       <AvatarAssistant />
     </div>
   );

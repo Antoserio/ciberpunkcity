@@ -472,7 +472,7 @@ const BUILDING_COLLIDERS = [
 const HERO_COLORS = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
 
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null }) {
   const mountRef = useRef(null);
   const heroRobotsRef = useRef([]);
   const audioRef = useRef(null);
@@ -693,7 +693,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       }
     }
 
-    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture);
+    const vikyVideoElement = createCityVideoElement('https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/0cbcd588c_Viky-EventoMayo-GoogleChrome2026-05-0811-15-57.mp4');
+    const vikyTexture = new THREE.VideoTexture(vikyVideoElement);
+    vikyTexture.colorSpace = THREE.SRGBColorSpace;
+    vikyTexture.minFilter = THREE.LinearFilter;
+    vikyTexture.magFilter = THREE.LinearFilter;
+    vikyTexture.generateMipmaps = false;
+
+    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture, vikyTexture, onOpenViky);
     extraCanvasesRef.current = extraCanvases;
 
     const robotSwarm = addFlyingRobots(scene);
@@ -772,11 +779,23 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     }
 
     // Controls
-    const handleClick = () => {
-      if (isMobile) return;
-      console.log('Click - requesting pointer lock');
-      canvas.requestPointerLock();
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    const handleClick = (event) => {
+      if (!isMobile) {
+        console.log('Click - requesting pointer lock');
+        canvas.requestPointerLock();
+      }
       startAmbientAudio();
+
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      const interactiveHit = intersects.find((hit) => hit.object?.userData?.onClick);
+      interactiveHit?.object?.userData?.onClick?.();
     };
     const handlePointerLockChange = () => {
       isLockedRef.current = isMobile ? true : document.pointerLockElement === canvas;
@@ -968,6 +987,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (plazaVideoTexture && plazaVideoElement && plazaVideoElement.readyState >= 2) {
         plazaVideoTexture.needsUpdate = true;
       }
+      if (vikyVideoElement && vikyVideoElement.readyState >= 2) {
+        vikyTexture.needsUpdate = true;
+      }
       // Extra canvases update every 4 frames staggered
       if (frameCount % 4 === 0) {
         const t = frameCount * 0.016;
@@ -1044,6 +1066,12 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         worksMediaElement.removeAttribute('src');
         worksMediaElement.load();
       }
+      if (vikyVideoElement) {
+        vikyVideoElement.pause();
+        vikyVideoElement.removeAttribute('src');
+        vikyVideoElement.load();
+      }
+      vikyTexture?.dispose?.();
       ambienceAudio.pause();
       ambienceLayerTwo.pause();
       ambienceAudio.currentTime = 0;
@@ -1082,7 +1110,7 @@ function colorToGlowKey(color) {
 
 // ─── Main city builder ────────────────────────────────────────────────────────
 
-function buildCity(scene, flicker, gt, videoTex, worksTex) {
+function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) {
   const extraCanvases = [];
   // Ground — plaza oscura abierta
   const ground = new THREE.Mesh(
@@ -1127,7 +1155,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex) {
   scene.add(plaza);
 
   // Zone buildings
-  ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex));
+  ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky));
 
   // Mid-range buildings — perímetro abierto con fondo más denso
   const midPositions = [
@@ -1188,7 +1216,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex) {
 
 // ─── Zone building ────────────────────────────────────────────────────────────
 
-function createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex) {
+function createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) {
   const [x, , z] = zone.position;
   const h = zone.buildingHeight || 16;
   const w = zone.buildingWidth || 8;
@@ -1245,7 +1273,7 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex) {
 
   // HQ gets the big video screen billboard
   if (isHQ && videoTex) {
-    addVideoScreen(scene, x, z, w, h, videoTex, flicker, worksTex);
+    addVideoScreen(scene, x, z, w, h, videoTex, flicker, worksTex, vikyTex, onOpenViky);
   }
 
   // Zone billboard name above building
@@ -1265,7 +1293,7 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex) {
 
 // ─── Video screen for HQ building ────────────────────────────────────────────
 
-function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex) {
+function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, vikyTex, onOpenViky) {
   const facadeW = bw;
   const facadeH = bh * 0.82;
   const facadeY = bh * 0.48;
@@ -1276,13 +1304,14 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex) {
   scene.add(frontScreen);
 
   const rearMat = new THREE.MeshBasicMaterial({
-    map: worksTex || null,
-    color: worksTex ? 0xffffff : 0x000000,
+    map: vikyTex || worksTex || null,
+    color: (vikyTex || worksTex) ? 0xffffff : 0x000000,
     side: THREE.FrontSide,
   });
   const rearScreen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW * 2.5, facadeH * 1.8), rearMat);
   rearScreen.position.set(bx, facadeY, bz - bw / 2 - 0.8);
   rearScreen.rotation.y = Math.PI;
+  rearScreen.userData.onClick = () => onOpenViky?.();
   scene.add(rearScreen);
 
   const frontBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW + 0.12, facadeH + 0.12, 0.05));

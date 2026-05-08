@@ -6,10 +6,10 @@ import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 
 const CITY_VIDEO_SOURCES = [
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+  'https://www.w3schools.com/html/mov_bbb.mp4',
+  'https://www.w3schools.com/html/movie.mp4',
+  'https://media.w3.org/2010/05/sintel/trailer.mp4',
+  'https://media.w3.org/2010/05/bunny/trailer.mp4',
 ];
 
 const CITY_VIDEO_SCREEN_CONFIGS = [

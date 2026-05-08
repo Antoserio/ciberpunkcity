@@ -485,7 +485,7 @@ const WORKS_CAMERA_TRANSITION_MS = 1000;
 const AMBIENCE_AUDIO_URL = 'https://media.base44.com/files/public/69fa345f1e88257c77c4e49b/b7918b98e_efecto-de-sonido-tecnologia-tecno-sound-effect-128-ytshortssavetubeme.mp3';
 const AMBIENCE_LAYER_TWO_URL = 'https://cdn.pixabay.com/download/audio/2023/02/28/audio_6e7d1e85f0.mp3?filename=futuristic-atmosphere-141082.mp3';
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null, worksTransitionToken = 0, cameraTarget = null }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, audioTrigger = 0, activeView = 'explore', activeWork = null, worksTransitionToken = 0, cameraTarget = null }) {
   const mountRef = useRef(null);
   const heroRobotsRef = useRef([]);
   const audioRef = useRef(null);
@@ -596,6 +596,19 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     ambienceAudio.play().catch(() => {});
     ambienceLayerTwo.play().catch(() => {});
   }, [audioEnabled]);
+
+  useEffect(() => {
+    if (!audioRef.current || !audioEnabled) return;
+
+    audioUnlockedRef.current = true;
+    const { ambienceAudio, ambienceLayerTwo } = audioRef.current;
+    ambienceAudio.muted = false;
+    ambienceLayerTwo.muted = false;
+    ambienceAudio.volume = 0.5;
+    ambienceLayerTwo.volume = 0.14;
+    ambienceAudio.play().catch(() => {});
+    ambienceLayerTwo.play().catch(() => {});
+  }, [audioTrigger, audioEnabled]);
 
   useEffect(() => {
     console.log('🔄 useEffect EJECUTÁNDOSE');
@@ -777,6 +790,12 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     ambienceAudio.muted = !audioEnabled;
     ambienceLayerTwo.muted = !audioEnabled;
     audioRef.current = { ambienceAudio, ambienceLayerTwo };
+
+    const keepAudioAlive = () => {
+      if (!audioUnlockedRef.current || !audioEnabled) return;
+      if (ambienceAudio.paused) ambienceAudio.play().catch(() => {});
+      if (ambienceLayerTwo.paused) ambienceLayerTwo.play().catch(() => {});
+    };
 
     const startAmbientAudio = () => {
       audioUnlockedRef.current = true;
@@ -1071,6 +1090,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         videoScreenRef.current.draw(frameCount * 0.016);
       }
       syncCityVideos(cityVideos, camera);
+      if (frameCount % 120 === 0) keepAudioAlive();
       if (plazaVideoTexture && plazaVideoElement && plazaVideoElement.readyState >= 2) {
         plazaVideoTexture.needsUpdate = true;
       }

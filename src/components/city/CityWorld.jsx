@@ -590,14 +590,20 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   }, [audioEnabled]);
 
   useEffect(() => {
+    console.log('🔄 useEffect EJECUTÁNDOSE');
+
+    const mount = mountRef.current;
+    const W = mount.clientWidth;
+    const H = mount.clientHeight;
+
     // Guardar posición actual de cámara si existe
     const savedCameraPos = camera?.position?.clone?.() || null;
     const savedYaw = yawRef.current;
     const savedPitch = pitchRef.current;
 
-    const mount = mountRef.current;
-    const W = mount.clientWidth;
-    const H = mount.clientHeight;
+    if (savedCameraPos) {
+      console.log('💾 Guardando posición:', savedCameraPos);
+    }
 
     // Scene
     const scene = new THREE.Scene();
@@ -609,6 +615,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
     if (savedCameraPos) {
       camera.position.copy(savedCameraPos);
+      console.log('✅ RESTAURADA a:', camera.position);
       targetYawRef.current = savedYaw;
       yawRef.current = savedYaw;
       targetPitchRef.current = savedPitch;

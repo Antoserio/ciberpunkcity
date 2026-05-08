@@ -868,6 +868,13 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       const deltaX = e.clientX - dragStateRef.current.lastMouseX;
       const deltaY = e.clientY - dragStateRef.current.lastMouseY;
 
+      console.log('Mouse drag:', {
+        deltaX,
+        deltaY,
+        yaw: yawRef.current,
+        pitch: pitchRef.current,
+      });
+
       yawRef.current -= deltaX * 0.003;
       pitchRef.current -= deltaY * 0.003;
       targetYawRef.current = yawRef.current;
@@ -989,6 +996,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const animate = () => {
       animFrameRef.current = requestAnimationFrame(animate);
       const delta = Math.min(clockRef.current.getDelta(), 0.05);
+      const prevPos = camera.position.clone();
       frameCount++;
 
       yawRef.current += (targetYawRef.current - yawRef.current) * LOOK_SMOOTH;
@@ -1075,6 +1083,13 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       heroRobot.mesh.rotation.y = Math.atan2(heroRobot.mesh.position.x - prevX, heroRobot.mesh.position.z - prevZ);
       heroRobot.mesh.rotation.z = Math.sin(robotTime * 1.15 + heroRobot.offset) * 0.07;
       });
+
+      if (camera.position.distanceTo(prevPos) > 0.1) {
+        console.log('⚠️ Cámara movida por código:', {
+          antes: prevPos,
+          después: camera.position.clone(),
+        });
+      }
 
       composer.render();
       if (document.pointerLockElement && frameCount % 2 === 0) {
@@ -1249,27 +1264,28 @@ function makeWorksCarouselScreen() {
 
     ctx.fillStyle = '#ffffff';
     ctx.font = '700 44px Orbitron, monospace';
-    ctx.fillText('SHOWCASE WORKS', 1230, 150);
+    ctx.textAlign = 'right';
+    ctx.fillText('SHOWCASE WORKS', canvas.width - 200, 100);
 
     ctx.fillStyle = accent;
     ctx.shadowColor = accent;
     ctx.shadowBlur = 26;
-    ctx.font = '900 88px Orbitron, monospace';
-    ctx.fillText(work.title, 1230, 285);
+    ctx.font = '900 82px Orbitron, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(work.title, 1230, canvas.height / 2 - 80);
     ctx.shadowBlur = 0;
 
-    ctx.fillStyle = '#d7cfff';
-    ctx.font = '700 38px Rajdhani, sans-serif';
-    ctx.fillText(work.subtitle, 1230, 360);
-
     ctx.fillStyle = '#f7f3ff';
-    ctx.font = '600 34px Rajdhani, sans-serif';
-    wrapText(ctx, work.description, 1230, 455, 590, 48);
+    ctx.font = 'bold 28px monospace';
+    ctx.fillText(work.description, 1230, canvas.height / 2 + 20);
+    ctx.fillStyle = '#d7cfff';
+    ctx.fillText(work.subtitle, 1230, canvas.height / 2 + 60);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '800 64px Rajdhani, sans-serif';
-    ctx.fillText(`PROYECTO ${activeIndex + 1} / ${WORKS.length}`, 1230, 740);
-
+    ctx.font = '800 58px Rajdhani, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`PROYECTO ${activeIndex + 1} / ${WORKS.length}`, canvas.width / 2, canvas.height - 80);
+    ctx.textAlign = 'left';
     for (let i = 0; i < WORKS.length; i++) {
       ctx.fillStyle = i === activeIndex ? WORKS[i].color : '#ffffff33';
       ctx.beginPath();

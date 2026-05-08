@@ -8,7 +8,6 @@ import AvatarAssistant from '../components/city/AvatarAssistant';
 import SplashScreen from '../components/city/SplashScreen';
 import MiniMap from '../components/city/MiniMap';
 import StandModal from '../components/city/StandModal';
-import RobotUploadPanel from '../components/city/RobotUploadPanel.jsx';
 import TopNav from '../components/city/TopNav.jsx';
 import WorksScreen from '../components/city/WorksScreen.jsx';
 import AboutOverlay from '../components/city/AboutOverlay.jsx';
@@ -136,13 +135,6 @@ export default function CyberCity() {
       </div>
 
       <TopNav activeView={activeView} onChangeView={handleChangeView} />
-      <RobotUploadPanel
-        onUploaded={(fileUrl, fileName) => {
-          setRobotModelUrl(fileUrl);
-          setRobotFileName(fileName || '');
-        }}
-        currentRobotFileName={robotFileName}
-      />
 
       {/* HUD overlay */}
       {activeView === 'explore' && (

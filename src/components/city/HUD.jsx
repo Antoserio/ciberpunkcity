@@ -1,11 +1,7 @@
 import { motion } from 'framer-motion';
-import { Menu } from 'lucide-react';
-import { useState } from 'react';
 import { ZONES } from './cityData';
-import AgencyMenu from './AgencyMenu';
 
 export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, isMobile = false }) {
-  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <>
       {/* Crosshair */}
@@ -23,19 +19,17 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
       <div className="fixed top-0 left-0 right-0 z-30 pointer-events-none">
         <div className="flex items-start justify-between gap-2 px-3 py-3 sm:px-6">
           {/* Logo */}
-          <div className="pointer-events-auto flex items-center gap-2 shrink-0">
-            <button
-              data-agency-menu-button="true"
-              onClick={() => setMenuOpen(true)}
-              className="glass-dark flex h-10 w-10 items-center justify-center rounded border border-cyan-400/20 text-cyan-300 transition hover:border-cyan-400/50 hover:text-white"
-            >
-              <Menu size={18} />
-            </button>
-            <div className="glass-dark px-3 py-2 rounded max-w-[42vw] sm:max-w-none">
-              <span className="font-orbitron text-xs sm:text-sm font-black neon-text-cyan tracking-widest">
-                AGENCY<span className="neon-text-magenta">360</span>
-              </span>
-              <span className="hidden sm:inline text-xs text-gray-500 font-rajdhani ml-2 tracking-widest">CYBERCITY</span>
+          <div className="pointer-events-none glass-dark rounded px-4 py-3 sm:px-5 sm:py-4">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="font-orbitron text-sm sm:text-base font-black neon-text-cyan tracking-[0.22em]">
+                  AGENCY<span className="neon-text-magenta">360</span>
+                </span>
+                <span className="text-[10px] sm:text-xs font-orbitron tracking-[0.28em] text-white/55">CYBERCITY</span>
+              </div>
+              <p className="max-w-[280px] sm:max-w-[420px] font-rajdhani text-xs sm:text-sm leading-tight text-white/75">
+                Agencia creativa y desarrollo de soluciones digitales.
+              </p>
             </div>
           </div>
 
@@ -145,7 +139,6 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
         </motion.div>
       )}
 
-      <AgencyMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </>
   );
 }

@@ -221,7 +221,6 @@ export default function CyberCity() {
         {audioEnabled ? 'SONIDO ON' : 'SONIDO OFF'}
       </button>
 
-      {activeView === 'works' && <WorksScreen onChangeActiveWork={setActiveWork} />}
       <AboutOverlay open={activeView === 'about'} onClose={() => setActiveView('explore')} />
       <VikyModal open={vikyOpen} onClose={() => setVikyOpen(false)} />
       <AvatarAssistant />

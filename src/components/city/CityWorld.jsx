@@ -482,6 +482,41 @@ const WORKS = [
 
 const WORKS_CAMERA_POSITION = new THREE.Vector3(0, 4.5, 15);
 const WORKS_CAMERA_TRANSITION_MS = 1000;
+const ROBOT_NO_FLY_ZONES = [
+  ...ZONES.map((zone) => ({
+    x: zone.position[0],
+    z: zone.position[2],
+    radius: (zone.buildingWidth || 8) * 0.9 + 5,
+  })),
+  { x: -18, z: -30, radius: 8 },
+  { x: 18, z: -30, radius: 8 },
+  { x: -30, z: 18, radius: 8 },
+  { x: 30, z: 18, radius: 8 },
+  { x: -34, z: -34, radius: 8 },
+  { x: 34, z: -34, radius: 8 },
+  { x: -34, z: 34, radius: 8 },
+  { x: 34, z: 34, radius: 8 },
+  { x: -46, z: -18, radius: 8 },
+  { x: 46, z: -18, radius: 8 },
+  { x: -46, z: 18, radius: 8 },
+  { x: 46, z: 18, radius: 8 },
+  { x: -12, z: -44, radius: 8 },
+  { x: 12, z: -44, radius: 8 },
+  { x: -12, z: 44, radius: 8 },
+  { x: 12, z: 44, radius: 8 },
+  { x: -58, z: -30, radius: 8 },
+  { x: -44, z: -30, radius: 8 },
+  { x: -30, z: -30, radius: 8 },
+  { x: 30, z: -30, radius: 8 },
+  { x: 44, z: -30, radius: 8 },
+  { x: 58, z: -30, radius: 8 },
+  { x: -58, z: 30, radius: 8 },
+  { x: -44, z: 30, radius: 8 },
+  { x: -30, z: 30, radius: 8 },
+  { x: 30, z: 30, radius: 8 },
+  { x: 44, z: 30, radius: 8 },
+  { x: 58, z: 30, radius: 8 },
+];
 
 export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', activeView = 'explore', activeWork = null, worksTransitionToken = 0, cameraTarget = null }) {
   const mountRef = useRef(null);
@@ -1749,6 +1784,18 @@ function updateFlyingRobots(robots, time) {
     let x = robot.originX + Math.sin(tx) * robot.driftX + Math.sin(tx * 0.37 + index) * 2.4;
     let z = robot.originZ + Math.cos(tz) * robot.driftZ + Math.cos(tz * 0.43 + index * 1.3) * 2.8;
     const y = robot.height + Math.sin(time * 0.9 + robot.offset) * robot.wobble + Math.cos(time * 0.55 + index) * 0.35;
+
+    ROBOT_NO_FLY_ZONES.forEach((zone) => {
+      const dx = x - zone.x;
+      const dz = z - zone.z;
+      const distance = Math.hypot(dx, dz) || 0.001;
+
+      if (distance < zone.radius) {
+        const pushStrength = (zone.radius - distance) / zone.radius;
+        x += (dx / distance) * pushStrength * 3.5;
+        z += (dz / distance) * pushStrength * 3.5;
+      }
+    });
 
     x = Math.max(robot.bounds.minX, Math.min(robot.bounds.maxX, x));
     z = Math.max(robot.bounds.minZ, Math.min(robot.bounds.maxZ, z));

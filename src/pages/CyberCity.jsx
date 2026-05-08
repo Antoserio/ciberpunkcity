@@ -139,27 +139,31 @@ export default function CyberCity() {
       <TopNav activeView={activeView} onChangeView={handleChangeView} />
 
       {showWelcomeOverlay && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[rgba(3,0,8,0.85)] backdrop-blur-[15px] px-4 text-white">
-          <div className="w-full max-w-2xl text-center">
-            <p className="font-orbitron text-2xl sm:text-4xl tracking-[0.4em] text-white">AGENCY360</p>
-            <h1 className="mt-6 bg-gradient-to-r from-cyan-300 via-white to-fuchsia-400 bg-clip-text font-orbitron text-3xl font-black text-transparent sm:text-5xl">
-              BIENVENIDO A AGENCY360
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/30 px-4 text-white backdrop-blur-[8px]">
+          <div className="w-full max-w-[500px] rounded-[30px] border border-cyan-400/20 bg-[rgba(10,10,30,0.4)] p-10 text-center backdrop-blur-[20px]">
+            <h1 className="mb-14 bg-gradient-to-r from-cyan-300 to-fuchsia-400 bg-clip-text font-orbitron text-4xl font-light tracking-[0.5em] text-transparent sm:text-5xl">
+              AGENCY360
             </h1>
 
-            <div className="mt-8 rounded-[28px] border border-cyan-400/60 bg-black/45 p-6 sm:p-8 shadow-[0_0_40px_rgba(0,255,255,0.18)]">
-              <h2 className="font-orbitron text-lg tracking-[0.35em] text-cyan-300 sm:text-xl">CONTROLES</h2>
-              <div className="mt-6 space-y-4 text-left font-rajdhani text-lg text-white/90 sm:text-xl">
-                <p>🖱️ RATÓN: Mira alrededor (arrastra o mueve)</p>
-                <p>⌨️ W A S D: Movimiento</p>
-                <p>⌨️ FLECHAS: Movimiento alternativo</p>
-                <p>🔊 Audio inmersivo incluido</p>
+            <div className="mb-14 flex justify-center gap-10 sm:gap-16">
+              <div className="text-center">
+                <div className="mx-auto mb-4 h-[60px] w-[40px] rounded-[20px] border-2 border-white/60">
+                  <div className="mx-auto mt-2 h-3 w-1 animate-bounce rounded-full bg-cyan-300" />
+                </div>
+                <p className="m-0 font-rajdhani text-sm tracking-[0.2em] text-white/70">MIRAR</p>
               </div>
-            </div>
 
-            <div className="mt-8 flex items-center justify-center gap-2 rounded-full border border-white/10 bg-black/35 px-3 py-2 backdrop-blur-md">
-              <span className="rounded-full bg-white px-4 py-2 font-orbitron text-[10px] tracking-[0.3em] text-black">EXPLORE</span>
-              <span className="rounded-full px-4 py-2 font-orbitron text-[10px] tracking-[0.3em] text-white/75">WORKS</span>
-              <span className="rounded-full px-4 py-2 font-orbitron text-[10px] tracking-[0.3em] text-white/75">ABOUT</span>
+              <div className="text-center">
+                <div className="mb-4 grid grid-cols-3 gap-1">
+                  <div />
+                  <div className="flex h-7 w-7 items-center justify-center rounded border-2 border-white/60 text-xs text-white/60">↑</div>
+                  <div />
+                  <div className="flex h-7 w-7 items-center justify-center rounded border-2 border-white/60 text-xs text-white/60">←</div>
+                  <div className="flex h-7 w-7 items-center justify-center rounded border-2 border-white/60 text-xs text-white/60">↓</div>
+                  <div className="flex h-7 w-7 items-center justify-center rounded border-2 border-white/60 text-xs text-white/60">→</div>
+                </div>
+                <p className="m-0 font-rajdhani text-sm tracking-[0.2em] text-white/70">MOVER</p>
+              </div>
             </div>
 
             <button
@@ -169,9 +173,9 @@ export default function CyberCity() {
                 setHasClickedOnce(true);
                 setActivateAudioSignal((value) => value + 1);
               }}
-              className="mt-8 rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 px-8 py-4 font-orbitron text-sm font-black tracking-[0.25em] text-white shadow-[0_0_30px_rgba(0,255,255,0.35)] transition hover:scale-[1.02] sm:px-12 sm:py-5 sm:text-lg"
+              className="rounded-full border border-cyan-400/50 bg-gradient-to-r from-cyan-400/20 to-fuchsia-500/20 px-10 py-4 font-orbitron text-sm font-light uppercase tracking-[0.3em] text-white backdrop-blur-[10px] transition-all duration-300 hover:border-cyan-300/80 hover:from-cyan-400/40 hover:to-fuchsia-500/40"
             >
-              COMENZAR EXPLORACIÓN
+              Explorar
             </button>
           </div>
         </div>

@@ -917,11 +917,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         mouseDeltaRef.current.x = 0;
         mouseDeltaRef.current.y = 0;
         
-        // FORZAR cursor al centro cada frame
-        if (document.pointerLockElement === canvas) {
-          const centerX = window.innerWidth / 2;
-          const centerY = window.innerHeight / 2;
-        }
+
       }
       yawRef.current += (targetYawRef.current - yawRef.current) * LOOK_SMOOTH;
       pitchRef.current += (targetPitchRef.current - pitchRef.current) * LOOK_SMOOTH;
@@ -1320,6 +1316,8 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
   rearVideoTexture.minFilter = THREE.LinearFilter;
   rearVideoTexture.magFilter = THREE.LinearFilter;
   rearVideoTexture.generateMipmaps = false;
+  rearVideoTexture.offset.set(0, 0.08);
+  rearVideoTexture.repeat.set(1, 0.85);
 
   const rearMaterial = new THREE.MeshBasicMaterial({
     map: rearVideoTexture,

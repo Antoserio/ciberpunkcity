@@ -19,7 +19,7 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
       <div className="fixed top-0 left-0 right-0 z-30 pointer-events-none">
         <div className="flex items-start justify-between gap-2 px-3 py-3 sm:px-6">
           {/* Logo */}
-          <div className="pointer-events-none glass-dark rounded px-4 py-3 sm:px-5 sm:py-4">
+          <div className="pointer-events-none px-1 py-1">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <span className="font-orbitron text-sm sm:text-base font-black neon-text-cyan tracking-[0.22em]">
@@ -27,29 +27,23 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
                 </span>
                 <span className="text-[10px] sm:text-xs font-orbitron tracking-[0.28em] text-white/55">CYBERCITY</span>
               </div>
-              <p className="max-w-[280px] sm:max-w-[420px] font-rajdhani text-xs sm:text-sm leading-tight text-white/75">
+              <p className="max-w-[280px] sm:max-w-[420px] font-rajdhani text-xs sm:text-sm leading-tight text-white/70">
                 Agencia creativa y desarrollo de soluciones digitales.
               </p>
             </div>
           </div>
 
           {/* Status bar */}
-          <div className="glass-dark hidden sm:flex px-3 py-2 rounded items-center gap-2 sm:gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-              <span className="text-[10px] sm:text-xs font-orbitron text-cyan-400 tracking-widest max-w-[24vw] sm:max-w-none truncate">
-                {activeZone ? activeZone.label : 'EXPLORANDO'}
-              </span>
-            </div>
-            <div className="w-px h-4 bg-gray-700 hidden sm:block" />
-            <span className="hidden sm:inline text-xs font-rajdhani text-gray-500">
-              {isLocked ? 'MODO EXPLORACIÓN' : 'CLICK PARA ENTRAR'}
+          <div className="hidden sm:flex items-center gap-2 sm:gap-3">
+            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="text-[10px] sm:text-xs font-orbitron text-cyan-400 tracking-widest max-w-[24vw] sm:max-w-none truncate">
+              {activeZone ? activeZone.label : 'EXPLORANDO'}
             </span>
           </div>
 
           {/* Coords display */}
-          <div className="glass-dark px-3 py-2 rounded hidden lg:block">
-            <span className="text-xs font-orbitron text-gray-500 tracking-widest">ZONAS: {ZONES.length}</span>
+          <div className="hidden lg:block px-1 py-1">
+            <span className="text-[10px] font-orbitron text-white/45 tracking-[0.24em]">ZONAS {ZONES.length}</span>
           </div>
         </div>
       </div>
@@ -82,25 +76,7 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
       </div>
 
       {/* Controls help - shown when not locked */}
-      {!isLocked && !isMobile && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed inset-0 z-30 pointer-events-none flex items-center justify-center"
-        >
-          <div className="glass-dark px-10 py-6 rounded-lg text-center" style={{ border: '2px solid rgba(0,255,255,0.5)', boxShadow: '0 0 40px rgba(0,255,255,0.3)' }}>
-            <p className="font-orbitron text-lg neon-text-cyan tracking-widest mb-3 animate-pulse">
-              👆 CLICK EN LA PANTALLA PARA EXPLORAR
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 text-xs font-rajdhani text-gray-400">
-              <span>🎮 <b className="text-cyan-400">WASD</b> · mover</span>
-              <span>🖱️ <b className="text-cyan-400">Mouse</b> · girar</span>
-              <span>⌨️ <b className="text-cyan-400">ESC</b> · salir</span>
-              <span>🏛️ <b className="text-cyan-400">Acércate</b> a los stands</span>
-            </div>
-          </div>
-        </motion.div>
-      )}
+
 
       {isMobile && !nearStand && !activeZone && (
         <div className="fixed bottom-16 left-3 right-3 z-30 pointer-events-none">

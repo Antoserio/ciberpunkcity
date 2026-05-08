@@ -505,7 +505,7 @@ const WORKS = [
 ];
 
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null, activateAudioSignal = 0 }) {
   const mountRef = useRef(null);
   const heroRobotsRef = useRef([]);
   const audioRef = useRef(null);
@@ -516,6 +516,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const targetPitchRef = useRef(-0.1);
   const mouseDeltaRef = useRef({ x: 0, y: 0 });
   const isLockedRef = useRef(false);
+  const dragStateRef = useRef({ isDragging: false, lastMouseX: 0, lastMouseY: 0 });
   const animFrameRef = useRef(null);
   const activeZoneRef = useRef(null);
   const nearStandRef = useRef(null);
@@ -590,7 +591,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         audioRef.current.ambienceLayerTwo.play().catch(() => {});
       }
     }
-  }, [audioEnabled]);
+  }, [audioEnabled, activateAudioSignal]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -838,10 +839,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const pointer = new THREE.Vector2();
 
     const handleClick = (event) => {
-      if (!isMobile) {
-        console.log('Click - requesting pointer lock');
-        canvas.requestPointerLock();
-      }
       startAmbientAudio();
 
       const rect = canvas.getBoundingClientRect();
@@ -850,20 +847,35 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       raycaster.setFromCamera(pointer, camera);
       const intersects = raycaster.intersectObjects(scene.children, true);
       const interactiveHit = intersects.find((hit) => hit.object?.userData?.onClick);
-      interactiveHit?.object?.userData?.onClick?.();
+      interactiveHit?.object?.userData?.onClick?.(interactiveHit);
     };
-    const handlePointerLockChange = () => {
-      isLockedRef.current = isMobile ? true : document.pointerLockElement === canvas;
-      console.log('Pointer lock changed, locked:', isLockedRef.current);
+    const handleMouseDown = (e) => {
+      if (modalOpenRef.current || activeView !== 'explore' || isMobile) return;
+      dragStateRef.current.isDragging = true;
+      dragStateRef.current.lastMouseX = e.clientX;
+      dragStateRef.current.lastMouseY = e.clientY;
+      isLockedRef.current = true;
+      canvas.style.cursor = 'grabbing';
+      startAmbientAudio();
+    };
+    const handleMouseUp = () => {
+      dragStateRef.current.isDragging = false;
+      canvas.style.cursor = activeView === 'explore' && !isMobile ? 'grab' : 'default';
     };
     const handleMouseMove = (e) => {
-      if (!isLockedRef.current) {
-        console.log('Mouse move pero NO locked');
-        return;
-      }
-      console.log('Mouse delta:', e.movementX, e.movementY);
-      mouseDeltaRef.current.x += e.movementX;
-      mouseDeltaRef.current.y += e.movementY;
+      if (!dragStateRef.current.isDragging || activeView !== 'explore') return;
+
+      const deltaX = e.clientX - dragStateRef.current.lastMouseX;
+      const deltaY = e.clientY - dragStateRef.current.lastMouseY;
+
+      yawRef.current -= deltaX * 0.003;
+      pitchRef.current -= deltaY * 0.003;
+      targetYawRef.current = yawRef.current;
+      targetPitchRef.current = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitchRef.current));
+      pitchRef.current = targetPitchRef.current;
+
+      dragStateRef.current.lastMouseX = e.clientX;
+      dragStateRef.current.lastMouseY = e.clientY;
     };
     const handleKeyDown = (e) => {
       // Block all movement and interaction while modal is open
@@ -941,6 +953,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
 
     canvas.addEventListener('click', handleClick);
+    canvas.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mouseup', handleMouseUp);
 
     // Force play all videos on first interaction
     const forcePlayAllVideos = () => {
@@ -963,10 +977,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: true });
     canvas.addEventListener('touchcancel', handleTouchEnd, { passive: true });
-    document.addEventListener('pointerlockchange', handlePointerLockChange);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
+    canvas.style.cursor = activeView === 'explore' && !isMobile ? 'grab' : 'default';
 
     const dir = new THREE.Vector3();
     const euler = new THREE.Euler(0, 0, 0, 'YXZ');
@@ -977,50 +991,39 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       const delta = Math.min(clockRef.current.getDelta(), 0.05);
       frameCount++;
 
-      // Smooth mouse look — accumulate deltas then lerp
-      if (isLockedRef.current && (mouseDeltaRef.current.x !== 0 || mouseDeltaRef.current.y !== 0)) {
-        targetYawRef.current -= mouseDeltaRef.current.x * LOOK_SPEED;
-        targetPitchRef.current -= mouseDeltaRef.current.y * LOOK_SPEED;
-        targetPitchRef.current = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, targetPitchRef.current));
-        mouseDeltaRef.current.x = 0;
-        mouseDeltaRef.current.y = 0;
-        
-
-      }
       yawRef.current += (targetYawRef.current - yawRef.current) * LOOK_SMOOTH;
       pitchRef.current += (targetPitchRef.current - pitchRef.current) * LOOK_SMOOTH;
       pitchRef.current = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, pitchRef.current));
 
-      // Movement - SIMPLIFICADO SIN COLISIONES
       const k = keysRef.current;
-      const moving = activeView === 'explore' && (k['KeyW'] || k['ArrowUp'] || k['KeyS'] || k['ArrowDown'] || k['KeyA'] || k['ArrowLeft'] || k['KeyD'] || k['ArrowRight']);
+      const moving = activeView === 'explore' && (k['KeyW'] || k['KeyS'] || k['KeyA'] || k['KeyD'] || k['ArrowUp'] || k['ArrowDown'] || k['ArrowLeft'] || k['ArrowRight']);
 
-      if ((isLockedRef.current || isMobile) && moving) {
+      if (moving) {
         dir.set(0, 0, 0);
-        
-        if (k['KeyW'] || k['ArrowUp']) dir.z -= 1;
-        if (k['KeyS'] || k['ArrowDown']) dir.z += 1;
-        if (k['KeyA'] || k['ArrowLeft']) dir.x -= 1;
-        if (k['KeyD'] || k['ArrowRight']) dir.x += 1;
-        
+
+        if (k['KeyW'] || k['ArrowUp']) dir.z = -1;
+        if (k['KeyS'] || k['ArrowDown']) dir.z = 1;
+        if (k['KeyA'] || k['ArrowLeft']) dir.x = -1;
+        if (k['KeyD'] || k['ArrowRight']) dir.x = 1;
+
         if (dir.lengthSq() > 0) {
           dir.normalize();
-          euler.set(0, yawRef.current, 0);
-          dir.applyEuler(euler);
-          camera.position.addScaledVector(dir, MOVE_SPEED * delta);
-          camera.position.y = 1.7; // Altura fija
+          dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yawRef.current);
+          camera.position.addScaledVector(dir, 20 * delta);
+          camera.position.y = 1.7;
         }
       }
 
-      euler.set(pitchRef.current, yawRef.current, 0);
-      camera.quaternion.setFromEuler(euler);
+      camera.rotation.order = 'YXZ';
+      camera.rotation.y = yawRef.current;
+      camera.rotation.x = pitchRef.current;
       if (activeView === 'works') {
         targetYawRef.current = Math.PI;
         targetPitchRef.current = -0.03;
       }
 
-      camera.position.x = Math.max(-72, Math.min(72, camera.position.x));
-      camera.position.z = Math.max(-72, Math.min(72, camera.position.z));
+      camera.position.x = Math.max(-70, Math.min(70, camera.position.x));
+      camera.position.z = Math.max(-70, Math.min(70, camera.position.z));
       if (activeView === 'explore') {
         checkZoneProximity(camera.position);
       }
@@ -1096,12 +1099,13 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     return () => {
       cancelAnimationFrame(animFrameRef.current);
       canvas.removeEventListener('click', handleClick);
+      canvas.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('mouseup', handleMouseUp);
       canvas.removeEventListener('touchstart', startAmbientAudio);
       canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);
       canvas.removeEventListener('touchcancel', handleTouchEnd);
-      document.removeEventListener('pointerlockchange', handlePointerLockChange);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);

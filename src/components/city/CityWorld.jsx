@@ -24,57 +24,27 @@ const CITY_VIDEO_SCREEN_CONFIGS = [
 ];
 
 function createCityVideoElement(src) {
-  console.log('🎬 Creating video element for:', src);
-  
   const video = document.createElement('video');
   video.src = src;
   video.crossOrigin = 'anonymous';
   video.loop = true;
   video.muted = true;
   video.playsInline = true;
-  video.autoplay = true;
+  video.autoplay = false;
+  video.preload = 'metadata';
   video.setAttribute('playsinline', '');
   video.setAttribute('webkit-playsinline', '');
   video.setAttribute('muted', '');
-  
-  console.log('🎬 Video element created, calling load()...');
   video.load();
-  
-  video.addEventListener('loadstart', () => {
-    console.log('✓ loadstart:', src);
-  });
-  
-  video.addEventListener('loadedmetadata', () => {
-    console.log('✓ loadedmetadata:', src, 'duration:', video.duration);
-  });
-  
+
   video.addEventListener('loadeddata', () => {
-    console.log('✓ loadeddata:', src);
-    video.play().then(() => {
-      console.log('✓✓ Video PLAYING after loadeddata:', src);
-    }).catch(e => console.error('✗ Play error after loadeddata:', e));
+    if (video.paused) video.play().catch(() => {});
   });
-  
+
   video.addEventListener('canplay', () => {
-    console.log('✓ canplay:', src);
-    if (video.paused) {
-      video.play().catch(e => console.error('✗ Canplay play error:', e));
-    }
+    if (video.paused) video.play().catch(() => {});
   });
-  
-  video.addEventListener('error', (e) => {
-    console.error('✗✗ VIDEO ERROR:', src, e);
-  });
-  
-  setTimeout(() => {
-    console.log('⏱️ Attempting immediate play for:', src);
-    video.play().then(() => {
-      console.log('✓ Immediate play SUCCESS:', src);
-    }).catch(e => {
-      console.log('✗ Immediate play blocked (normal):', e.message);
-    });
-  }, 100);
-  
+
   return video;
 }
 
@@ -117,17 +87,22 @@ function createCityVideoScreen(scene, config, texture) {
 }
 
 function syncCityVideos(cityVideos, camera) {
-  cityVideos.forEach((item) => {
-    const distance = camera.position.distanceTo(item.group.position);
-    item.group.visible = distance < 65;
+  const nearestVideos = cityVideos
+    .map((item) => ({ item, distance: camera.position.distanceTo(item.group.position) }))
+    .sort((a, b) => a.distance - b.distance);
 
-    if (distance < 55 && item.video.paused) {
+  nearestVideos.forEach(({ item, distance }, index) => {
+    const shouldShow = distance < 62;
+    const shouldPlay = shouldShow && index < 2;
+    item.group.visible = shouldShow;
+
+    if (shouldPlay && item.video.paused) {
       item.video.play().catch(() => {});
-    } else if (distance > 65 && !item.video.paused) {
+    } else if (!shouldPlay && !item.video.paused) {
       item.video.pause();
     }
 
-    if (item.video.readyState >= item.video.HAVE_CURRENT_DATA) {
+    if (shouldPlay && item.video.readyState >= item.video.HAVE_CURRENT_DATA) {
       item.texture.needsUpdate = true;
       const screenMesh = item.group.userData.screen;
       if (screenMesh && screenMesh.material) {
@@ -633,7 +608,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 1.25));
     renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 0.6;
@@ -649,7 +624,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     composer.setSize(W, H);
     const renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 0.9, 0.6, 0.6);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), isMobile ? 0.45 : 0.6, 0.45, 0.75);
     composer.addPass(bloomPass);
 
     scene.add(new THREE.AmbientLight(0x3a2a68, 3.2));
@@ -709,34 +684,16 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       cityVideos.push({ video: plazaVideoElement, texture: plazaVideoTexture, group: plazaVideoScreen?.group || { position: new THREE.Vector3(-6.2, 4.9, -11.15), visible: true } });
     }
 
-    CITY_VIDEO_SCREEN_CONFIGS.forEach((config) => {
-      const video = document.createElement('video');
-      video.src = 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4';
-      video.crossOrigin = 'anonymous';
-      video.loop = true;
-      video.muted = true;
-      video.playsInline = true;
-      video.autoplay = true;
-      video.setAttribute('playsinline', '');
-      video.setAttribute('webkit-playsinline', '');
-      video.setAttribute('muted', '');
-      video.load();
-      
-      video.addEventListener('loadeddata', () => {
-        console.log('✓ Video loaded successfully');
-        video.play().catch(e => console.error('Play error:', e));
-      });
-      
+    CITY_VIDEO_SCREEN_CONFIGS.slice(0, isMobile ? 2 : 4).forEach((config) => {
+      const video = createCityVideoElement(CITY_VIDEO_SOURCES[config.sourceIndex]);
       const texture = new THREE.VideoTexture(video);
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
       texture.generateMipmaps = false;
-      
+
       const group = createCityVideoScreen(scene, config, texture);
       cityVideos.push({ video, texture, group });
-      
-      setTimeout(() => video.play().catch(() => {}), 200);
     });
 
     if (activeWork) {
@@ -933,15 +890,12 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     document.addEventListener('mouseup', handleMouseUp);
 
     const forcePlayAllVideos = () => {
-      console.log('User interaction - playing all videos');
-      cityVideos.forEach((item, i) => {
+      cityVideos.slice(0, 2).forEach((item) => {
         item.video.muted = true;
-        item.video.play()
-          .then(() => console.log('Video', i, 'playing'))
-          .catch(e => console.error('Video', i, 'error:', e));
+        item.video.play().catch(() => {});
       });
       if (plazaVideoElement) {
-        plazaVideoElement.play().catch(e => console.error('Plaza video error:', e));
+        plazaVideoElement.play().catch(() => {});
       }
     };
 
@@ -1032,14 +986,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         checkZoneProximity(camera.position);
       }
 
-      if (frameCount % 6 === 0) {
+      if (frameCount % 10 === 0) {
         const t = frameCount * 0.016;
         for (let i = 0; i < flickerObjectsRef.current.length; i++) {
           const o = flickerObjectsRef.current[i];
           o.material.emissiveIntensity = o.baseIntensity + Math.sin(t * o.flickerSpeed + o.flickerOffset) * 0.2;
         }
       }
-      if (frameCount % 2 === 0 && videoScreenRef.current) {
+      if (frameCount % 4 === 0 && videoScreenRef.current) {
         videoScreenRef.current.draw(frameCount * 0.016);
       }
       syncCityVideos(cityVideos, camera);
@@ -1049,10 +1003,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (vikyVideoElement && vikyVideoElement.readyState >= 2) {
         vikyTexture.needsUpdate = true;
       }
-      if (frameCount % 4 === 0) {
+      if (frameCount % 8 === 0) {
         const t = frameCount * 0.016;
         for (let i = 0; i < extraCanvasesRef.current.length; i++) {
-          if (frameCount % 4 === (i % 4)) extraCanvasesRef.current[i].draw(t + i * 1.3);
+          if (i % 2 === frameCount % 2) extraCanvasesRef.current[i].draw(t + i * 1.3);
         }
       }
 
@@ -1082,31 +1036,12 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         heroRobot.mesh.rotation.z = Math.sin(robotTime * 1.15 + heroRobot.offset) * 0.07;
       });
 
-      if (camera.position.distanceTo(prevPos) > 0.01 && !moving) {
-        console.error('⚠️ BUG: Algo movió la cámara sin WASD:', camera.position);
-      }
-
-      if (camera.position.distanceTo(debugPos) > 5) {
-        console.error('🚨 RESET DETECTADO:', {
-          antes: debugPos,
-          ahora: camera.position.clone(),
-          stack: new Error().stack
-        });
-      }
-
       const movimiento = camera.position.distanceTo(posInicial);
       if (movimiento > 10 && !moving && !worksTransitionRef.current.active) {
-        console.error('🚨 TELEPORT DETECTADO:', {
-          antes: posInicial,
-          ahora: camera.position.clone(),
-          distancia: movimiento
-        });
         camera.position.copy(posInicial);
       }
 
       composer.render();
-      const moved = camera.position.distanceTo(debugPosStart);
-      if (moved > 3) console.error('🚨', moved.toFixed(1));
       if (document.pointerLockElement && frameCount % 2 === 0) {
         const menuButton = document.querySelector('[data-agency-menu-button="true"]');
         if (menuButton) menuButton.style.opacity = '1';
@@ -1505,7 +1440,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     scene.add(cap);
   }
 
-  const count = 400;
+  const count = 220;
   const pos = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   const particleColors = [[0,1,1],[1,0,1],[1,0.8,0],[0.3,0.5,1]];

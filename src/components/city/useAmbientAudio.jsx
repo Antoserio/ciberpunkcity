@@ -6,7 +6,7 @@ export default function useAmbientAudio(enabled) {
   const audio = useMemo(() => {
     const element = new Audio(AMBIENCE_AUDIO_URL);
     element.loop = true;
-    element.preload = 'auto';
+    element.preload = 'metadata';
     element.crossOrigin = 'anonymous';
     return element;
   }, []);

@@ -75,13 +75,21 @@ function createCityVideoScreen(scene, config, texture) {
 function syncCityVideos(cityVideos, camera) {
   cityVideos.forEach((item) => {
     const distance = camera.position.distanceTo(item.group.position);
-    if (distance < 30) {
-      if (item.video.paused) item.video.play().catch(() => {});
-      if (item.texture) item.texture.needsUpdate = true;
-      item.group.visible = true;
-    } else if (distance > 38) {
-      if (!item.video.paused) item.video.pause();
-      item.group.visible = false;
+    item.group.visible = distance < 65;
+
+    if (distance < 55 && item.video.paused) {
+      item.video.play().catch(() => {});
+    } else if (distance > 65 && !item.video.paused) {
+      item.video.pause();
+    }
+
+    if (item.video.readyState >= item.video.HAVE_CURRENT_DATA) {
+      item.texture.needsUpdate = true;
+      const screenMesh = item.group.userData.screen;
+      if (screenMesh && screenMesh.material) {
+        screenMesh.material.map = item.texture;
+        screenMesh.material.needsUpdate = true;
+      }
     }
   });
 }
@@ -613,20 +621,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     if (activeWork) {
       const worksImageUrl = activeWork.type === 'showcase' ? activeWork.showcaseItems?.[0]?.img : null;
-      if (activeWork.type === 'video' && activeWork.videoUrl?.includes('/embed/')) {
-        const match = activeWork.videoUrl.match(/\/embed\/([^?&]+)/);
-        const videoId = match?.[1];
-        if (videoId) {
-          worksMediaElement = document.createElement('video');
-          worksMediaElement.crossOrigin = 'anonymous';
-          worksMediaElement.muted = true;
-          worksMediaElement.loop = true;
-          worksMediaElement.playsInline = true;
-          worksMediaElement.autoplay = true;
-          worksMediaElement.preload = 'auto';
-          worksMediaElement.src = `https://www.youtube.com/watch?v=${videoId}`;
-        }
-      }
 
       if (worksImageUrl) {
         worksMediaTexture = new THREE.TextureLoader().load(worksImageUrl);
@@ -796,6 +790,23 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
 
     canvas.addEventListener('click', handleClick);
+
+    // Force play all videos on first interaction
+    const forcePlayAllVideos = () => {
+      console.log('User interaction - playing all videos');
+      cityVideos.forEach((item, i) => {
+        item.video.muted = true;
+        item.video.play()
+          .then(() => console.log('Video', i, 'playing'))
+          .catch(e => console.error('Video', i, 'error:', e));
+      });
+      if (plazaVideoElement) {
+        plazaVideoElement.play().catch(e => console.error('Plaza video error:', e));
+      }
+    };
+
+    canvas.addEventListener('click', forcePlayAllVideos, { once: true });
+    canvas.addEventListener('touchstart', forcePlayAllVideos, { once: true });
     canvas.addEventListener('touchstart', startAmbientAudio, { passive: true });
     canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: true });

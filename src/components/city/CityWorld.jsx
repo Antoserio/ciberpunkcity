@@ -1001,6 +1001,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     let frameCount = 0;
 
     const animate = () => {
+      const posInicial = camera.position.clone();
       const debugPosStart = camera.position.clone();
       animFrameRef.current = requestAnimationFrame(animate);
       const debugPos = camera.position.clone();
@@ -1115,6 +1116,16 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
           ahora: camera.position.clone(),
           stack: new Error().stack
         });
+      }
+
+      const movimiento = camera.position.distanceTo(posInicial);
+      if (movimiento > 10 && !moving && !worksTransitionRef.current.active) {
+        console.error('🚨 TELEPORT DETECTADO:', {
+          antes: posInicial,
+          ahora: camera.position.clone(),
+          distancia: movimiento
+        });
+        camera.position.copy(posInicial);
       }
 
       composer.render();

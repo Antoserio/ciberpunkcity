@@ -1,6 +1,9 @@
 import { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
@@ -566,8 +569,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     // Scene
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x030008, 0.02);
-    scene.background = new THREE.Color(0x030008);
+    const fogColor = new THREE.Color(0x1a0a2e);
+    scene.fog = new THREE.Fog(fogColor, 12, 150);
+    scene.background = fogColor;
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
@@ -588,23 +592,39 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.25;
+    renderer.toneMappingExposure = 1.35;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
 
+    const composer = new EffectComposer(renderer);
+    composer.setSize(W, H);
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 1.05, 0.55, 0.72);
+    composer.addPass(bloomPass);
+
     // Luces
-    scene.add(new THREE.AmbientLight(0x3a2a68, 2.8));
-    scene.add(new THREE.HemisphereLight(0x66ccff, 0x12051f, 1.8));
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
+    scene.add(new THREE.AmbientLight(0x3a2a68, 3.1));
+    scene.add(new THREE.HemisphereLight(0x66ccff, 0x12051f, 2.1));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.9);
     keyLight.position.set(24, 30, 14);
     scene.add(keyLight);
-    const fillLight = new THREE.PointLight(0xff44cc, 18, 120, 2);
+    const fillLight = new THREE.PointLight(0xff44cc, 22, 120, 2);
     fillLight.position.set(0, 22, 0);
     scene.add(fillLight);
+    const cyanWash = new THREE.PointLight(0x00e5ff, 16, 90, 2);
+    cyanWash.position.set(-24, 14, -8);
+    scene.add(cyanWash);
+    const magentaWash = new THREE.PointLight(0xff00c8, 18, 100, 2);
+    magentaWash.position.set(24, 16, 6);
+    scene.add(magentaWash);
+    const violetWash = new THREE.PointLight(0x7c3aed, 14, 80, 2);
+    violetWash.position.set(0, 18, -24);
+    scene.add(violetWash);
 
     // Glow textures
     const gt = {
@@ -994,6 +1014,11 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         }
       }
 
+      const particles = scene.children.find((child) => child.isPoints);
+      if (particles) {
+        particles.rotation.y += 0.00035;
+      }
+
       const robotTime = frameCount * 0.016;
       updateFlyingRobots(robotSwarm, robotTime);
       heroRobots.forEach((heroRobot, index) => {
@@ -1010,7 +1035,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       heroRobot.mesh.rotation.z = Math.sin(robotTime * 1.15 + heroRobot.offset) * 0.07;
       });
 
-      renderer.render(scene, camera);
+      composer.render();
       if (document.pointerLockElement && frameCount % 2 === 0) {
         const menuButton = document.querySelector('[data-agency-menu-button="true"]');
         if (menuButton) menuButton.style.opacity = '1';
@@ -1022,6 +1047,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       camera.aspect = mount.clientWidth / mount.clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(mount.clientWidth, mount.clientHeight);
+      composer.setSize(mount.clientWidth, mount.clientHeight);
     };
     window.addEventListener('resize', handleResize);
 
@@ -1068,6 +1094,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         vikyVideoElement.load();
       }
       vikyTexture?.dispose?.();
+      composer.dispose();
       ambienceAudio.pause();
       ambienceLayerTwo.pause();
       ambienceAudio.currentTime = 0;
@@ -1087,7 +1114,7 @@ function basicMat(params) {
 }
 
 function emissiveMat(color, intensity = 1.0) {
-  return new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity, roughness: 0.1, metalness: 0 });
+  return new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity * 1.75, roughness: 0.08, metalness: 0.15 });
 }
 
 function addGlowSprite(scene, x, y, z, texture, size = 6) {
@@ -1112,11 +1139,12 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) 
   const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(220, 220, 80, 80),
   new THREE.MeshStandardMaterial({
-    color: 0x090612,
-    roughness: 0.12,
-    metalness: 0.92,
+    color: 0x080610,
+    roughness: 0.06,
+    metalness: 0.96,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.94,
+    envMapIntensity: 1.35,
   })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -1190,22 +1218,26 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) 
     scene.add(cap);
   }
 
-  // Floating particles — reduced count
-  const count = 200;
+  // Floating particles — vapor cyberpunk
+  const count = 900;
   const pos = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   const particleColors = [[0,1,1],[1,0,1],[1,0.8,0],[0.3,0.5,1]];
   for (let i = 0; i < count; i++) {
-    pos[i*3] = (Math.random() - 0.5) * 160;
-    pos[i*3+1] = Math.random() * 35 + 1;
-    pos[i*3+2] = (Math.random() - 0.5) * 160;
+    pos[i*3] = (Math.random() - 0.5) * 170;
+    pos[i*3+1] = Math.random() * 38 + 0.5;
+    pos[i*3+2] = (Math.random() - 0.5) * 170;
     const c = particleColors[i % 4];
     colors[i*3] = c[0]; colors[i*3+1] = c[1]; colors[i*3+2] = c[2];
   }
   const pGeo = new THREE.BufferGeometry();
   pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   pGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 0.07, vertexColors: true, transparent: true, opacity: 0.7 })));
+  const particles = new THREE.Points(
+    pGeo,
+    new THREE.PointsMaterial({ size: 0.11, vertexColors: true, transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false })
+  );
+  scene.add(particles);
 
   return extraCanvases;
 }

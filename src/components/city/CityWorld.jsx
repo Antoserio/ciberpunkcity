@@ -596,14 +596,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const W = mount.clientWidth;
     const H = mount.clientHeight;
 
-    // Guardar posición actual de cámara si existe
-    const savedCameraPos = camera?.position?.clone?.() || null;
+    const savedCameraPos = null;
     const savedYaw = yawRef.current;
     const savedPitch = pitchRef.current;
-
-    if (savedCameraPos) {
-      console.log('💾 Guardando posición:', savedCameraPos);
-    }
 
     // Scene
     const scene = new THREE.Scene();

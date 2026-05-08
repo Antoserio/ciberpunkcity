@@ -505,7 +505,7 @@ const WORKS = [
 ];
 
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null, activateAudioSignal = 0 }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null, worksTransitionToken = 0 }) {
   const mountRef = useRef(null);
   const heroRobotsRef = useRef([]);
   const audioRef = useRef(null);
@@ -527,6 +527,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const extraCanvasesRef = useRef([]);
   const modalOpenRef = useRef(false);
   const touchStateRef = useRef({ moving: false, looking: false, moveId: null, lookId: null, moveStartX: 0, moveStartY: 0, moveX: 0, moveY: 0 });
+  const mobileMovementRef = useRef({ x: 0, z: 0 });
+  const worksTransitionRef = useRef({ active: false, startTime: 0, duration: 1500, startPos: null, targetPos: null, startYaw: 0, targetYaw: Math.PI, startPitch: 0, targetPitch: -0.03, token: 0 });
 
   // When modal opens: freeze movement immediately by clearing pressed keys and unlocking
   useEffect(() => {
@@ -619,6 +621,11 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       targetPitchRef.current = -0.03;
       pitchRef.current = -0.03;
     }
+
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const handleJoystickTouchMove = () => {};
+    const handleJoystickTouchEnd = () => {};
+    const joystickContainer = null;
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -997,9 +1004,13 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       pitchRef.current = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, pitchRef.current));
 
       const k = keysRef.current;
-      const moving = activeView === 'explore' && (k['KeyW'] || k['KeyS'] || k['KeyA'] || k['KeyD'] || k['ArrowUp'] || k['ArrowDown'] || k['ArrowLeft'] || k['ArrowRight']);
+      const mobileMovement = mobileMovementRef.current;
+      const moving = activeView === 'explore' && (
+        k['KeyW'] || k['KeyS'] || k['KeyA'] || k['KeyD'] || k['ArrowUp'] || k['ArrowDown'] || k['ArrowLeft'] || k['ArrowRight'] ||
+        (isMobileDevice && (Math.abs(mobileMovement.x) > 0.1 || Math.abs(mobileMovement.z) > 0.1))
+      );
 
-      if (moving) {
+      if (moving && !worksTransitionRef.current.active) {
         dir.set(0, 0, 0);
 
         if (k['KeyW'] || k['ArrowUp']) dir.z = -1;
@@ -1007,11 +1018,49 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         if (k['KeyA'] || k['ArrowLeft']) dir.x = -1;
         if (k['KeyD'] || k['ArrowRight']) dir.x = 1;
 
+        if (isMobileDevice && (Math.abs(mobileMovement.x) > 0.1 || Math.abs(mobileMovement.z) > 0.1)) {
+          dir.x = mobileMovement.x;
+          dir.z = mobileMovement.z;
+        }
+
         if (dir.lengthSq() > 0) {
           dir.normalize();
           dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yawRef.current);
-          camera.position.addScaledVector(dir, 20 * delta);
+          camera.position.addScaledVector(dir, 15 * delta);
           camera.position.y = 1.7;
+        }
+      }
+
+      if (activeView === 'works' && worksTransitionToken > 0 && worksTransitionRef.current.token !== worksTransitionToken) {
+        worksTransitionRef.current = {
+          active: true,
+          startTime: performance.now(),
+          duration: 1500,
+          startPos: camera.position.clone(),
+          targetPos: new THREE.Vector3(0, 1.7, 12),
+          startYaw: yawRef.current,
+          targetYaw: Math.PI,
+          startPitch: pitchRef.current,
+          targetPitch: 0,
+          token: worksTransitionToken,
+        };
+        cityVideos.forEach((item) => item.video.play().catch(() => {}));
+      }
+
+      if (worksTransitionRef.current.active) {
+        const transition = worksTransitionRef.current;
+        const elapsed = performance.now() - transition.startTime;
+        const progress = Math.min(elapsed / transition.duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        camera.position.lerpVectors(transition.startPos, transition.targetPos, eased);
+        yawRef.current = transition.startYaw + (transition.targetYaw - transition.startYaw) * eased;
+        targetYawRef.current = yawRef.current;
+        pitchRef.current = transition.startPitch + (transition.targetPitch - transition.startPitch) * eased;
+        targetPitchRef.current = pitchRef.current;
+
+        if (progress >= 1) {
+          transition.active = false;
         }
       }
 
@@ -1107,6 +1156,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);
       canvas.removeEventListener('touchcancel', handleTouchEnd);
+      document.removeEventListener('touchmove', handleJoystickTouchMove);
+      document.removeEventListener('touchend', handleJoystickTouchEnd);
+      document.removeEventListener('touchcancel', handleJoystickTouchEnd);
+      if (joystickContainer && document.body.contains(joystickContainer)) document.body.removeChild(joystickContainer);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
@@ -1151,7 +1204,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
-  }, [checkZoneProximity, plazaVideoUrl, robotModelUrl, activeView, activeWork]);
+  }, [checkZoneProximity, plazaVideoUrl, robotModelUrl, activeView, activeWork, worksTransitionToken]);
 
   return <div ref={mountRef} className="w-full h-full cursor-crosshair" />;
 }

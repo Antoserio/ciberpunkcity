@@ -30,6 +30,7 @@ export default function CyberCity() {
   const [activateAudioSignal, setActivateAudioSignal] = useState(0);
   const [activeWork, setActiveWork] = useState(() => STANDS.find((stand) => stand.type === 'video' || stand.type === 'showcase') || null);
   const [vikyOpen, setVikyOpen] = useState(false);
+  const [worksTransitionToken, setWorksTransitionToken] = useState(0);
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -100,6 +101,9 @@ export default function CyberCity() {
 
   const handleChangeView = useCallback((view) => {
     setActiveView(view);
+    if (view === 'works') {
+      setWorksTransitionToken((value) => value + 1);
+    }
     if (document.pointerLockElement) {
       document.exitPointerLock();
     }
@@ -127,6 +131,7 @@ export default function CyberCity() {
           audioEnabled={audioEnabled}
           activeView={activeView}
           activeWork={activeWork}
+          worksTransitionToken={worksTransitionToken}
         />
       </div>
 

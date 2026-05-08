@@ -503,7 +503,7 @@ const WORKS_CAMERA_LOOK_AT = new THREE.Vector3(0, 4.5, 26);
 const WORKS_CAMERA_TRANSITION_MS = 1000;
 
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null, worksTransitionToken = 0 }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null, worksTransitionToken = 0, cameraTarget = null }) {
   const mountRef = useRef(null);
   const heroRobotsRef = useRef([]);
   const audioRef = useRef(null);

@@ -210,7 +210,9 @@ export default function CyberCity() {
       {activeView === 'explore' && !isMobile && <MiniMap activeZone={activeZone} isMobile={isMobile} />}
 
       <button
+        id="sound-toggle"
         onClick={(e) => {
+          e.preventDefault();
           e.stopPropagation();
           setAudioEnabled((value) => !value);
         }}

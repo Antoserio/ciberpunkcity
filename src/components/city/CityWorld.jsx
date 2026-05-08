@@ -627,7 +627,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.8;
+    renderer.toneMappingExposure = 0.6;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
@@ -640,7 +640,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     composer.setSize(W, H);
     const renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 1.2, 0.6, 0.5);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 0.9, 0.6, 0.6);
     composer.addPass(bloomPass);
 
     // Luces
@@ -989,6 +989,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     const animate = () => {
       animFrameRef.current = requestAnimationFrame(animate);
+      const debugPos = camera.position.clone();
       const delta = Math.min(clockRef.current.getDelta(), 0.05);
       const prevPos = camera.position.clone();
       frameCount++;
@@ -1123,6 +1124,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
       if (camera.position.distanceTo(prevPos) > 0.01 && !moving) {
         console.error('⚠️ BUG: Algo movió la cámara sin WASD:', camera.position);
+      }
+
+      if (camera.position.distanceTo(debugPos) > 5) {
+        console.error('🚨 RESET DETECTADO:', {
+          antes: debugPos,
+          ahora: camera.position.clone(),
+          stack: new Error().stack
+        });
       }
 
       composer.render();

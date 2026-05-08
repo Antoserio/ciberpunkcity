@@ -569,8 +569,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     // Scene
     const scene = new THREE.Scene();
-    const fogColor = new THREE.Color(0x030008);
-    scene.fog = new THREE.FogExp2(0x030008, 0.012);
+    const fogColor = new THREE.Color(0x1a0530);
+    scene.fog = new THREE.FogExp2(0x1a0530, 0.025);
     scene.background = fogColor;
 
     // Camera
@@ -600,15 +600,19 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     mount.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
 
+    const vignette = document.createElement('div');
+    vignette.style.cssText = `position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 150px 50px rgba(0,0,0,0.6); z-index: 100;`;
+    document.body.appendChild(vignette);
+
     const composer = new EffectComposer(renderer);
     composer.setSize(W, H);
     const renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 0.8, 0.5, 0.78);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 2.0, 0.8, 0.3);
     composer.addPass(bloomPass);
 
     // Luces
-    scene.add(new THREE.AmbientLight(0x3a2a68, 1.5));
+    scene.add(new THREE.AmbientLight(0x3a2a68, 3.2));
     scene.add(new THREE.HemisphereLight(0x66ccff, 0x12051f, 1.0));
     const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
     keyLight.position.set(24, 30, 14);
@@ -1085,6 +1089,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       }
       vikyTexture?.dispose?.();
       composer.dispose();
+      vignette.remove();
       ambienceAudio.pause();
       ambienceLayerTwo.pause();
       ambienceAudio.currentTime = 0;
@@ -1104,7 +1109,7 @@ function basicMat(params) {
 }
 
 function emissiveMat(color, intensity = 1.0) {
-  return new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity * 0.6, roughness: 0.08, metalness: 0.15 });
+  return new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity * 1.2, roughness: 0.08, metalness: 0.15 });
 }
 
 function addGlowSprite(scene, x, y, z, texture, size = 6) {
@@ -1209,7 +1214,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) 
   }
 
   // Floating particles — vapor cyberpunk
-  const count = 900;
+  const count = 400;
   const pos = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   const particleColors = [[0,1,1],[1,0,1],[1,0.8,0],[0.3,0.5,1]];
@@ -1225,7 +1230,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) 
   pGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   const particles = new THREE.Points(
     pGeo,
-    new THREE.PointsMaterial({ size: 0.11, vertexColors: true, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false })
+    new THREE.PointsMaterial({ size: 0.25, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false })
   );
   scene.add(particles);
 

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -482,6 +482,8 @@ const WORKS = [
 
 const WORKS_CAMERA_POSITION = new THREE.Vector3(0, 4.5, 15);
 const WORKS_CAMERA_TRANSITION_MS = 1000;
+const AMBIENCE_AUDIO_URL = 'https://media.base44.com/files/public/69fa345f1e88257c77c4e49b/b7918b98e_efecto-de-sonido-tecnologia-tecno-sound-effect-128-ytshortssavetubeme.mp3';
+const AMBIENCE_LAYER_TWO_URL = 'https://cdn.pixabay.com/download/audio/2023/02/28/audio_6e7d1e85f0.mp3?filename=futuristic-atmosphere-141082.mp3';
 
 export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', audioEnabled = true, activeView = 'explore', activeWork = null, worksTransitionToken = 0, cameraTarget = null }) {
   const mountRef = useRef(null);
@@ -505,6 +507,20 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const touchStateRef = useRef({ moving: false, looking: false, moveId: null, lookId: null, moveStartX: 0, moveStartY: 0, moveX: 0, moveY: 0 });
   const mobileMovementRef = useRef({ x: 0, z: 0 });
   const worksTransitionRef = useRef({ active: activeView === 'works', startTime: performance.now(), duration: WORKS_CAMERA_TRANSITION_MS, startPos: new THREE.Vector3(0, 1.7, 20), targetPos: activeView === 'works' ? WORKS_CAMERA_POSITION.clone() : null, startYaw: 0, targetYaw: Math.PI, startPitch: -0.1, targetPitch: -0.03, token: worksTransitionToken });
+  const stableAmbienceAudio = useMemo(() => {
+    const audio = new Audio(AMBIENCE_AUDIO_URL);
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.crossOrigin = 'anonymous';
+    return audio;
+  }, []);
+  const stableAmbienceLayerTwo = useMemo(() => {
+    const audio = new Audio(AMBIENCE_LAYER_TWO_URL);
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.crossOrigin = 'anonymous';
+    return audio;
+  }, []);
 
   useCameraTargetTransition({ cameraTarget, worksTransitionRef, yawRef, pitchRef });
 
@@ -748,14 +764,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     const robotSwarm = addFlyingRobots(scene);
 
-    const ambienceAudio = new Audio('https://media.base44.com/files/public/69fa345f1e88257c77c4e49b/b7918b98e_efecto-de-sonido-tecnologia-tecno-sound-effect-128-ytshortssavetubeme.mp3');
-    const ambienceLayerTwo = new Audio('https://cdn.pixabay.com/download/audio/2023/02/28/audio_6e7d1e85f0.mp3?filename=futuristic-atmosphere-141082.mp3');
-    ambienceAudio.loop = true;
-    ambienceLayerTwo.loop = true;
-    ambienceAudio.preload = 'auto';
-    ambienceLayerTwo.preload = 'auto';
-    ambienceAudio.crossOrigin = 'anonymous';
-    ambienceLayerTwo.crossOrigin = 'anonymous';
+    const ambienceAudio = stableAmbienceAudio;
+    const ambienceLayerTwo = stableAmbienceLayerTwo;
     ambienceAudio.volume = audioEnabled ? 0.5 : 0;
     ambienceLayerTwo.volume = audioEnabled ? 0.14 : 0;
     ambienceAudio.muted = !audioEnabled;
@@ -1183,14 +1193,19 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       worksCarousel.dispose();
       composer.dispose();
       vignette.remove();
-      ambienceAudio.pause();
-      ambienceLayerTwo.pause();
-      ambienceAudio.currentTime = 0;
-      ambienceLayerTwo.currentTime = 0;
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
-  }, [plazaVideoUrl, robotModelUrl]);
+  }, [plazaVideoUrl, robotModelUrl, stableAmbienceAudio, stableAmbienceLayerTwo]);
+
+  useEffect(() => {
+    return () => {
+      stableAmbienceAudio.pause();
+      stableAmbienceLayerTwo.pause();
+      stableAmbienceAudio.currentTime = 0;
+      stableAmbienceLayerTwo.currentTime = 0;
+    };
+  }, [stableAmbienceAudio, stableAmbienceLayerTwo]);
 
   return <div ref={mountRef} className="w-full h-full cursor-crosshair" />;
 }

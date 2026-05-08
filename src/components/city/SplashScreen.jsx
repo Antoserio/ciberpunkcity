@@ -44,7 +44,7 @@ export default function SplashScreen({ onEnter }) {
         style={{ background: 'linear-gradient(90deg, transparent, #00ffff, transparent)' }}
       />
 
-      <div className="relative z-10 text-center px-8">
+      <div className="relative z-10 w-full max-w-[100vw] overflow-hidden px-4 sm:px-8 text-center">
         {/* Logo */}
         <motion.div
           initial={{ opacity: 0, scale: 0.5 }}
@@ -52,17 +52,17 @@ export default function SplashScreen({ onEnter }) {
           transition={{ delay: 0.2, type: 'spring', damping: 15 }}
           className="mb-8"
         >
-          <div className="inline-flex items-center gap-4 mb-4">
-            <div className="w-16 h-px" style={{ background: 'linear-gradient(90deg, transparent, #00ffff)' }} />
-            <span className="font-orbitron text-5xl font-black neon-text-cyan tracking-widest">
+          <div className="mb-4 flex flex-wrap items-center justify-center gap-2 sm:gap-4">
+            <div className="hidden sm:block w-16 h-px" style={{ background: 'linear-gradient(90deg, transparent, #00ffff)' }} />
+            <span className="font-orbitron text-[42px] sm:text-5xl font-black neon-text-cyan tracking-[0.12em] sm:tracking-widest leading-none">
               AGENCY
             </span>
-            <span className="font-orbitron text-5xl font-black neon-text-magenta tracking-widest">
+            <span className="font-orbitron text-[42px] sm:text-5xl font-black neon-text-magenta tracking-[0.12em] sm:tracking-widest leading-none">
               360
             </span>
-            <div className="w-16 h-px" style={{ background: 'linear-gradient(90deg, #ff00ff, transparent)' }} />
+            <div className="hidden sm:block w-16 h-px" style={{ background: 'linear-gradient(90deg, #ff00ff, transparent)' }} />
           </div>
-          <p className="font-rajdhani text-lg tracking-[0.5em] text-gray-400 uppercase">
+          <p className="font-rajdhani text-sm sm:text-lg tracking-[0.28em] sm:tracking-[0.5em] text-gray-400 uppercase break-words">
             Cybercity · Experience
           </p>
         </motion.div>
@@ -72,7 +72,7 @@ export default function SplashScreen({ onEnter }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="flex flex-wrap justify-center gap-3 mb-12"
+          className="mx-auto mb-10 flex max-w-[340px] sm:max-w-none flex-wrap justify-center gap-2 sm:gap-3"
         >
           {[
             { label: 'SOFTWARE', color: '#00ffff' },
@@ -82,7 +82,7 @@ export default function SplashScreen({ onEnter }) {
           ].map((tag, i) => (
             <span
               key={i}
-              className="px-3 py-1 font-orbitron text-xs tracking-widest rounded"
+              className="max-w-[44vw] sm:max-w-none truncate px-2.5 sm:px-3 py-1 font-orbitron text-[10px] sm:text-xs tracking-[0.16em] sm:tracking-widest rounded"
               style={{
                 color: tag.color,
                 border: `1px solid ${tag.color}50`,
@@ -100,7 +100,7 @@ export default function SplashScreen({ onEnter }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="w-80 mx-auto mb-6"
+          className="w-full max-w-[320px] sm:w-80 mx-auto mb-6"
         >
           <div className="flex justify-between mb-2">
             <span className="font-orbitron text-xs text-gray-600 tracking-widest">CARGANDO CIUDAD</span>
@@ -129,7 +129,7 @@ export default function SplashScreen({ onEnter }) {
             onClick={onEnter}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
-            className="px-10 py-4 font-orbitron font-black text-sm tracking-widest rounded transition-all"
+            className="w-full max-w-[300px] px-6 sm:px-10 py-4 font-orbitron font-black text-xs sm:text-sm tracking-[0.2em] sm:tracking-widest rounded transition-all"
             style={{
               background: 'linear-gradient(135deg, rgba(0,255,255,0.15), rgba(255,0,255,0.15))',
               border: '1px solid rgba(0,255,255,0.5)',
@@ -139,8 +139,8 @@ export default function SplashScreen({ onEnter }) {
           >
             ▶ ENTRAR AL MUNDO
           </motion.button>
-          <p className="text-xs font-rajdhani text-gray-600 mt-3 tracking-wider">
-            Requiere teclado y mouse · Mejor en desktop
+          <p className="mx-auto mt-3 max-w-[280px] text-[11px] sm:text-xs font-rajdhani text-gray-600 tracking-wide">
+            Mejor en desktop
           </p>
         </motion.div>
       </div>

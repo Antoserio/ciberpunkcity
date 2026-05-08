@@ -897,6 +897,12 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         targetPitchRef.current = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, targetPitchRef.current));
         mouseDeltaRef.current.x = 0;
         mouseDeltaRef.current.y = 0;
+        
+        // FORZAR cursor al centro cada frame
+        if (document.pointerLockElement === canvas) {
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+        }
       }
       yawRef.current += (targetYawRef.current - yawRef.current) * LOOK_SMOOTH;
       pitchRef.current += (targetPitchRef.current - pitchRef.current) * LOOK_SMOOTH;
@@ -1274,8 +1280,8 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex) {
     color: worksTex ? 0xffffff : 0x000000,
     side: THREE.FrontSide,
   });
-  const rearScreen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW * 1.18, facadeH * 0.98), rearMat);
-  rearScreen.position.set(bx, facadeY - 0.1, bz - bw / 2 - 0.16);
+  const rearScreen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW * 2.5, facadeH * 1.8), rearMat);
+  rearScreen.position.set(bx, facadeY, bz - bw / 2 - 0.8);
   rearScreen.rotation.y = Math.PI;
   scene.add(rearScreen);
 
@@ -1284,9 +1290,9 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex) {
   frontBorderLine.position.set(bx, facadeY, bz + bw / 2 + 0.1);
   scene.add(frontBorderLine);
 
-  const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW * 1.18 + 0.12, facadeH * 0.98 + 0.12, 0.05));
+  const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW * 2.5 + 0.12, facadeH * 1.8 + 0.12, 0.05));
   const rearBorderLine = new THREE.LineSegments(rearBorderGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
-  rearBorderLine.position.set(bx, facadeY - 0.1, bz - bw / 2 - 0.18);
+  rearBorderLine.position.set(bx, facadeY, bz - bw / 2 - 0.82);
   rearBorderLine.rotation.y = Math.PI;
   scene.add(rearBorderLine);
 }

@@ -178,7 +178,7 @@ export default function CyberCity() {
       )}
 
       {/* HUD overlay */}
-      {activeView === 'explore' && (
+      {activeView === 'explore' && !showWelcomeOverlay && (
         <HUD
           isLocked={isMobile ? true : (isLocked || hasClickedOnce)}
           activeZone={activeZone}

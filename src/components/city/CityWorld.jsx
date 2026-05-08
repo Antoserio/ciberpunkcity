@@ -1017,10 +1017,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       camera.rotation.order = 'YXZ';
       camera.rotation.y = yawRef.current;
       camera.rotation.x = pitchRef.current;
-      if (activeView === 'works') {
-        targetYawRef.current = Math.PI;
-        targetPitchRef.current = -0.03;
-      }
 
       camera.position.x = Math.max(-70, Math.min(70, camera.position.x));
       camera.position.z = Math.max(-70, Math.min(70, camera.position.z));
@@ -1284,21 +1280,21 @@ function makeWorksCarouselScreen() {
     const controlOpacity = controlsVisible ? 1 : 0.98;
     ctx.globalAlpha = controlOpacity;
     ctx.fillStyle = '#02020a';
-    ctx.fillRect(90, 835, 620, 170);
-    ctx.fillRect(1210, 835, 620, 170);
+    ctx.fillRect(90, 835, 620, 150);
+    ctx.fillRect(1210, 835, 620, 150);
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 8;
-    ctx.strokeRect(90, 835, 620, 170);
-    ctx.strokeRect(1210, 835, 620, 170);
+    ctx.strokeRect(90, 835, 620, 150);
+    ctx.strokeRect(1210, 835, 620, 150);
     ctx.fillStyle = '#ffffff';
     ctx.font = '900 84px Rajdhani, sans-serif';
-    ctx.fillText('◄ ANTERIOR', 150, 940);
-    ctx.fillText('SIGUIENTE ►', 1270, 940);
+    ctx.fillText('◄ ANTERIOR', 150, 935);
+    ctx.fillText('SIGUIENTE ►', 1270, 935);
     ctx.globalAlpha = 1;
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '800 46px Rajdhani, sans-serif';
-    ctx.fillText('← → FLECHAS DEL TECLADO PARA NAVEGAR', 1230, 1015);
+    ctx.fillStyle = '#d9d9ff';
+    ctx.font = '700 28px Rajdhani, sans-serif';
+    ctx.fillText('USA ← → PARA CAMBIAR', 1330, 975);
 
     ctx.strokeStyle = `rgba(255,255,255,${0.08 + pulse * 0.08})`;
     ctx.lineWidth = 2;

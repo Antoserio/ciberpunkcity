@@ -589,6 +589,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (audioEnabled) {
         audioRef.current.ambienceAudio.play().catch(() => {});
         audioRef.current.ambienceLayerTwo.play().catch(() => {});
+      } else {
+        audioRef.current.ambienceAudio.pause();
+        audioRef.current.ambienceLayerTwo.pause();
       }
     }
   }, [audioEnabled]);

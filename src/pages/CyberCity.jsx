@@ -32,7 +32,7 @@ export default function CyberCity() {
   const [worksTransitionToken, setWorksTransitionToken] = useState(0);
   const [cameraTarget, setCameraTarget] = useState({ 
     position: { x: 15, y: 1.7, z: 15 }, 
-    rotation: -0.8 
+    rotation: 2.4 
   });
 
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function CyberCity() {
       // Volver a posición inicial diagonal
       setCameraTarget({
         position: { x: 15, y: 1.7, z: 15 },
-        rotation: -0.8
+        rotation: 2.4
       });
     }
     

@@ -1199,7 +1199,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
-  }, [checkZoneProximity, plazaVideoUrl, robotModelUrl]);
+  }, [plazaVideoUrl, robotModelUrl]);
 
   return <div ref={mountRef} className="w-full h-full cursor-crosshair" />;
 }

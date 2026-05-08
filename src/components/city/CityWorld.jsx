@@ -1303,16 +1303,16 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
   frontScreen.position.set(bx, facadeY, bz + bw / 2 + 0.08);
   scene.add(frontScreen);
 
-  const rearMat = new THREE.MeshBasicMaterial({
-    map: vikyTex || worksTex || null,
-    color: (vikyTex || worksTex) ? 0xffffff : 0x000000,
-    side: THREE.FrontSide,
-  });
-  const rearScreen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW * 2.5, facadeH * 1.8), rearMat);
-  rearScreen.position.set(bx, facadeY, bz - bw / 2 - 0.8);
-  rearScreen.rotation.y = Math.PI;
-  rearScreen.userData.onClick = () => onOpenViky?.();
-  scene.add(rearScreen);
+  // const rearMat = new THREE.MeshBasicMaterial({
+  //   map: vikyTex || worksTex || null,
+  //   color: (vikyTex || worksTex) ? 0xffffff : 0x000000,
+  //   side: THREE.FrontSide,
+  // });
+  // const rearScreen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW * 2.5, facadeH * 1.8), rearMat);
+  // rearScreen.position.set(bx, facadeY, bz - bw / 2 - 0.8);
+  // rearScreen.rotation.y = Math.PI;
+  // rearScreen.userData.onClick = () => onOpenViky?.();
+  // scene.add(rearScreen);
 
   const frontBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW + 0.12, facadeH + 0.12, 0.05));
   const frontBorderLine = new THREE.LineSegments(frontBorderGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));

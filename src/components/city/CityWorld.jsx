@@ -486,7 +486,7 @@ const ROBOT_NO_FLY_ZONES = [
   ...ZONES.map((zone) => ({
     x: zone.position[0],
     z: zone.position[2],
-    radius: (zone.buildingWidth || 8) * 0.9 + 5,
+    radius: (zone.buildingWidth || 8) * 1.4 + 8,
   })),
   { x: -18, z: -30, radius: 8 },
   { x: 18, z: -30, radius: 8 },
@@ -1791,9 +1791,9 @@ function updateFlyingRobots(robots, time) {
       const distance = Math.hypot(dx, dz) || 0.001;
 
       if (distance < zone.radius) {
-        const pushStrength = (zone.radius - distance) / zone.radius;
-        x += (dx / distance) * pushStrength * 3.5;
-        z += (dz / distance) * pushStrength * 3.5;
+        const safeDistance = zone.radius + 1.5;
+        x = zone.x + (dx / distance) * safeDistance;
+        z = zone.z + (dz / distance) * safeDistance;
       }
     });
 

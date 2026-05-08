@@ -26,7 +26,7 @@ export default function CyberCity() {
   const [robotModelUrl, setRobotModelUrl] = useState('');
   const [robotFileName, setRobotFileName] = useState('');
   const [audioEnabled, setAudioEnabled] = useState(false);
-  const [activeView, setActiveView] = useState('works');
+  const [activeView, setActiveView] = useState('explore');
   const [activeWork, setActiveWork] = useState(() => STANDS.find((stand) => stand.type === 'video' || stand.type === 'showcase') || null);
   const [vikyOpen, setVikyOpen] = useState(false);
   const [worksTransitionToken, setWorksTransitionToken] = useState(0);
@@ -167,7 +167,7 @@ export default function CyberCity() {
             <button
               onClick={() => {
                 setShowWelcomeOverlay(false);
-                setActiveView('works');
+                setActiveView('explore');
                 setHasClickedOnce(true);
               }}
               className="rounded-full border border-cyan-400/50 bg-gradient-to-r from-cyan-400/20 to-fuchsia-500/20 px-10 py-4 font-orbitron text-sm font-light uppercase tracking-[0.3em] text-white backdrop-blur-[10px] transition-all duration-300 hover:border-cyan-300/80 hover:from-cyan-400/40 hover:to-fuchsia-500/40"

@@ -498,7 +498,7 @@ const WORKS = [
   }
 ];
 
-const WORKS_CAMERA_POSITION = new THREE.Vector3(0, 1.7, 20);
+const WORKS_CAMERA_POSITION = new THREE.Vector3(0, 4.5, 15);
 const WORKS_CAMERA_LOOK_AT = new THREE.Vector3(0, 4.5, 26);
 const WORKS_CAMERA_TRANSITION_MS = 1000;
 

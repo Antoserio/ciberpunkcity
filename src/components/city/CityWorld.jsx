@@ -1303,27 +1303,58 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
   frontScreen.position.set(bx, facadeY, bz + bw / 2 + 0.08);
   scene.add(frontScreen);
 
-  // const rearMat = new THREE.MeshBasicMaterial({
-  //   map: vikyTex || worksTex || null,
-  //   color: (vikyTex || worksTex) ? 0xffffff : 0x000000,
-  //   side: THREE.FrontSide,
-  // });
-  // const rearScreen = new THREE.Mesh(new THREE.PlaneGeometry(facadeW * 2.5, facadeH * 1.8), rearMat);
-  // rearScreen.position.set(bx, facadeY, bz - bw / 2 - 0.8);
-  // rearScreen.rotation.y = Math.PI;
-  // rearScreen.userData.onClick = () => onOpenViky?.();
-  // scene.add(rearScreen);
+  const vikyVideo = document.createElement('video');
+  vikyVideo.src = 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/0cbcd588c_Viky-EventoMayo-GoogleChrome2026-05-0811-15-57.mp4';
+  vikyVideo.crossOrigin = 'anonymous';
+  vikyVideo.loop = true;
+  vikyVideo.muted = true;
+  vikyVideo.playsInline = true;
+  vikyVideo.autoplay = true;
+  vikyVideo.setAttribute('playsinline', '');
+  vikyVideo.setAttribute('webkit-playsinline', '');
+  vikyVideo.setAttribute('muted', '');
+  vikyVideo.load();
+
+  const rearVideoTexture = new THREE.VideoTexture(vikyVideo);
+  rearVideoTexture.colorSpace = THREE.SRGBColorSpace;
+  rearVideoTexture.minFilter = THREE.LinearFilter;
+  rearVideoTexture.magFilter = THREE.LinearFilter;
+  rearVideoTexture.generateMipmaps = false;
+
+  const rearMaterial = new THREE.MeshBasicMaterial({
+    map: rearVideoTexture,
+    color: 0xffffff,
+    side: THREE.FrontSide,
+    toneMapped: false,
+  });
+
+  const rearScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(facadeW * 2.2, facadeH * 1.6),
+    rearMaterial
+  );
+  rearScreen.position.set(bx, facadeY, bz - bw / 2 - 1.2);
+  rearScreen.rotation.y = Math.PI;
+  rearScreen.userData.onClick = () => onOpenViky?.();
+  rearScreen.userData.vikyVideo = vikyVideo;
+  scene.add(rearScreen);
 
   const frontBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW + 0.12, facadeH + 0.12, 0.05));
   const frontBorderLine = new THREE.LineSegments(frontBorderGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
   frontBorderLine.position.set(bx, facadeY, bz + bw / 2 + 0.1);
   scene.add(frontBorderLine);
 
-  // const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW * 2.5 + 0.12, facadeH * 1.8 + 0.12, 0.05));
-  // const rearBorderLine = new THREE.LineSegments(rearBorderGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
-  // rearBorderLine.position.set(bx, facadeY, bz - bw / 2 - 0.82);
-  // rearBorderLine.rotation.y = Math.PI;
-  // scene.add(rearBorderLine);
+  const rearBorderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(facadeW * 2.2 + 0.2, facadeH * 1.6 + 0.2, 0.1));
+  const rearBorderLine = new THREE.LineSegments(rearBorderGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
+  rearBorderLine.position.copy(rearScreen.position);
+  rearBorderLine.rotation.y = Math.PI;
+  scene.add(rearBorderLine);
+
+  vikyVideo.addEventListener('loadeddata', () => {
+    console.log('✓ Viky video loaded');
+    vikyVideo.play().catch((e) => console.error('Viky play error:', e));
+  });
+
+  setTimeout(() => vikyVideo.play().catch(() => {}), 200);
 }
 
 // ─── Extra canvas screens on mid buildings ────────────────────────────────────

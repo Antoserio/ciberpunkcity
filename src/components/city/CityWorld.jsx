@@ -21,35 +21,25 @@ const CITY_VIDEO_SCREEN_CONFIGS = [
 
 function createCityVideoElement(src) {
   const video = document.createElement('video');
-  video.src = src;
   video.crossOrigin = 'anonymous';
-  video.loop = true;
   video.muted = true;
+  video.defaultMuted = true;
+  video.loop = true;
   video.playsInline = true;
   video.autoplay = true;
+  video.preload = 'auto';
+  video.setAttribute('muted', '');
   video.setAttribute('playsinline', '');
   video.setAttribute('webkit-playsinline', '');
-  
+  video.src = src;
   video.load();
-  
-  video.addEventListener('loadeddata', () => {
-    console.log('Video loaded:', src);
-    video.play().catch(e => console.error('Play failed:', e));
+  video.addEventListener('loadedmetadata', () => {
+    video.play().catch(() => {});
   });
-  
-  video.addEventListener('canplay', () => {
-    console.log('Video can play:', src);
-    if (video.paused) {
-      video.play().catch(e => console.error('Canplay play failed:', e));
-    }
+
+  video.addEventListener('canplaythrough', () => {
+    if (video.paused) video.play().catch(() => {});
   });
-  
-  setTimeout(() => {
-    video.play().catch(() => {
-      console.log('Initial play blocked, will retry on interaction');
-    });
-  }, 100);
-  
   return video;
 }
 
@@ -695,22 +685,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       const playLayer = ambienceLayerTwo.play();
       Promise.allSettled([playMain, playLayer]).then(() => {});
     };
-    const forcePlayAll = () => {
-      console.log('User interaction detected, playing all videos');
-      cityVideos.forEach((item, i) => {
-        item.video.muted = true;
-        item.video.play()
-          .then(() => console.log('Video', i, 'playing'))
-          .catch(e => console.error('Video', i, 'failed:', e));
-      });
-      if (plazaVideoElement) {
-        plazaVideoElement.play().catch(e => console.error('Plaza video failed:', e));
-      }
-    };
-
-    canvas.addEventListener('click', forcePlayAll);
-    canvas.addEventListener('touchstart', forcePlayAll, { passive: true });
-
     const heroRobots = [];
     heroRobotsRef.current = heroRobots;
 
@@ -987,9 +961,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     return () => {
       cancelAnimationFrame(animFrameRef.current);
       canvas.removeEventListener('click', handleClick);
-      canvas.removeEventListener('click', forcePlayAll);
       canvas.removeEventListener('touchstart', startAmbientAudio);
-      canvas.removeEventListener('touchstart', forcePlayAll);
       canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);

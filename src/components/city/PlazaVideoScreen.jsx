@@ -43,6 +43,7 @@ export function addPlazaVideoScreen(scene, videoTexture) {
   scene.add(group);
 
   return {
+    group,
     dispose() {
       scene.remove(group);
     },

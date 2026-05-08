@@ -5,6 +5,87 @@ import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 
+const CITY_VIDEO_SOURCES = [
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+];
+
+const CITY_VIDEO_SCREEN_CONFIGS = [
+  { x: -30, y: 10.5, z: -25.4, width: 7.2, height: 4.05, rotationY: 0, frameColor: 0x00ffff, glowColor: 0x00ffff, sourceIndex: 0 },
+  { x: 30, y: 11.5, z: -25.4, width: 7.2, height: 4.05, rotationY: 0, frameColor: 0xff00ff, glowColor: 0xff00ff, sourceIndex: 1 },
+  { x: -34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: Math.PI / 2, frameColor: 0xffff00, glowColor: 0xffff00, sourceIndex: 2 },
+  { x: 34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: -Math.PI / 2, frameColor: 0x4488ff, glowColor: 0x4488ff, sourceIndex: 3 },
+];
+
+function createCityVideoElement(src) {
+  const video = document.createElement('video');
+  video.crossOrigin = 'anonymous';
+  video.muted = true;
+  video.loop = true;
+  video.playsInline = true;
+  video.autoplay = true;
+  video.preload = 'metadata';
+  video.setAttribute('muted', '');
+  video.setAttribute('playsinline', '');
+  video.setAttribute('webkit-playsinline', '');
+  video.src = src;
+  video.load();
+  return video;
+}
+
+function createCityVideoScreen(scene, config, texture) {
+  const group = new THREE.Group();
+  const depth = 0.22;
+  const frame = new THREE.Mesh(
+    new THREE.BoxGeometry(config.width + 0.42, config.height + 0.42, depth),
+    new THREE.MeshBasicMaterial({ color: 0x04040a })
+  );
+  group.add(frame);
+
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(config.width, config.height),
+    new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, toneMapped: false, color: 0xffffff })
+  );
+  screen.position.z = depth * 0.55;
+  group.add(screen);
+
+  const border = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(config.width + 0.12, config.height + 0.12, 0.06)),
+    new THREE.LineBasicMaterial({ color: config.frameColor })
+  );
+  border.position.z = depth * 0.42;
+  group.add(border);
+
+  const glow = new THREE.Mesh(
+    new THREE.PlaneGeometry(config.width + 0.8, config.height + 0.8),
+    new THREE.MeshBasicMaterial({ color: config.glowColor, transparent: true, opacity: 0.09, side: THREE.DoubleSide })
+  );
+  glow.position.z = 0.02;
+  group.add(glow);
+
+  group.position.set(config.x, config.y, config.z);
+  group.rotation.y = config.rotationY || 0;
+  group.userData.screen = screen;
+  scene.add(group);
+  return group;
+}
+
+function syncCityVideos(cityVideos, camera) {
+  cityVideos.forEach((item) => {
+    const distance = camera.position.distanceTo(item.group.position);
+    if (distance < 30) {
+      if (item.video.paused) item.video.play().catch(() => {});
+      if (item.texture) item.texture.needsUpdate = true;
+      item.group.visible = true;
+    } else if (distance > 38) {
+      if (!item.video.paused) item.video.pause();
+      item.group.visible = false;
+    }
+  });
+}
+
 // Radial glow sprite texture
 function makeGlowTexture(hex) {
   const size = 128;
@@ -496,20 +577,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     let plazaVideoScreen = null;
     let worksMediaElement = null;
     let worksMediaTexture = null;
+    const cityVideos = [];
 
     if (plazaVideoUrl) {
-      plazaVideoElement = document.createElement('video');
-      plazaVideoElement.crossOrigin = 'anonymous';
-      plazaVideoElement.muted = true;
-      plazaVideoElement.loop = true;
-      plazaVideoElement.playsInline = true;
-      plazaVideoElement.autoplay = true;
-      plazaVideoElement.preload = 'auto';
-      plazaVideoElement.setAttribute('muted', '');
-      plazaVideoElement.setAttribute('playsinline', '');
-      plazaVideoElement.setAttribute('webkit-playsinline', '');
-      plazaVideoElement.src = plazaVideoUrl;
-      plazaVideoElement.load();
+      plazaVideoElement = createCityVideoElement(plazaVideoUrl);
 
       plazaVideoTexture = new THREE.VideoTexture(plazaVideoElement);
       plazaVideoTexture.colorSpace = THREE.SRGBColorSpace;
@@ -525,7 +596,20 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       plazaVideoElement.addEventListener('loadeddata', startVideoPlayback);
 
       plazaVideoScreen = addPlazaVideoScreen(scene, plazaVideoTexture);
+      cityVideos.push({ video: plazaVideoElement, texture: plazaVideoTexture, group: plazaVideoScreen?.group || { position: new THREE.Vector3(-6.2, 4.9, -11.15), visible: true } });
     }
+
+    CITY_VIDEO_SCREEN_CONFIGS.forEach((config) => {
+      const video = createCityVideoElement(CITY_VIDEO_SOURCES[config.sourceIndex]);
+      const texture = new THREE.VideoTexture(video);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.generateMipmaps = false;
+
+      const group = createCityVideoScreen(scene, config, texture);
+      cityVideos.push({ video, texture, group });
+    });
 
     if (activeWork) {
       const worksImageUrl = activeWork.type === 'showcase' ? activeWork.showcaseItems?.[0]?.img : null;
@@ -808,6 +892,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (frameCount % 2 === 0 && videoScreenRef.current) {
         videoScreenRef.current.draw(frameCount * 0.016);
       }
+      syncCityVideos(cityVideos, camera);
       if (plazaVideoTexture && plazaVideoElement && plazaVideoElement.readyState >= 2) {
         plazaVideoTexture.needsUpdate = true;
       }
@@ -866,6 +951,15 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       plazaVideoScreen?.dispose();
       plazaVideoTexture?.dispose();
       worksMediaTexture?.dispose?.();
+      cityVideos.forEach((item) => {
+        item.texture?.dispose?.();
+        item.video?.pause?.();
+        item.video?.removeAttribute?.('src');
+        item.video?.load?.();
+        if (item.group && item.group !== plazaVideoScreen?.group) {
+          scene.remove(item.group);
+        }
+      });
       robotSwarm.forEach((robot) => scene.remove(robot.group));
       heroRobots.forEach((heroRobot) => scene.remove(heroRobot.mesh));
       if (plazaVideoElement) {

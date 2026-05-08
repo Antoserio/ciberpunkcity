@@ -34,15 +34,15 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
           </div>
 
           {/* Status bar */}
-          <div className="hidden sm:flex items-center gap-2 sm:gap-3">
-            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="text-[10px] sm:text-xs font-orbitron text-cyan-400 tracking-widest max-w-[24vw] sm:max-w-none truncate">
-              {activeZone ? activeZone.label : 'EXPLORANDO'}
-            </span>
-          </div>
 
           {/* Coords display */}
-          <div className="hidden lg:block px-1 py-1">
+          <div className="hidden lg:flex items-center gap-4 px-1 py-1">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-[10px] font-orbitron text-cyan-400 tracking-[0.24em]">
+                {activeZone ? activeZone.label : 'EXPLORANDO'}
+              </span>
+            </div>
             <span className="text-[10px] font-orbitron text-white/45 tracking-[0.24em]">ZONAS {ZONES.length}</span>
           </div>
         </div>

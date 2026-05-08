@@ -988,6 +988,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     let frameCount = 0;
 
     const animate = () => {
+      const debugPosStart = camera.position.clone();
       animFrameRef.current = requestAnimationFrame(animate);
       const debugPos = camera.position.clone();
       const delta = Math.min(clockRef.current.getDelta(), 0.05);
@@ -1135,6 +1136,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       }
 
       composer.render();
+      const moved = camera.position.distanceTo(debugPosStart);
+      if (moved > 3) console.error('🚨', moved.toFixed(1));
       if (document.pointerLockElement && frameCount % 2 === 0) {
         const menuButton = document.querySelector('[data-agency-menu-button="true"]');
         if (menuButton) menuButton.style.opacity = '1';

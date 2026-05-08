@@ -625,7 +625,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.35;
+    renderer.toneMappingExposure = 0.8;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
@@ -638,7 +638,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     composer.setSize(W, H);
     const renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 2.0, 0.8, 0.3);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 1.2, 0.6, 0.5);
     composer.addPass(bloomPass);
 
     // Luces
@@ -647,7 +647,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
     keyLight.position.set(24, 30, 14);
     scene.add(keyLight);
-    const fillLight = new THREE.PointLight(0xff44cc, 10, 120, 2);
+    const fillLight = new THREE.PointLight(0xff44cc, 12, 120, 2);
     fillLight.position.set(0, 22, 0);
     scene.add(fillLight);
     const cyanWash = new THREE.PointLight(0x00e5ff, 5, 90, 2);
@@ -1158,7 +1158,7 @@ function basicMat(params) {
 }
 
 function emissiveMat(color, intensity = 1.0) {
-  return new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity * 1.2, roughness: 0.08, metalness: 0.15 });
+  return new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity * 0.8, roughness: 0.08, metalness: 0.15 });
 }
 
 function addGlowSprite(scene, x, y, z, texture, size = 6) {

@@ -30,6 +30,10 @@ export default function CyberCity() {
   const [activeWork, setActiveWork] = useState(() => STANDS.find((stand) => stand.type === 'video' || stand.type === 'showcase') || null);
   const [vikyOpen, setVikyOpen] = useState(false);
   const [worksTransitionToken, setWorksTransitionToken] = useState(0);
+  const [cameraTarget, setCameraTarget] = useState({ 
+    position: { x: 15, y: 1.7, z: 15 }, 
+    rotation: -0.8 
+  });
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -101,7 +105,19 @@ export default function CyberCity() {
   const handleChangeView = useCallback((view) => {
     if (view === 'works') {
       setWorksTransitionToken((value) => value + 1);
+      // Mover cámara delante del carousel
+      setCameraTarget({
+        position: { x: 0, y: 4.5, z: 15 },
+        rotation: 0
+      });
+    } else if (view === 'explore') {
+      // Volver a posición inicial diagonal
+      setCameraTarget({
+        position: { x: 15, y: 1.7, z: 15 },
+        rotation: -0.8
+      });
     }
+    
     setActiveView(view);
     if (document.pointerLockElement) {
       document.exitPointerLock();
@@ -131,6 +147,7 @@ export default function CyberCity() {
           activeView={activeView}
           activeWork={activeWork}
           worksTransitionToken={worksTransitionToken}
+          cameraTarget={cameraTarget}
         />
       </div>
 

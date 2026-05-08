@@ -602,7 +602,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
-    camera.position.set(0, 1.7, 14);
+    camera.position.set(0, 1.7, 20);
     targetYawRef.current = 0;
     yawRef.current = 0;
     targetPitchRef.current = -0.1;
@@ -1020,38 +1020,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         }
       }
 
-      if (activeView === 'works' && worksTransitionToken > 0 && worksTransitionRef.current.token !== worksTransitionToken) {
-        worksTransitionRef.current = {
-          active: true,
-          startTime: performance.now(),
-          duration: 1500,
-          startPos: camera.position.clone(),
-          targetPos: new THREE.Vector3(0, 1.7, 12),
-          startYaw: yawRef.current,
-          targetYaw: Math.PI,
-          startPitch: pitchRef.current,
-          targetPitch: 0,
-          token: worksTransitionToken,
-        };
-        cityVideos.forEach((item) => item.video.play().catch(() => {}));
-      }
 
-      if (worksTransitionRef.current.active) {
-        const transition = worksTransitionRef.current;
-        const elapsed = performance.now() - transition.startTime;
-        const progress = Math.min(elapsed / transition.duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-
-        camera.position.lerpVectors(transition.startPos, transition.targetPos, eased);
-        yawRef.current = transition.startYaw + (transition.targetYaw - transition.startYaw) * eased;
-        targetYawRef.current = yawRef.current;
-        pitchRef.current = transition.startPitch + (transition.targetPitch - transition.startPitch) * eased;
-        targetPitchRef.current = pitchRef.current;
-
-        if (progress >= 1) {
-          transition.active = false;
-        }
-      }
 
       camera.rotation.order = 'YXZ';
       camera.rotation.y = yawRef.current;

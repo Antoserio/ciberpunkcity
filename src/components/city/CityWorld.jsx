@@ -463,6 +463,12 @@ const MOVE_SPEED = 11;
 const LOOK_SPEED = 0.0024;
 const LOOK_SMOOTH = 0.22;
 const MAX_PITCH = Math.PI / 2 - 0.02;
+const BUILDING_COLLIDERS = [
+  ...ZONES.map((zone) => ({ x: zone.position[0], z: zone.position[2], radius: Math.max(zone.buildingWidth * 0.9, 6) })),
+  ...[
+    [-18,-30],[18,-30],[-30,18],[30,18],[-34,-34],[34,-34],[-34,34],[34,34],[-46,-18],[46,-18],[-46,18],[46,18],[-12,-44],[12,-44],[-12,44],[12,44],[-58,-30],[-44,-30],[-30,-30],[30,-30],[44,-30],[58,-30],[-58,30],[-44,30],[-30,30],[30,30],[44,30],[58,30],
+  ].map(([x, z]) => ({ x, z, radius: 6 }))
+];
 const HERO_COLORS = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
 
 
@@ -733,7 +739,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         loader.load(robotModelUrl, (gltf) => {
           const heroRobot = gltf.scene;
           const anchor = heroAnchors[index];
-          heroRobot.scale.setScalar(2 + index * 0.08);
+          heroRobot.scale.setScalar(0.8 + index * 0.05);
           heroRobot.position.set(anchor.x, 5 + index * 0.4, anchor.z);
 
           heroRobot.traverse((child) => {
@@ -969,11 +975,12 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       heroRobots.forEach((heroRobot, index) => {
       const targetX = heroRobot.anchorX + Math.sin(robotTime * heroRobot.speed + heroRobot.offset) * heroRobot.driftX + Math.sin(robotTime * 0.42 + index) * 8;
       const targetZ = heroRobot.anchorZ + Math.cos(robotTime * (heroRobot.speed * 0.9) + heroRobot.offset) * heroRobot.driftZ + Math.sin(robotTime * 0.33 + index * 1.2) * 6;
+      const safeTarget = avoidBuildingCollision(targetX, targetZ, 5.5);
       const prevX = heroRobot.mesh.position.x;
       const prevZ = heroRobot.mesh.position.z;
 
-      heroRobot.mesh.position.x += (targetX - heroRobot.mesh.position.x) * 0.02;
-      heroRobot.mesh.position.z += (targetZ - heroRobot.mesh.position.z) * 0.02;
+      heroRobot.mesh.position.x += (safeTarget.x - heroRobot.mesh.position.x) * 0.02;
+      heroRobot.mesh.position.z += (safeTarget.z - heroRobot.mesh.position.z) * 0.02;
       heroRobot.mesh.position.y = heroRobot.height + Math.sin(robotTime * 1.3 + heroRobot.offset) * 1.3 + Math.cos(robotTime * 0.6 + index) * 0.5;
       heroRobot.mesh.rotation.y = Math.atan2(heroRobot.mesh.position.x - prevX, heroRobot.mesh.position.z - prevZ);
       heroRobot.mesh.rotation.z = Math.sin(robotTime * 1.15 + heroRobot.offset) * 0.07;
@@ -1493,13 +1500,16 @@ function createFlyingRobot(color = 0x00ffff) {
 function addFlyingRobots(scene) {
   const colors = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
   const lanes = [
-    { minX: -62, maxX: -36, minZ: -58, maxZ: 58 },
-    { minX: 36, maxX: 62, minZ: -58, maxZ: 58 },
-    { minX: -58, maxX: 58, minZ: -62, maxZ: -36 },
-    { minX: -58, maxX: 58, minZ: 36, maxZ: 62 },
+    { minX: -65, maxX: -25, minZ: -65, maxZ: 65 },
+    { minX: 25, maxX: 65, minZ: -65, maxZ: 65 },
+    { minX: -65, maxX: 65, minZ: -65, maxZ: -25 },
+    { minX: -65, maxX: 65, minZ: 25, maxZ: 65 },
+    { minX: -45, maxX: 45, minZ: -45, maxZ: 45 },
+    { minX: -60, maxX: -20, minZ: -20, maxZ: 20 },
+    { minX: 20, maxX: 60, minZ: -20, maxZ: 20 },
   ];
 
-  return Array.from({ length: 7 }, (_, i) => {
+  return Array.from({ length: 15 }, (_, i) => {
     const robot = createFlyingRobot(colors[i % colors.length]);
     const lane = lanes[i % lanes.length];
     const originX = lane.minX + Math.random() * (lane.maxX - lane.minX);
@@ -1507,7 +1517,7 @@ function addFlyingRobots(scene) {
     const driftX = 8 + Math.random() * Math.min(14, (lane.maxX - lane.minX) * 0.6);
     const driftZ = 8 + Math.random() * Math.min(14, (lane.maxZ - lane.minZ) * 0.6);
     const speed = 0.1 + Math.random() * 0.12;
-    const height = 5 + Math.random() * 5;
+    const height = 3 + Math.random() * 12;
     const offset = Math.random() * Math.PI * 2;
     const wobble = 0.25 + Math.random() * 0.45;
     const yawOffset = Math.random() * 0.35 - 0.175;
@@ -1531,12 +1541,34 @@ function updateFlyingRobots(robots, time) {
     x = Math.max(robot.bounds.minX, Math.min(robot.bounds.maxX, x));
     z = Math.max(robot.bounds.minZ, Math.min(robot.bounds.maxZ, z));
 
+    const safeTarget = avoidBuildingCollision(x, z, 3.5);
     const prevX = robot.group.position.x;
     const prevZ = robot.group.position.z;
 
-    robot.group.position.set(x, y, z);
-    robot.group.rotation.y = Math.atan2(x - prevX, z - prevZ) + robot.yawOffset;
+    robot.group.position.set(safeTarget.x, y, safeTarget.z);
+    robot.group.rotation.y = Math.atan2(safeTarget.x - prevX, safeTarget.z - prevZ) + robot.yawOffset;
     robot.group.rotation.z = Math.sin(time * 1.8 + index) * 0.05;
     robot.trail.scale.y = 0.6 + Math.sin(time * 2.2 + index) * 0.08;
   });
+}
+
+function avoidBuildingCollision(x, z, padding = 2.5) {
+  const safe = { x, z };
+
+  BUILDING_COLLIDERS.forEach((collider) => {
+    const dx = safe.x - collider.x;
+    const dz = safe.z - collider.z;
+    const distance = Math.hypot(dx, dz) || 0.001;
+    const minDistance = collider.radius + padding;
+
+    if (distance < minDistance) {
+      const push = (minDistance - distance) / distance;
+      safe.x += dx * push;
+      safe.z += dz * push;
+    }
+  });
+
+  safe.x = Math.max(-64, Math.min(64, safe.x));
+  safe.z = Math.max(-64, Math.min(64, safe.z));
+  return safe;
 }

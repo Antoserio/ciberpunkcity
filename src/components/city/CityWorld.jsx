@@ -514,7 +514,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const touchStateRef = useRef({ moving: false, looking: false, moveId: null, lookId: null, moveStartX: 0, moveStartY: 0, moveX: 0, moveY: 0 });
   const mobileMovementRef = useRef({ x: 0, z: 0 });
   const cameraRef = useRef(null);
-  const worksTransitionRef = useRef({ active: activeView === 'works', startTime: performance.now(), duration: WORKS_CAMERA_TRANSITION_MS, startPos: new THREE.Vector3(0, 1.7, 20), targetPos: activeView === 'works' ? WORKS_CAMERA_POSITION.clone() : null, startYaw: 0, targetYaw: Math.PI, startPitch: -0.1, targetPitch: -0.03, token: worksTransitionToken });
+  const worksTransitionRef = useRef({ active: activeView === 'works', startTime: performance.now(), duration: WORKS_CAMERA_TRANSITION_MS, startPos: new THREE.Vector3(15, 1.7, 15), targetPos: activeView === 'works' ? WORKS_CAMERA_POSITION.clone() : null, startYaw: 2.4, targetYaw: Math.PI, startPitch: -0.1, targetPitch: -0.03, token: worksTransitionToken });
 
   useCameraTargetTransition({ cameraTarget, worksTransitionRef, yawRef, pitchRef, cameraRef });
 
@@ -596,9 +596,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       targetPitchRef.current = savedPitch;
       pitchRef.current = savedPitch;
     } else {
-      camera.position.set(0, 1.7, 20);
-      targetYawRef.current = 0;
-      yawRef.current = 0;
+      camera.position.set(15, 1.7, 15);
+      targetYawRef.current = 2.4;
+      yawRef.current = 2.4;
       targetPitchRef.current = -0.1;
       pitchRef.current = -0.1;
     }

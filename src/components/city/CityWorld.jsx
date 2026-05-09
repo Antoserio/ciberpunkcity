@@ -513,9 +513,10 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const modalOpenRef = useRef(false);
   const touchStateRef = useRef({ moving: false, looking: false, moveId: null, lookId: null, moveStartX: 0, moveStartY: 0, moveX: 0, moveY: 0 });
   const mobileMovementRef = useRef({ x: 0, z: 0 });
+  const cameraRef = useRef(null);
   const worksTransitionRef = useRef({ active: activeView === 'works', startTime: performance.now(), duration: WORKS_CAMERA_TRANSITION_MS, startPos: new THREE.Vector3(0, 1.7, 20), targetPos: activeView === 'works' ? WORKS_CAMERA_POSITION.clone() : null, startYaw: 0, targetYaw: Math.PI, startPitch: -0.1, targetPitch: -0.03, token: worksTransitionToken });
 
-  useCameraTargetTransition({ cameraTarget, worksTransitionRef, yawRef, pitchRef });
+  useCameraTargetTransition({ cameraTarget, worksTransitionRef, yawRef, pitchRef, cameraRef });
 
   useEffect(() => {
     modalOpenRef.current = modalOpen;
@@ -586,6 +587,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     scene.background = fogColor;
 
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
+    cameraRef.current = camera;
     if (savedCameraPos) {
       camera.position.copy(savedCameraPos);
       console.log('✅ RESTAURADA a:', camera.position);
@@ -1109,6 +1111,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       vignette.remove();
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+      cameraRef.current = null;
     };
   }, [plazaVideoUrl, robotModelUrl]);
 

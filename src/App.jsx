@@ -6,7 +6,6 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Add page imports here
-import LandingPage from './pages/LandingPage';
 import CyberCity from './pages/CyberCity';
 
 const AuthenticatedApp = () => {
@@ -35,8 +34,7 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/world" element={<CyberCity />} />
+      <Route path="/" element={<CyberCity />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

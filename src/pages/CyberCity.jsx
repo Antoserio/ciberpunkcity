@@ -7,6 +7,7 @@ import ZonePanel from '../components/city/ZonePanel';
 import AvatarAssistant from '../components/city/AvatarAssistant';
 import SplashScreen from '../components/city/SplashScreen';
 import MiniMap from '../components/city/MiniMap';
+import LandingHero from '../components/city/LandingHero.jsx';
 import StandModal from '../components/city/StandModal';
 import TopNav from '../components/city/TopNav.jsx';
 import WorksScreen from '../components/city/WorksScreen.jsx';
@@ -129,7 +130,7 @@ export default function CyberCity() {
 
 
   if (!started) {
-    return <SplashScreen onEnter={() => setStarted(true)} />;
+    return <LandingHero onEnter={() => setStarted(true)} />;
   }
 
   return (

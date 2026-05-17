@@ -1639,7 +1639,7 @@ function createArcadeMachine(scene, stand, gt) {
     texture.wrapT = THREE.ClampToEdgeWrapping;
   });
 
-  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.DoubleSide, transparent: false, color: 0xffffff });
+  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.DoubleSide, transparent: false, color: 0x6f6f6f });
   const marqueeMaterial = new THREE.MeshBasicMaterial({ map: marqueeTexture, toneMapped: false });
   const bezelMaterial = new THREE.MeshBasicMaterial({ map: bezelTexture, toneMapped: false });
 

@@ -105,7 +105,7 @@ function SnakeGame({ active }) {
         <span>SCORE {score}</span>
         <span>↑ ↓ ← →</span>
       </div>
-      <canvas ref={canvasRef} width={288} height={288} className="mx-auto rounded-xl border border-cyan-300/30 bg-black shadow-[0_0_30px_rgba(0,255,255,0.12)]" />
+      <canvas ref={canvasRef} width={288} height={288} className="mx-auto rounded-xl border border-cyan-300/30 bg-black shadow-[0_0_30px_rgba(0,255,255,0.12)] [image-rendering:pixelated]" />
     </div>
   );
 }
@@ -123,17 +123,18 @@ function PongGame({ active }) {
       rightY: 120,
       ballX: 240,
       ballY: 140,
-      ballVX: 3.2,
-      ballVY: 2.2,
+      ballVX: 3.6,
+      ballVY: 2.4,
       up: false,
       down: false,
     };
+    let frameId;
 
     const resetBall = (dir = 1) => {
       state.ballX = 240;
       state.ballY = 140;
-      state.ballVX = 3.2 * dir;
-      state.ballVY = (Math.random() * 2 + 1.5) * (Math.random() > 0.5 ? 1 : -1);
+      state.ballVX = 3.6 * dir;
+      state.ballVY = (Math.random() * 2 + 1.8) * (Math.random() > 0.5 ? 1 : -1);
     };
 
     const onKeyDown = (e) => {
@@ -148,13 +149,13 @@ function PongGame({ active }) {
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
-    const loop = setInterval(() => {
+    const render = () => {
       if (state.up) state.leftY -= 6;
       if (state.down) state.leftY += 6;
       state.leftY = Math.max(0, Math.min(220, state.leftY));
 
       const target = state.ballY - 30;
-      state.rightY += (target - state.rightY) * 0.08;
+      state.rightY += (target - state.rightY) * 0.12;
       state.rightY = Math.max(0, Math.min(220, state.rightY));
 
       state.ballX += state.ballVX;
@@ -173,6 +174,7 @@ function PongGame({ active }) {
         resetBall(-1);
       }
 
+      ctx.clearRect(0, 0, 480, 280);
       ctx.fillStyle = '#05070f';
       ctx.fillRect(0, 0, 480, 280);
       ctx.strokeStyle = 'rgba(255,255,255,0.18)';
@@ -190,10 +192,14 @@ function PongGame({ active }) {
       ctx.beginPath();
       ctx.arc(state.ballX, state.ballY, 7, 0, Math.PI * 2);
       ctx.fill();
-    }, 16);
+
+      frameId = requestAnimationFrame(render);
+    };
+
+    frameId = requestAnimationFrame(render);
 
     return () => {
-      clearInterval(loop);
+      cancelAnimationFrame(frameId);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
@@ -205,7 +211,7 @@ function PongGame({ active }) {
         <span>{score.left} - {score.right}</span>
         <span>↑ ↓</span>
       </div>
-      <canvas ref={canvasRef} width={480} height={280} className="mx-auto w-full max-w-[480px] rounded-xl border border-cyan-300/30 bg-black shadow-[0_0_30px_rgba(0,255,255,0.12)]" />
+      <canvas ref={canvasRef} width={480} height={280} className="mx-auto w-full max-w-[480px] rounded-xl border border-cyan-300/30 bg-black shadow-[0_0_30px_rgba(0,255,255,0.12)] [image-rendering:auto]" />
     </div>
   );
 }
@@ -228,20 +234,21 @@ function BreakoutGame({ active }) {
       paddleX: 190,
       ballX: 240,
       ballY: 210,
-      ballVX: 3,
-      ballVY: -3,
+      ballVX: 3.4,
+      ballVY: -3.4,
       left: false,
       right: false,
       bricks: bricks.map((brick) => ({ ...brick })),
     };
+    let frameId;
     setScore(0);
 
     const reset = () => {
       state.paddleX = 190;
       state.ballX = 240;
       state.ballY = 210;
-      state.ballVX = 3;
-      state.ballVY = -3;
+      state.ballVX = 3.4;
+      state.ballVY = -3.4;
       state.bricks = bricks.map((brick) => ({ ...brick }));
       setScore(0);
     };
@@ -258,7 +265,7 @@ function BreakoutGame({ active }) {
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
-    const loop = setInterval(() => {
+    const render = () => {
       if (state.left) state.paddleX -= 7;
       if (state.right) state.paddleX += 7;
       state.paddleX = Math.max(12, Math.min(388, state.paddleX));
@@ -273,6 +280,7 @@ function BreakoutGame({ active }) {
       }
       if (state.ballY > 280) {
         reset();
+        frameId = requestAnimationFrame(render);
         return;
       }
 
@@ -287,9 +295,11 @@ function BreakoutGame({ active }) {
 
       if (state.bricks.every((brick) => !brick.alive)) {
         reset();
+        frameId = requestAnimationFrame(render);
         return;
       }
 
+      ctx.clearRect(0, 0, 480, 280);
       ctx.fillStyle = '#05070f';
       ctx.fillRect(0, 0, 480, 280);
       state.bricks.forEach((brick, index) => {
@@ -302,10 +312,14 @@ function BreakoutGame({ active }) {
       ctx.beginPath();
       ctx.arc(state.ballX, state.ballY, 7, 0, Math.PI * 2);
       ctx.fill();
-    }, 16);
+
+      frameId = requestAnimationFrame(render);
+    };
+
+    frameId = requestAnimationFrame(render);
 
     return () => {
-      clearInterval(loop);
+      cancelAnimationFrame(frameId);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
@@ -317,7 +331,7 @@ function BreakoutGame({ active }) {
         <span>SCORE {score}</span>
         <span>← →</span>
       </div>
-      <canvas ref={canvasRef} width={480} height={280} className="mx-auto w-full max-w-[480px] rounded-xl border border-cyan-300/30 bg-black shadow-[0_0_30px_rgba(0,255,255,0.12)]" />
+      <canvas ref={canvasRef} width={480} height={280} className="mx-auto w-full max-w-[480px] rounded-xl border border-cyan-300/30 bg-black shadow-[0_0_30px_rgba(0,255,255,0.12)] [image-rendering:auto]" />
     </div>
   );
 }

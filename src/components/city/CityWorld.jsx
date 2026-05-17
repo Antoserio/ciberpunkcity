@@ -1378,19 +1378,19 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   const carouselRotation = Math.PI;
 
   const carouselFrame = new THREE.Mesh(
-    new THREE.BoxGeometry(13.2, 7.8, 0.55),
+    new THREE.BoxGeometry(13.6, 8, 0.62),
     new THREE.MeshBasicMaterial({ color: 0x04040a })
   );
-  carouselFrame.position.set(0, 4.2, 35);
-  carouselFrame.rotation.y = carouselRotation;
+  carouselFrame.position.set(0, 4.25, 35);
+  carouselFrame.rotation.y = 0;
   scene.add(carouselFrame);
 
   const carouselScreen = new THREE.Mesh(
-    new THREE.PlaneGeometry(12.4, 7),
+    new THREE.PlaneGeometry(12.7, 7.2),
     new THREE.MeshBasicMaterial({ map: worksCarousel.texture, toneMapped: false, side: THREE.DoubleSide })
   );
-  carouselScreen.position.set(0, 4.2, 34.7);
-  carouselScreen.rotation.y = carouselRotation;
+  carouselScreen.position.set(0, 4.25, 34.67);
+  carouselScreen.rotation.y = 0;
   carouselScreen.userData.onClick = (event) => {
     const point = event?.point;
     if (!point) return;
@@ -1401,11 +1401,11 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   scene.add(carouselScreen);
 
   const carouselGlow = new THREE.Mesh(
-    new THREE.PlaneGeometry(13.8, 7.6),
-    new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
+    new THREE.PlaneGeometry(14.2, 7.9),
+    new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.1, side: THREE.DoubleSide })
   );
-  carouselGlow.position.set(0, 4.2, 34.5);
-  carouselGlow.rotation.y = carouselRotation;
+  carouselGlow.position.set(0, 4.25, 34.42);
+  carouselGlow.rotation.y = 0;
   scene.add(carouselGlow);
 
   ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky));
@@ -1715,7 +1715,26 @@ function createArcadeMachine(scene, stand, gt) {
   marqueeGlow.position.set(0, 4.15, 0.43);
   body.add(marqueeGlow);
 
+  const frameOutline = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(2.28, 4.6, 1.9)),
+    new THREE.LineBasicMaterial({ color: 0x00e5ff })
+  );
+  frameOutline.position.set(0, 2.3, 0.04);
+  body.add(frameOutline);
+
+  const sideAccentLeft = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 4.2, 1.7),
+    new THREE.MeshBasicMaterial({ color: 0xff4fd8 })
+  );
+  sideAccentLeft.position.set(-1.16, 2.2, 0.02);
+  body.add(sideAccentLeft);
+
+  const sideAccentRight = sideAccentLeft.clone();
+  sideAccentRight.position.x = 1.16;
+  body.add(sideAccentRight);
+
   body.position.set(x, 0, z);
+  body.rotation.y = Math.PI;
 
   const glowKey = colorToGlowKey(stand.colorInt || 0x00ffff);
   addGlowSprite(scene, x, 3.7, z + 0.8, gt[glowKey], 6.4);

@@ -1623,7 +1623,7 @@ function createArcadeMachine(scene, stand, gt) {
   const metalPanel = new THREE.MeshStandardMaterial({ color: 0x707886, roughness: 0.38, metalness: 0.82 });
   const marqueeShell = new THREE.MeshStandardMaterial({ color: 0x111216, roughness: 0.44, metalness: 0.3 });
 
-  const sideArtTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/1ae469e7c_image.png');
+  const sideArtTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/87b366af2__Burnt_U.jpg');
   const marqueeTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/6fe794235_image.png');
   const bezelTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/15ddba126_0119_Ros.jpg');
 

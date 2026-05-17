@@ -1630,8 +1630,10 @@ function createArcadeMachine(scene, stand, gt) {
   sideArtTexture.colorSpace = THREE.SRGBColorSpace;
   sideArtTexture.wrapS = THREE.ClampToEdgeWrapping;
   sideArtTexture.wrapT = THREE.ClampToEdgeWrapping;
-  sideArtTexture.offset.set(0, 0);
-  sideArtTexture.repeat.set(1, 1);
+  sideArtTexture.center.set(0.5, 0.5);
+  sideArtTexture.rotation = 0;
+  sideArtTexture.offset.set(0.18, 0.02);
+  sideArtTexture.repeat.set(0.64, 0.96);
 
   [marqueeTexture, bezelTexture].forEach((texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -1639,7 +1641,7 @@ function createArcadeMachine(scene, stand, gt) {
     texture.wrapT = THREE.ClampToEdgeWrapping;
   });
 
-  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.DoubleSide, transparent: false, color: 0x6f6f6f });
+  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.DoubleSide, transparent: true, color: 0xffffff });
   const marqueeMaterial = new THREE.MeshBasicMaterial({ map: marqueeTexture, toneMapped: false });
   const bezelMaterial = new THREE.MeshBasicMaterial({ map: bezelTexture, toneMapped: false });
 

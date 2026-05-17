@@ -1618,20 +1618,13 @@ function createArcadeMachine(scene, stand, gt) {
   const body = new THREE.Group();
   const textureLoader = new THREE.TextureLoader();
 
-  const cabinetBlack = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.62, metalness: 0.18 });
-  const cabinetDark = new THREE.MeshStandardMaterial({ color: 0x0e0e12, roughness: 0.54, metalness: 0.14 });
+  const cabinetBlack = new THREE.MeshStandardMaterial({ color: 0xf1f2f4, roughness: 0.72, metalness: 0.08 });
+  const cabinetDark = new THREE.MeshStandardMaterial({ color: 0xd7dbe2, roughness: 0.68, metalness: 0.1 });
   const metalPanel = new THREE.MeshStandardMaterial({ color: 0x707886, roughness: 0.38, metalness: 0.82 });
   const marqueeShell = new THREE.MeshStandardMaterial({ color: 0x111216, roughness: 0.44, metalness: 0.3 });
 
-  const sideArtTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/87b366af2__Burnt_U.jpg');
   const marqueeTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/6fe794235_image.png');
   const bezelTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/15ddba126_0119_Ros.jpg');
-
-  sideArtTexture.colorSpace = THREE.SRGBColorSpace;
-  sideArtTexture.wrapS = THREE.ClampToEdgeWrapping;
-  sideArtTexture.wrapT = THREE.ClampToEdgeWrapping;
-  sideArtTexture.offset.set(0, 0);
-  sideArtTexture.repeat.set(1, 1);
 
   [marqueeTexture, bezelTexture].forEach((texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -1639,7 +1632,7 @@ function createArcadeMachine(scene, stand, gt) {
     texture.wrapT = THREE.ClampToEdgeWrapping;
   });
 
-  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.FrontSide, transparent: true, alphaTest: 0.15, color: 0xffffff });
+  const sideArtMaterial = new THREE.MeshBasicMaterial({ color: 0xe8ebf0, side: THREE.FrontSide });
   const marqueeMaterial = new THREE.MeshBasicMaterial({ map: marqueeTexture, toneMapped: false });
   const bezelMaterial = new THREE.MeshBasicMaterial({ map: bezelTexture, toneMapped: false });
 

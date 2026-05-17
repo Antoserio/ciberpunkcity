@@ -1386,7 +1386,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     new THREE.MeshBasicMaterial({ color: 0x04040a })
   );
   carouselFrame.position.set(0, 4.25, 28);
-  carouselFrame.rotation.y = 0;
+  carouselFrame.rotation.y = Math.PI;
   scene.add(carouselFrame);
 
   const carouselScreen = new THREE.Mesh(

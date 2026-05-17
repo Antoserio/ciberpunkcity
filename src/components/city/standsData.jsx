@@ -73,7 +73,7 @@ export const STANDS = [
   {
     id: 'arcade_nexus',
     key: 'P',
-    position: [2, 0, 24],
+    position: [16, 0, 28],
     color: '#00ffff',
     colorInt: 0x00ffff,
     title: 'NEXUS PLAY',

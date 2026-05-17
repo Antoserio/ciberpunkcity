@@ -839,7 +839,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const handleTouchStart = (e) => {
       if (!isMobile || modalOpenRef.current) return;
       for (const touch of e.changedTouches) {
-        if (touch.clientX < window.innerWidth * 0.45 && touchStateRef.current.moveId === null) {
+        if (touch.clientX < window.innerWidth * 0.5 && touchStateRef.current.moveId === null) {
           touchStateRef.current.moveId = touch.identifier;
           touchStateRef.current.moving = true;
           touchStateRef.current.moveStartX = touch.clientX;
@@ -861,6 +861,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         if (touch.identifier === touchStateRef.current.moveId) {
           touchStateRef.current.moveX = touch.clientX - touchStateRef.current.moveStartX;
           touchStateRef.current.moveY = touch.clientY - touchStateRef.current.moveStartY;
+          mobileMovementRef.current.x = Math.max(-1, Math.min(1, touchStateRef.current.moveX / 70));
+          mobileMovementRef.current.z = Math.max(-1, Math.min(1, touchStateRef.current.moveY / 70));
         }
         if (touch.identifier === touchStateRef.current.lookId) {
           targetYawRef.current -= (touch.clientX - touchStateRef.current.lookStartX) * LOOK_SPEED * 0.7;
@@ -879,6 +881,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
           touchStateRef.current.moving = false;
           touchStateRef.current.moveX = 0;
           touchStateRef.current.moveY = 0;
+          mobileMovementRef.current.x = 0;
+          mobileMovementRef.current.z = 0;
         }
         if (touch.identifier === touchStateRef.current.lookId) {
           touchStateRef.current.lookId = null;
@@ -967,7 +971,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
         if (isMobileDevice && (Math.abs(mobileMovement.x) > 0.1 || Math.abs(mobileMovement.z) > 0.1)) {
           dir.x = mobileMovement.x;
-          dir.z = mobileMovement.z;
+          dir.z = mobileMovement.z * -1;
         }
 
         if (dir.lengthSq() > 0) {
@@ -1012,7 +1016,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         }
       }
 
-      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 4.2, 35)) < 18;
+      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 4.2, 28)) < 18;
       worksCarousel.setProximity(isNearCarousel);
       worksCarousel.update(frameCount * 0.016);
 
@@ -1381,7 +1385,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     new THREE.BoxGeometry(13.6, 8, 0.62),
     new THREE.MeshBasicMaterial({ color: 0x04040a })
   );
-  carouselFrame.position.set(0, 4.25, 35);
+  carouselFrame.position.set(0, 4.25, 28);
   carouselFrame.rotation.y = 0;
   scene.add(carouselFrame);
 
@@ -1389,7 +1393,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     new THREE.PlaneGeometry(12.7, 7.2),
     new THREE.MeshBasicMaterial({ map: worksCarousel.texture, toneMapped: false, side: THREE.DoubleSide })
   );
-  carouselScreen.position.set(0, 4.25, 34.67);
+  carouselScreen.position.set(0, 4.25, 27.67);
   carouselScreen.rotation.y = 0;
   carouselScreen.userData.onClick = (event) => {
     const point = event?.point;
@@ -1404,7 +1408,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     new THREE.PlaneGeometry(14.2, 7.9),
     new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.1, side: THREE.DoubleSide })
   );
-  carouselGlow.position.set(0, 4.25, 34.42);
+  carouselGlow.position.set(0, 4.25, 27.42);
   carouselGlow.rotation.y = 0;
   scene.add(carouselGlow);
 
@@ -1635,7 +1639,7 @@ function createArcadeMachine(scene, stand, gt) {
     texture.wrapT = THREE.ClampToEdgeWrapping;
   });
 
-  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.DoubleSide, transparent: true });
+  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.DoubleSide, transparent: false, color: 0xffffff });
   const marqueeMaterial = new THREE.MeshBasicMaterial({ map: marqueeTexture, toneMapped: false });
   const bezelMaterial = new THREE.MeshBasicMaterial({ map: bezelTexture, toneMapped: false });
 
@@ -1800,7 +1804,7 @@ function createArcadeMachine(scene, stand, gt) {
   body.add(marqueeGlow);
 
   body.position.set(x, 0, z);
-  body.rotation.y = Math.PI;
+  body.rotation.y = Math.PI - 0.18;
   body.scale.setScalar(1.08);
 
   const glowKey = colorToGlowKey(stand.colorInt || 0x00ffff);

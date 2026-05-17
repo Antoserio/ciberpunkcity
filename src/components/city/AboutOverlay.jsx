@@ -14,13 +14,13 @@ export default function AboutOverlay({ open, onClose }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/10 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 p-3 backdrop-blur-md sm:p-6"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
-            className="mx-auto mt-8 w-[min(96vw,1200px)] rounded-[2rem] border border-white/8 bg-[rgba(3,6,15,0.14)] p-5 sm:p-8 shadow-[0_0_80px_rgba(0,255,255,0.06)]"
+            className="max-h-[92vh] w-[min(96vw,1200px)] overflow-y-auto rounded-[2rem] border border-white/8 bg-[rgba(3,6,15,0.14)] p-5 sm:p-8 shadow-[0_0_80px_rgba(0,255,255,0.06)]"
           >
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>

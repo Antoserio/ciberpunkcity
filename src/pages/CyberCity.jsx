@@ -13,7 +13,8 @@ import WorksScreen from '../components/city/WorksScreen.jsx';
 import AboutOverlay from '../components/city/AboutOverlay.jsx';
 import VikyModal from '../components/city/VikyModal.jsx';
 import ArcadeGamesModal from '../components/city/ArcadeGamesModal.jsx';
-import { STANDS } from '../components/city/standsData';import useAmbientAudio from '../components/city/useAmbientAudio';
+import { STANDS } from '../components/city/standsData';
+import useAmbientAudio from '../components/city/useAmbientAudio';
 
 export default function CyberCity() {
   const [started, setStarted] = useState(false);
@@ -114,7 +115,7 @@ export default function CyberCity() {
       setWorksTransitionToken((value) => value + 1);
       // Mover cámara delante del carousel
       setCameraTarget({
-        position: { x: 0, y: 4.5, z: 15 },
+        position: { x: 0, y: 4.5, z: 11 },
         rotation: Math.PI
       });
     } else if (view === 'explore') {
@@ -256,6 +257,7 @@ export default function CyberCity() {
       </button>
 
       <AboutOverlay open={activeView === 'about'} onClose={() => setActiveView('explore')} />
+      {activeView === 'works' && <WorksScreen onChangeActiveWork={setActiveWork} />}
       <VikyModal open={vikyOpen} onClose={() => setVikyOpen(false)} />
       <ArcadeGamesModal open={arcadeOpen} onClose={() => setArcadeOpen(false)} />
       <AvatarAssistant />

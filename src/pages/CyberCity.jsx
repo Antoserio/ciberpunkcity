@@ -157,30 +157,39 @@ export default function CyberCity() {
       <TopNav activeView={activeView} onChangeView={handleChangeView} />
 
       {showWelcomeOverlay && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/30 px-4 text-white backdrop-blur-[8px]">
-          <div className="w-full max-w-[500px] rounded-[30px] border border-cyan-400/20 bg-[rgba(10,10,30,0.4)] p-10 text-center backdrop-blur-[20px]">
-            <h1 className="mb-14 bg-gradient-to-r from-cyan-300 to-fuchsia-400 bg-clip-text font-orbitron text-4xl font-light tracking-[0.5em] text-transparent sm:text-5xl">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 px-4 text-white backdrop-blur-[10px]">
+          <div className="w-full max-w-[560px] rounded-[32px] border border-cyan-400/20 bg-[rgba(10,10,30,0.55)] px-6 py-8 text-center shadow-[0_0_80px_rgba(0,255,255,0.08)] backdrop-blur-[24px] sm:px-10 sm:py-10">
+            <p className="mb-3 font-rajdhani text-[11px] uppercase tracking-[0.45em] text-cyan-300/75">Bienvenido</p>
+            <h1 className="mx-auto max-w-full bg-gradient-to-r from-cyan-300 via-white to-fuchsia-400 bg-clip-text font-orbitron text-2xl font-light tracking-[0.32em] text-transparent sm:text-4xl sm:tracking-[0.5em]">
               AGENCY360
             </h1>
 
-            <div className="mb-14 flex justify-center gap-10 sm:gap-16">
-              <div className="text-center">
-                <div className="mx-auto mb-4 h-[60px] w-[40px] rounded-[20px] border-2 border-white/60">
-                  <div className="mx-auto mt-2 h-3 w-1 animate-bounce rounded-full bg-cyan-300" />
+            <p className="mx-auto mt-5 max-w-md font-rajdhani text-base leading-relaxed text-white/72 sm:text-lg">
+              Explora nuestro portfolio y juega en nuestro mundo inmersivo para descubrir experiencias visuales, tecnología y creatividad digital.
+            </p>
+
+            <div className="my-8 grid grid-cols-2 gap-4 sm:my-10 sm:gap-6">
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-5 text-center">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full border border-cyan-300/35 bg-cyan-300/10">
+                  <div className="h-[34px] w-[22px] rounded-[14px] border border-white/60">
+                    <div className="mx-auto mt-1.5 h-2.5 w-1 animate-bounce rounded-full bg-cyan-300" />
+                  </div>
                 </div>
-                <p className="m-0 font-rajdhani text-sm tracking-[0.2em] text-white/70">MIRAR</p>
+                <p className="font-orbitron text-[10px] uppercase tracking-[0.32em] text-cyan-300/85">Mirar</p>
+                <p className="mt-2 font-rajdhani text-sm text-white/60">Usa el ratón para orientarte</p>
               </div>
 
-              <div className="text-center">
-                <div className="mb-4 grid grid-cols-3 gap-1">
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-5 text-center">
+                <div className="mx-auto mb-3 grid w-fit grid-cols-3 gap-1">
                   <div />
-                  <div className="flex h-7 w-7 items-center justify-center rounded border-2 border-white/60 text-xs text-white/60">↑</div>
+                  <div className="flex h-7 w-7 items-center justify-center rounded border border-white/50 text-xs text-white/70">↑</div>
                   <div />
-                  <div className="flex h-7 w-7 items-center justify-center rounded border-2 border-white/60 text-xs text-white/60">←</div>
-                  <div className="flex h-7 w-7 items-center justify-center rounded border-2 border-white/60 text-xs text-white/60">↓</div>
-                  <div className="flex h-7 w-7 items-center justify-center rounded border-2 border-white/60 text-xs text-white/60">→</div>
+                  <div className="flex h-7 w-7 items-center justify-center rounded border border-white/50 text-xs text-white/70">←</div>
+                  <div className="flex h-7 w-7 items-center justify-center rounded border border-white/50 text-xs text-white/70">↓</div>
+                  <div className="flex h-7 w-7 items-center justify-center rounded border border-white/50 text-xs text-white/70">→</div>
                 </div>
-                <p className="m-0 font-rajdhani text-sm tracking-[0.2em] text-white/70">MOVER</p>
+                <p className="mt-3 font-orbitron text-[10px] uppercase tracking-[0.32em] text-fuchsia-300/85">Mover</p>
+                <p className="mt-2 font-rajdhani text-sm text-white/60">Avanza y recorre la ciudad</p>
               </div>
             </div>
 
@@ -190,7 +199,7 @@ export default function CyberCity() {
                 setActiveView('explore');
                 setHasClickedOnce(true);
               }}
-              className="rounded-full border border-cyan-400/50 bg-gradient-to-r from-cyan-400/20 to-fuchsia-500/20 px-10 py-4 font-orbitron text-sm font-light uppercase tracking-[0.3em] text-white backdrop-blur-[10px] transition-all duration-300 hover:border-cyan-300/80 hover:from-cyan-400/40 hover:to-fuchsia-500/40"
+              className="rounded-full border border-cyan-400/50 bg-gradient-to-r from-cyan-400/20 to-fuchsia-500/20 px-8 py-4 font-orbitron text-xs font-light uppercase tracking-[0.3em] text-white backdrop-blur-[10px] transition-all duration-300 hover:border-cyan-300/80 hover:from-cyan-400/40 hover:to-fuchsia-500/40 sm:px-10 sm:text-sm"
             >
               Explorar
             </button>

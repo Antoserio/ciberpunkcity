@@ -1630,10 +1630,8 @@ function createArcadeMachine(scene, stand, gt) {
   sideArtTexture.colorSpace = THREE.SRGBColorSpace;
   sideArtTexture.wrapS = THREE.ClampToEdgeWrapping;
   sideArtTexture.wrapT = THREE.ClampToEdgeWrapping;
-  sideArtTexture.center.set(0.5, 0.5);
-  sideArtTexture.rotation = 0;
-  sideArtTexture.offset.set(0.18, 0.02);
-  sideArtTexture.repeat.set(0.64, 0.96);
+  sideArtTexture.offset.set(0, 0);
+  sideArtTexture.repeat.set(1, 1);
 
   [marqueeTexture, bezelTexture].forEach((texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -1641,7 +1639,7 @@ function createArcadeMachine(scene, stand, gt) {
     texture.wrapT = THREE.ClampToEdgeWrapping;
   });
 
-  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.DoubleSide, transparent: true, color: 0xffffff });
+  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.FrontSide, transparent: true, alphaTest: 0.15, color: 0xffffff });
   const marqueeMaterial = new THREE.MeshBasicMaterial({ map: marqueeTexture, toneMapped: false });
   const bezelMaterial = new THREE.MeshBasicMaterial({ map: bezelTexture, toneMapped: false });
 
@@ -1715,6 +1713,17 @@ function createArcadeMachine(scene, stand, gt) {
   leftSideShape.lineTo(-0.78, 0);
 
   const sideGeometry = new THREE.ShapeGeometry(leftSideShape);
+  sideGeometry.computeBoundingBox();
+  const sideBounds = sideGeometry.boundingBox;
+  const sideSizeX = sideBounds.max.x - sideBounds.min.x;
+  const sideSizeY = sideBounds.max.y - sideBounds.min.y;
+  const sideUv = sideGeometry.attributes.uv;
+  for (let i = 0; i < sideUv.count; i++) {
+    const x = sideGeometry.attributes.position.getX(i);
+    const y = sideGeometry.attributes.position.getY(i);
+    sideUv.setXY(i, (x - sideBounds.min.x) / sideSizeX, (y - sideBounds.min.y) / sideSizeY);
+  }
+  sideUv.needsUpdate = true;
   const leftArt = new THREE.Mesh(sideGeometry, sideArtMaterial);
   leftArt.position.set(-0.79, 0, 0);
   leftArt.rotation.y = Math.PI / 2;

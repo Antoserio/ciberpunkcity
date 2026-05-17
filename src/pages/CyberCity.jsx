@@ -7,7 +7,6 @@ import ZonePanel from '../components/city/ZonePanel';
 import AvatarAssistant from '../components/city/AvatarAssistant';
 import SplashScreen from '../components/city/SplashScreen';
 import MiniMap from '../components/city/MiniMap';
-import LandingHero from '../components/city/LandingHero.jsx';
 import StandModal from '../components/city/StandModal';
 import TopNav from '../components/city/TopNav.jsx';
 import WorksScreen from '../components/city/WorksScreen.jsx';
@@ -130,7 +129,8 @@ export default function CyberCity() {
 
 
   if (!started) {
-    return <LandingHero onEnter={() => setStarted(true)} />;
+    setStarted(true);
+    return null;
   }
 
   return (
@@ -160,8 +160,8 @@ export default function CyberCity() {
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 px-4 text-white backdrop-blur-[10px]">
           <div className="w-full max-w-[560px] rounded-[32px] border border-cyan-400/20 bg-[rgba(10,10,30,0.55)] px-6 py-8 text-center shadow-[0_0_80px_rgba(0,255,255,0.08)] backdrop-blur-[24px] sm:px-10 sm:py-10">
             <p className="mb-3 font-rajdhani text-[11px] uppercase tracking-[0.45em] text-cyan-300/75">Bienvenido</p>
-            <h1 className="mx-auto max-w-full bg-gradient-to-r from-cyan-300 via-white to-fuchsia-400 bg-clip-text font-orbitron text-2xl font-light tracking-[0.32em] text-transparent sm:text-4xl sm:tracking-[0.5em]">
-              AGENCY360
+            <h1 className="mx-auto max-w-full bg-gradient-to-r from-cyan-300 via-violet-300 to-fuchsia-400 bg-clip-text font-orbitron text-4xl font-black uppercase leading-none tracking-[0.08em] text-transparent sm:text-6xl lg:text-7xl">
+              NEXUS 360
             </h1>
 
             <p className="mx-auto mt-5 max-w-md font-rajdhani text-base leading-relaxed text-white/72 sm:text-lg">

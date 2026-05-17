@@ -1614,180 +1614,192 @@ function createArcadeMachine(scene, stand, gt) {
   const body = new THREE.Group();
   const textureLoader = new THREE.TextureLoader();
 
-  const metalTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/71d62d772_Metal_St.jpg');
-  const woodTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/43b6be537_Wood_Ply.jpg');
-  const sideArtTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/0504d4224__Burnt_U.jpg');
-  const bezelTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/15ddba126_0119_Ros.jpg');
-  const controlPanelTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/b9b809bbe_asteroid.jpg');
+  const cabinetBlack = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.62, metalness: 0.18 });
+  const cabinetDark = new THREE.MeshStandardMaterial({ color: 0x0e0e12, roughness: 0.54, metalness: 0.14 });
+  const metalPanel = new THREE.MeshStandardMaterial({ color: 0x707886, roughness: 0.38, metalness: 0.82 });
+  const marqueeShell = new THREE.MeshStandardMaterial({ color: 0x111216, roughness: 0.44, metalness: 0.3 });
 
-  [metalTexture, woodTexture, sideArtTexture, bezelTexture, controlPanelTexture].forEach((texture) => {
+  const sideArtTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/1ae469e7c_image.png');
+  const marqueeTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/6fe794235_image.png');
+  const bezelTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/15ddba126_0119_Ros.jpg');
+
+  [sideArtTexture, marqueeTexture, bezelTexture].forEach((texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
   });
 
-  metalTexture.repeat.set(1.2, 2.2);
-  woodTexture.repeat.set(1.2, 1.2);
-  sideArtTexture.repeat.set(1, 1);
-  bezelTexture.repeat.set(1, 1);
-  controlPanelTexture.repeat.set(1, 1);
-
-  const shellMaterial = new THREE.MeshStandardMaterial({ map: woodTexture, color: 0xd8d2a8, roughness: 0.68, metalness: 0.12 });
-  const trimMaterial = new THREE.MeshStandardMaterial({ color: 0xffc533, emissive: 0x6a4600, emissiveIntensity: 0.35, roughness: 0.32, metalness: 0.48 });
-  const panelMaterial = new THREE.MeshStandardMaterial({ map: controlPanelTexture, roughness: 0.38, metalness: 0.22 });
-  const metalMaterial = new THREE.MeshStandardMaterial({ map: metalTexture, color: 0xbfc7d6, roughness: 0.42, metalness: 0.82 });
+  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.DoubleSide, transparent: true });
+  const marqueeMaterial = new THREE.MeshBasicMaterial({ map: marqueeTexture, toneMapped: false });
   const bezelMaterial = new THREE.MeshBasicMaterial({ map: bezelTexture, toneMapped: false });
-  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.DoubleSide });
 
   const base = new THREE.Mesh(
-    new THREE.BoxGeometry(2.2, 2.2, 1.75),
-    [shellMaterial, shellMaterial, metalMaterial, metalMaterial, shellMaterial, shellMaterial]
+    new THREE.BoxGeometry(1.55, 2.4, 1.55),
+    [cabinetBlack, cabinetBlack, cabinetDark, cabinetDark, cabinetBlack, cabinetBlack]
   );
-  base.position.set(0, 1.1, 0);
+  base.position.set(0, 1.2, 0);
   body.add(base);
 
   const lowerFront = new THREE.Mesh(
-    new THREE.BoxGeometry(1.8, 1.1, 0.16),
-    metalMaterial
+    new THREE.BoxGeometry(0.72, 0.88, 0.1),
+    metalPanel
   );
-  lowerFront.position.set(0, 0.85, 0.92);
+  lowerFront.position.set(0, 0.78, 0.83);
   body.add(lowerFront);
 
+  const coinDoorLeft = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.34), new THREE.MeshBasicMaterial({ color: 0x2c3138 }));
+  coinDoorLeft.position.set(-0.11, 0.8, 0.885);
+  body.add(coinDoorLeft);
+  const coinDoorRight = coinDoorLeft.clone();
+  coinDoorRight.position.x = 0.11;
+  body.add(coinDoorRight);
+
   const controlDeck = new THREE.Mesh(
-    new THREE.BoxGeometry(1.95, 0.18, 1.05),
-    panelMaterial
+    new THREE.BoxGeometry(1.3, 0.16, 0.86),
+    cabinetBlack
   );
-  controlDeck.position.set(0, 2.05, 0.52);
-  controlDeck.rotation.x = -0.42;
+  controlDeck.position.set(0, 2.08, 0.42);
+  controlDeck.rotation.x = -0.28;
   body.add(controlDeck);
 
-  const upperCabinet = new THREE.Mesh(
-    new THREE.BoxGeometry(1.8, 1.85, 1.25),
-    [shellMaterial, shellMaterial, metalMaterial, metalMaterial, shellMaterial, shellMaterial]
+  const controlDeckFront = new THREE.Mesh(
+    new THREE.BoxGeometry(1.3, 0.62, 0.08),
+    cabinetBlack
   );
-  upperCabinet.position.set(0, 3.15, -0.1);
-  upperCabinet.rotation.x = 0.2;
-  body.add(upperCabinet);
+  controlDeckFront.position.set(0, 1.82, 0.76);
+  controlDeckFront.rotation.x = 0.42;
+  body.add(controlDeckFront);
 
-  const marquee = new THREE.Mesh(
-    new THREE.BoxGeometry(1.95, 0.48, 0.42),
-    trimMaterial
+  const monitorCabinet = new THREE.Mesh(
+    new THREE.BoxGeometry(1.36, 1.78, 1.12),
+    [cabinetBlack, cabinetBlack, cabinetDark, cabinetDark, cabinetBlack, cabinetBlack]
   );
-  marquee.position.set(0, 4.15, 0.2);
-  body.add(marquee);
+  monitorCabinet.position.set(0, 3.14, -0.02);
+  body.add(monitorCabinet);
+
+  const marqueeTop = new THREE.Mesh(
+    new THREE.BoxGeometry(1.48, 0.44, 0.62),
+    marqueeShell
+  );
+  marqueeTop.position.set(0, 4.35, 0.1);
+  body.add(marqueeTop);
 
   const marqueeFront = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.82, 0.3),
-    new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false })
+    new THREE.PlaneGeometry(1.34, 0.32),
+    marqueeMaterial
   );
-  marqueeFront.position.set(0, 4.15, 0.43);
+  marqueeFront.position.set(0, 4.35, 0.42);
   body.add(marqueeFront);
 
-  const sideWingLeft = new THREE.Mesh(
-    new THREE.BoxGeometry(0.18, 2.7, 1.6),
-    shellMaterial
-  );
-  sideWingLeft.position.set(-1.06, 2.55, -0.02);
-  sideWingLeft.rotation.z = 0.14;
-  body.add(sideWingLeft);
+  const leftSideShape = new THREE.Shape();
+  leftSideShape.moveTo(-0.78, 0);
+  leftSideShape.lineTo(0.78, 0);
+  leftSideShape.lineTo(0.78, 1.4);
+  leftSideShape.lineTo(0.42, 2.1);
+  leftSideShape.lineTo(0.28, 3.12);
+  leftSideShape.lineTo(0.12, 3.95);
+  leftSideShape.lineTo(-0.18, 4.55);
+  leftSideShape.lineTo(-0.78, 4.55);
+  leftSideShape.lineTo(-0.78, 0);
 
-  const sideWingRight = sideWingLeft.clone();
-  sideWingRight.position.x = 1.06;
-  sideWingRight.rotation.z = -0.14;
-  body.add(sideWingRight);
-
-  const leftArt = new THREE.Mesh(new THREE.PlaneGeometry(1.36, 2.38), sideArtMaterial);
-  leftArt.position.set(-1.17, 2.54, -0.02);
+  const sideGeometry = new THREE.ShapeGeometry(leftSideShape);
+  const leftArt = new THREE.Mesh(sideGeometry, sideArtMaterial);
+  leftArt.position.set(-0.79, 0, 0);
   leftArt.rotation.y = Math.PI / 2;
-  leftArt.rotation.z = 0.14;
   body.add(leftArt);
 
-  const rightArt = new THREE.Mesh(new THREE.PlaneGeometry(1.36, 2.38), sideArtMaterial);
-  rightArt.position.set(1.17, 2.54, -0.02);
+  const rightArt = new THREE.Mesh(sideGeometry, sideArtMaterial);
+  rightArt.position.set(0.79, 0, 0);
   rightArt.rotation.y = -Math.PI / 2;
-  rightArt.rotation.z = -0.14;
+  rightArt.scale.x = -1;
   body.add(rightArt);
 
-  const screenFrame = new THREE.Mesh(
-    new THREE.BoxGeometry(1.42, 1.08, 0.08),
-    new THREE.MeshBasicMaterial({ color: 0x05070f })
+  const leftSideBorder = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-0.78, 0, 0),
+      new THREE.Vector3(0.78, 0, 0),
+      new THREE.Vector3(0.78, 1.4, 0),
+      new THREE.Vector3(0.42, 2.1, 0),
+      new THREE.Vector3(0.28, 3.12, 0),
+      new THREE.Vector3(0.12, 3.95, 0),
+      new THREE.Vector3(-0.18, 4.55, 0),
+      new THREE.Vector3(-0.78, 4.55, 0),
+      new THREE.Vector3(-0.78, 0, 0),
+    ]),
+    new THREE.LineBasicMaterial({ color: 0x050505 })
   );
-  screenFrame.position.set(0, 3.1, 0.74);
-  screenFrame.rotation.x = -0.32;
+  leftSideBorder.position.set(-0.795, 0, 0);
+  leftSideBorder.rotation.y = Math.PI / 2;
+  body.add(leftSideBorder);
+
+  const rightSideBorder = leftSideBorder.clone();
+  rightSideBorder.position.x = 0.795;
+  rightSideBorder.rotation.y = -Math.PI / 2;
+  body.add(rightSideBorder);
+
+  const screenFrame = new THREE.Mesh(
+    new THREE.BoxGeometry(1.08, 1.18, 0.08),
+    new THREE.MeshBasicMaterial({ color: 0x06070a })
+  );
+  screenFrame.position.set(0, 3.18, 0.55);
+  screenFrame.rotation.x = -0.22;
   body.add(screenFrame);
 
   const bezel = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.32, 0.98),
+    new THREE.PlaneGeometry(0.98, 1.08),
     bezelMaterial
   );
-  bezel.position.set(0, 3.1, 0.785);
-  bezel.rotation.x = -0.32;
+  bezel.position.set(0, 3.18, 0.595);
+  bezel.rotation.x = -0.22;
   body.add(bezel);
 
   const screen = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.02, 0.72),
-    new THREE.MeshBasicMaterial({ color: 0x101820, side: THREE.DoubleSide })
+    new THREE.PlaneGeometry(0.72, 0.82),
+    new THREE.MeshBasicMaterial({ color: 0x080b10, side: THREE.DoubleSide })
   );
-  screen.position.set(0, 3.1, 0.79);
-  screen.rotation.x = -0.32;
+  screen.position.set(0, 3.18, 0.605);
+  screen.rotation.x = -0.22;
   body.add(screen);
 
-  const buttonColors = [0xff5db1, 0x62f3ff, 0xff9f1c];
+  const buttonColors = [0xff4f9a, 0x52d9ff, 0xffb400, 0xf4f7ff];
   buttonColors.forEach((color, index) => {
     const button = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.1, 0.1, 0.08, 24),
+      new THREE.CylinderGeometry(0.055, 0.055, 0.065, 24),
       new THREE.MeshBasicMaterial({ color })
     );
     button.rotation.x = Math.PI / 2;
-    button.position.set(-0.18 + index * 0.32, 2.12, 1.02);
+    button.position.set(-0.22 + index * 0.16, 2.13, 0.76);
     body.add(button);
   });
 
   const joystickBase = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.06, 0.06, 0.28, 16),
-    new THREE.MeshBasicMaterial({ color: 0xffffff })
+    new THREE.CylinderGeometry(0.035, 0.035, 0.22, 16),
+    new THREE.MeshBasicMaterial({ color: 0xd9dbe2 })
   );
-  joystickBase.position.set(-0.58, 2.18, 0.94);
+  joystickBase.position.set(-0.45, 2.16, 0.68);
   body.add(joystickBase);
 
   const joystickBall = new THREE.Mesh(
-    new THREE.SphereGeometry(0.1, 18, 18),
+    new THREE.SphereGeometry(0.075, 16, 16),
     new THREE.MeshBasicMaterial({ color: 0xff3b3b })
   );
-  joystickBall.position.set(-0.58, 2.33, 0.98);
+  joystickBall.position.set(-0.45, 2.29, 0.72);
   body.add(joystickBall);
 
   const marqueeGlow = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.8, 0.34),
-    new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.28, side: THREE.DoubleSide })
+    new THREE.PlaneGeometry(1.4, 0.36),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, side: THREE.DoubleSide })
   );
-  marqueeGlow.position.set(0, 4.15, 0.46);
+  marqueeGlow.position.set(0, 4.35, 0.44);
   body.add(marqueeGlow);
-
-  const frameOutline = new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.BoxGeometry(2.28, 4.6, 1.9)),
-    new THREE.LineBasicMaterial({ color: 0x00e5ff })
-  );
-  frameOutline.position.set(0, 2.3, 0.04);
-  body.add(frameOutline);
-
-  const sideAccentLeft = new THREE.Mesh(
-    new THREE.BoxGeometry(0.06, 4.2, 1.7),
-    new THREE.MeshBasicMaterial({ color: 0xff4fd8 })
-  );
-  sideAccentLeft.position.set(-1.16, 2.2, 0.02);
-  body.add(sideAccentLeft);
-
-  const sideAccentRight = sideAccentLeft.clone();
-  sideAccentRight.position.x = 1.16;
-  body.add(sideAccentRight);
 
   body.position.set(x, 0, z);
   body.rotation.y = Math.PI;
+  body.scale.setScalar(1.08);
 
   const glowKey = colorToGlowKey(stand.colorInt || 0x00ffff);
-  addGlowSprite(scene, x, 3.7, z + 0.8, gt[glowKey], 6.4);
-  addGlowSprite(scene, x, 2.3, z + 0.9, gt[glowKey], 4.3);
+  addGlowSprite(scene, x, 3.7, z + 0.8, gt[glowKey], 5.2);
+  addGlowSprite(scene, x, 2.3, z + 0.9, gt[glowKey], 3.4);
 
   scene.add(body);
 }

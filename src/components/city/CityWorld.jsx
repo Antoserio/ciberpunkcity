@@ -1386,7 +1386,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     new THREE.MeshBasicMaterial({ color: 0x04040a })
   );
   carouselFrame.position.set(0, 4.25, 28);
-  carouselFrame.rotation.y = Math.PI;
+  carouselFrame.rotation.y = 0;
   scene.add(carouselFrame);
 
   const carouselScreen = new THREE.Mesh(
@@ -1721,7 +1721,6 @@ function createArcadeMachine(scene, stand, gt) {
   const rightArt = new THREE.Mesh(sideGeometry, sideArtMaterial);
   rightArt.position.set(0.79, 0, 0);
   rightArt.rotation.y = -Math.PI / 2;
-  rightArt.scale.x = -1;
   body.add(rightArt);
 
   const leftSideBorder = new THREE.Line(
@@ -1804,7 +1803,7 @@ function createArcadeMachine(scene, stand, gt) {
   body.add(marqueeGlow);
 
   body.position.set(x, 0, z);
-  body.rotation.y = Math.PI - 0.18;
+  body.rotation.y = -2.3;
   body.scale.setScalar(1.08);
 
   const glowKey = colorToGlowKey(stand.colorInt || 0x00ffff);

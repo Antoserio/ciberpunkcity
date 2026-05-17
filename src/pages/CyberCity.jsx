@@ -115,7 +115,7 @@ export default function CyberCity() {
       setWorksTransitionToken((value) => value + 1);
       // Mover cámara delante del carousel
       setCameraTarget({
-        position: { x: 0, y: 4.5, z: 11 },
+        position: { x: 0, y: 4.5, z: 15 },
         rotation: Math.PI
       });
     } else if (view === 'explore') {
@@ -257,7 +257,7 @@ export default function CyberCity() {
       </button>
 
       <AboutOverlay open={activeView === 'about'} onClose={() => setActiveView('explore')} />
-      {activeView === 'works' && <WorksScreen onChangeActiveWork={setActiveWork} />}
+
       <VikyModal open={vikyOpen} onClose={() => setVikyOpen(false)} />
       <ArcadeGamesModal open={arcadeOpen} onClose={() => setArcadeOpen(false)} />
       <AvatarAssistant />

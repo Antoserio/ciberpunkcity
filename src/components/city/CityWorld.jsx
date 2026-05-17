@@ -1618,10 +1618,10 @@ function createArcadeMachine(scene, stand, gt) {
   const body = new THREE.Group();
   const textureLoader = new THREE.TextureLoader();
 
-  const cabinetBlack = new THREE.MeshStandardMaterial({ color: 0xf1f2f4, roughness: 0.72, metalness: 0.08 });
-  const cabinetDark = new THREE.MeshStandardMaterial({ color: 0xd7dbe2, roughness: 0.68, metalness: 0.1 });
-  const metalPanel = new THREE.MeshStandardMaterial({ color: 0x707886, roughness: 0.38, metalness: 0.82 });
-  const marqueeShell = new THREE.MeshStandardMaterial({ color: 0x111216, roughness: 0.44, metalness: 0.3 });
+  const cabinetBlack = new THREE.MeshStandardMaterial({ color: 0x10131c, roughness: 0.5, metalness: 0.35 });
+  const cabinetDark = new THREE.MeshStandardMaterial({ color: 0x1a2340, roughness: 0.42, metalness: 0.28 });
+  const metalPanel = new THREE.MeshStandardMaterial({ color: 0x39445f, roughness: 0.32, metalness: 0.85 });
+  const marqueeShell = new THREE.MeshStandardMaterial({ color: 0x0a0d14, roughness: 0.34, metalness: 0.38 });
 
   const marqueeTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/6fe794235_image.png');
   const bezelTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/15ddba126_0119_Ros.jpg');
@@ -1632,7 +1632,7 @@ function createArcadeMachine(scene, stand, gt) {
     texture.wrapT = THREE.ClampToEdgeWrapping;
   });
 
-  const sideArtMaterial = new THREE.MeshBasicMaterial({ color: 0xe8ebf0, side: THREE.FrontSide });
+  const sideArtMaterial = new THREE.MeshStandardMaterial({ color: 0x1f3f96, emissive: 0x0b1b45, emissiveIntensity: 0.45, roughness: 0.38, metalness: 0.22, side: THREE.FrontSide });
   const marqueeMaterial = new THREE.MeshBasicMaterial({ map: marqueeTexture, toneMapped: false });
   const bezelMaterial = new THREE.MeshBasicMaterial({ map: bezelTexture, toneMapped: false });
 
@@ -1801,7 +1801,7 @@ function createArcadeMachine(scene, stand, gt) {
 
   const marqueeGlow = new THREE.Mesh(
     new THREE.PlaneGeometry(1.4, 0.36),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, side: THREE.DoubleSide })
+    new THREE.MeshBasicMaterial({ color: 0x69f0ff, transparent: true, opacity: 0.18, side: THREE.DoubleSide })
   );
   marqueeGlow.position.set(0, 4.35, 0.44);
   body.add(marqueeGlow);
@@ -1811,8 +1811,8 @@ function createArcadeMachine(scene, stand, gt) {
   body.scale.setScalar(1.08);
 
   const glowKey = colorToGlowKey(stand.colorInt || 0x00ffff);
-  addGlowSprite(scene, x, 3.7, z + 0.8, gt[glowKey], 5.2);
-  addGlowSprite(scene, x, 2.3, z + 0.9, gt[glowKey], 3.4);
+  addGlowSprite(scene, x, 3.7, z + 0.8, gt[glowKey], 5.8);
+  addGlowSprite(scene, x, 2.3, z + 0.9, gt[glowKey], 3.8);
 
   scene.add(body);
 }

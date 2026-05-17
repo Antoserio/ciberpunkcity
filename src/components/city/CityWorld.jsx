@@ -1386,7 +1386,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     new THREE.MeshBasicMaterial({ color: 0x04040a })
   );
   carouselFrame.position.set(0, 4.25, 28);
-  carouselFrame.rotation.y = 0;
+  carouselFrame.rotation.y = Math.PI;
   scene.add(carouselFrame);
 
   const carouselScreen = new THREE.Mesh(
@@ -1394,7 +1394,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     new THREE.MeshBasicMaterial({ map: worksCarousel.texture, toneMapped: false, side: THREE.DoubleSide })
   );
   carouselScreen.position.set(0, 4.25, 27.67);
-  carouselScreen.rotation.y = 0;
+  carouselScreen.rotation.y = Math.PI;
   carouselScreen.userData.onClick = (event) => {
     const point = event?.point;
     if (!point) return;
@@ -1409,7 +1409,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.1, side: THREE.DoubleSide })
   );
   carouselGlow.position.set(0, 4.25, 27.42);
-  carouselGlow.rotation.y = 0;
+  carouselGlow.rotation.y = Math.PI;
   scene.add(carouselGlow);
 
   ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky));
@@ -1630,8 +1630,8 @@ function createArcadeMachine(scene, stand, gt) {
   sideArtTexture.colorSpace = THREE.SRGBColorSpace;
   sideArtTexture.wrapS = THREE.ClampToEdgeWrapping;
   sideArtTexture.wrapT = THREE.ClampToEdgeWrapping;
-  sideArtTexture.offset.set(0.28, 0.02);
-  sideArtTexture.repeat.set(0.46, 0.96);
+  sideArtTexture.offset.set(0, 0);
+  sideArtTexture.repeat.set(1, 1);
 
   [marqueeTexture, bezelTexture].forEach((texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;

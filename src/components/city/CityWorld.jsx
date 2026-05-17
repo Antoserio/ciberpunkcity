@@ -1612,21 +1612,43 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
 function createArcadeMachine(scene, stand, gt) {
   const [x, , z] = stand.position;
   const body = new THREE.Group();
+  const textureLoader = new THREE.TextureLoader();
 
-  const shellMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.34, metalness: 0.58 });
-  const trimMaterial = new THREE.MeshBasicMaterial({ color: 0xffc533 });
-  const panelMaterial = new THREE.MeshStandardMaterial({ color: 0x171717, roughness: 0.22, metalness: 0.42 });
+  const metalTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/71d62d772_Metal_St.jpg');
+  const woodTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/43b6be537_Wood_Ply.jpg');
+  const sideArtTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/0504d4224__Burnt_U.jpg');
+  const bezelTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/15ddba126_0119_Ros.jpg');
+  const controlPanelTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/b9b809bbe_asteroid.jpg');
+
+  [metalTexture, woodTexture, sideArtTexture, bezelTexture, controlPanelTexture].forEach((texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+  });
+
+  metalTexture.repeat.set(1.2, 2.2);
+  woodTexture.repeat.set(1.2, 1.2);
+  sideArtTexture.repeat.set(1, 1);
+  bezelTexture.repeat.set(1, 1);
+  controlPanelTexture.repeat.set(1, 1);
+
+  const shellMaterial = new THREE.MeshStandardMaterial({ map: woodTexture, color: 0xd8d2a8, roughness: 0.68, metalness: 0.12 });
+  const trimMaterial = new THREE.MeshStandardMaterial({ color: 0xffc533, emissive: 0x6a4600, emissiveIntensity: 0.35, roughness: 0.32, metalness: 0.48 });
+  const panelMaterial = new THREE.MeshStandardMaterial({ map: controlPanelTexture, roughness: 0.38, metalness: 0.22 });
+  const metalMaterial = new THREE.MeshStandardMaterial({ map: metalTexture, color: 0xbfc7d6, roughness: 0.42, metalness: 0.82 });
+  const bezelMaterial = new THREE.MeshBasicMaterial({ map: bezelTexture, toneMapped: false });
+  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.DoubleSide });
 
   const base = new THREE.Mesh(
     new THREE.BoxGeometry(2.2, 2.2, 1.75),
-    shellMaterial
+    [shellMaterial, shellMaterial, metalMaterial, metalMaterial, shellMaterial, shellMaterial]
   );
   base.position.set(0, 1.1, 0);
   body.add(base);
 
   const lowerFront = new THREE.Mesh(
     new THREE.BoxGeometry(1.8, 1.1, 0.16),
-    new THREE.MeshBasicMaterial({ color: 0x1a1a1a })
+    metalMaterial
   );
   lowerFront.position.set(0, 0.85, 0.92);
   body.add(lowerFront);
@@ -1641,7 +1663,7 @@ function createArcadeMachine(scene, stand, gt) {
 
   const upperCabinet = new THREE.Mesh(
     new THREE.BoxGeometry(1.8, 1.85, 1.25),
-    shellMaterial
+    [shellMaterial, shellMaterial, metalMaterial, metalMaterial, shellMaterial, shellMaterial]
   );
   upperCabinet.position.set(0, 3.15, -0.1);
   upperCabinet.rotation.x = 0.2;
@@ -1653,6 +1675,13 @@ function createArcadeMachine(scene, stand, gt) {
   );
   marquee.position.set(0, 4.15, 0.2);
   body.add(marquee);
+
+  const marqueeFront = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.82, 0.3),
+    new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false })
+  );
+  marqueeFront.position.set(0, 4.15, 0.43);
+  body.add(marqueeFront);
 
   const sideWingLeft = new THREE.Mesh(
     new THREE.BoxGeometry(0.18, 2.7, 1.6),
@@ -1667,6 +1696,18 @@ function createArcadeMachine(scene, stand, gt) {
   sideWingRight.rotation.z = -0.14;
   body.add(sideWingRight);
 
+  const leftArt = new THREE.Mesh(new THREE.PlaneGeometry(1.36, 2.38), sideArtMaterial);
+  leftArt.position.set(-1.17, 2.54, -0.02);
+  leftArt.rotation.y = Math.PI / 2;
+  leftArt.rotation.z = 0.14;
+  body.add(leftArt);
+
+  const rightArt = new THREE.Mesh(new THREE.PlaneGeometry(1.36, 2.38), sideArtMaterial);
+  rightArt.position.set(1.17, 2.54, -0.02);
+  rightArt.rotation.y = -Math.PI / 2;
+  rightArt.rotation.z = -0.14;
+  body.add(rightArt);
+
   const screenFrame = new THREE.Mesh(
     new THREE.BoxGeometry(1.42, 1.08, 0.08),
     new THREE.MeshBasicMaterial({ color: 0x05070f })
@@ -1675,8 +1716,16 @@ function createArcadeMachine(scene, stand, gt) {
   screenFrame.rotation.x = -0.32;
   body.add(screenFrame);
 
+  const bezel = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.32, 0.98),
+    bezelMaterial
+  );
+  bezel.position.set(0, 3.1, 0.785);
+  bezel.rotation.x = -0.32;
+  body.add(bezel);
+
   const screen = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.18, 0.82),
+    new THREE.PlaneGeometry(1.02, 0.72),
     new THREE.MeshBasicMaterial({ color: 0x101820, side: THREE.DoubleSide })
   );
   screen.position.set(0, 3.1, 0.79);
@@ -1712,7 +1761,7 @@ function createArcadeMachine(scene, stand, gt) {
     new THREE.PlaneGeometry(1.8, 0.34),
     new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.28, side: THREE.DoubleSide })
   );
-  marqueeGlow.position.set(0, 4.15, 0.43);
+  marqueeGlow.position.set(0, 4.15, 0.46);
   body.add(marqueeGlow);
 
   const frameOutline = new THREE.LineSegments(

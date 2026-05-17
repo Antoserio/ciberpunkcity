@@ -1409,6 +1409,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   scene.add(carouselGlow);
 
   ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky));
+  STANDS.filter((stand) => stand.type === 'arcade').forEach((stand) => createArcadeMachine(scene, stand, gt));
 
   const midPositions = [
     [-18,-30],[18,-30],[-30,18],[30,18],
@@ -1606,6 +1607,71 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
   });
 
   setTimeout(() => vikyVideo.play().catch(() => {}), 200);
+}
+
+function createArcadeMachine(scene, stand, gt) {
+  const [x, , z] = stand.position;
+  const body = new THREE.Group();
+
+  const base = new THREE.Mesh(
+    new THREE.BoxGeometry(2.8, 0.8, 2.4),
+    new THREE.MeshStandardMaterial({ color: 0x090d18, roughness: 0.35, metalness: 0.55 })
+  );
+  base.position.set(x, 0.4, z);
+  body.add(base);
+
+  const cabinet = new THREE.Mesh(
+    new THREE.BoxGeometry(2.4, 3.2, 1.8),
+    new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.28, metalness: 0.62 })
+  );
+  cabinet.position.set(x, 2, z + 0.1);
+  body.add(cabinet);
+
+  const marquee = new THREE.Mesh(
+    new THREE.BoxGeometry(2.45, 0.55, 0.35),
+    new THREE.MeshBasicMaterial({ color: 0x00e5ff })
+  );
+  marquee.position.set(x, 3.65, z + 0.78);
+  body.add(marquee);
+
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.45, 1.05),
+    new THREE.MeshBasicMaterial({ color: 0x05070f, side: THREE.DoubleSide })
+  );
+  screen.position.set(x, 2.3, z + 1.01);
+  body.add(screen);
+
+  const controls = new THREE.Mesh(
+    new THREE.BoxGeometry(1.8, 0.18, 0.9),
+    new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.24, metalness: 0.45 })
+  );
+  controls.position.set(x, 1.25, z + 0.7);
+  controls.rotation.x = -0.45;
+  body.add(controls);
+
+  const buttonColors = [0xff4fd8, 0x70f0ff, 0xb47dff];
+  buttonColors.forEach((color, index) => {
+    const button = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.09, 0.09, 0.08, 24),
+      new THREE.MeshBasicMaterial({ color })
+    );
+    button.rotation.x = Math.PI / 2;
+    button.position.set(x - 0.35 + index * 0.35, 1.3, z + 1.02);
+    body.add(button);
+  });
+
+  const joystick = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.03, 0.03, 0.24, 12),
+    new THREE.MeshBasicMaterial({ color: 0xffffff })
+  );
+  joystick.position.set(x - 0.62, 1.36, z + 0.95);
+  body.add(joystick);
+
+  const glowKey = colorToGlowKey(stand.colorInt || 0x00ffff);
+  addGlowSprite(scene, x, 3.2, z + 0.9, gt[glowKey], 5.5);
+  addGlowSprite(scene, x, 1.8, z + 0.8, gt[glowKey], 3.8);
+
+  scene.add(body);
 }
 
 function createMidBuilding(scene, x, z, w, h, nc, flicker) {

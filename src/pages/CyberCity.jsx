@@ -12,8 +12,8 @@ import TopNav from '../components/city/TopNav.jsx';
 import WorksScreen from '../components/city/WorksScreen.jsx';
 import AboutOverlay from '../components/city/AboutOverlay.jsx';
 import VikyModal from '../components/city/VikyModal.jsx';
-import { STANDS } from '../components/city/standsData';
-import useAmbientAudio from '../components/city/useAmbientAudio';
+import ArcadeGamesModal from '../components/city/ArcadeGamesModal.jsx';
+import { STANDS } from '../components/city/standsData';import useAmbientAudio from '../components/city/useAmbientAudio';
 
 export default function CyberCity() {
   const [started, setStarted] = useState(false);
@@ -30,6 +30,7 @@ export default function CyberCity() {
   const [activeView, setActiveView] = useState('explore');
   const [activeWork, setActiveWork] = useState(() => STANDS.find((stand) => stand.type === 'video' || stand.type === 'showcase') || null);
   const [vikyOpen, setVikyOpen] = useState(false);
+  const [arcadeOpen, setArcadeOpen] = useState(false);
   const [worksTransitionToken, setWorksTransitionToken] = useState(0);
   const [cameraTarget, setCameraTarget] = useState({ 
     position: { x: 15, y: 1.7, z: 15 }, 
@@ -78,8 +79,11 @@ export default function CyberCity() {
   }, []);
 
   const handleActivateStand = useCallback((stand) => {
-    // Exit pointer lock so modal can receive input
     if (document.pointerLockElement) document.exitPointerLock();
+    if (stand?.type === 'arcade') {
+      setArcadeOpen(true);
+      return;
+    }
     setOpenStand(stand);
   }, []);
 
@@ -143,7 +147,7 @@ export default function CyberCity() {
           onLeaveStand={() => setNearStand(null)}
           onActivateStand={handleActivateStand}
           onOpenViky={() => setVikyOpen(true)}
-          modalOpen={!!openStand || vikyOpen || showWelcomeOverlay}
+          modalOpen={!!openStand || vikyOpen || arcadeOpen || showWelcomeOverlay}
           plazaVideoUrl=""
           isMobile={isMobile}
           robotModelUrl={robotModelUrl}
@@ -253,6 +257,7 @@ export default function CyberCity() {
 
       <AboutOverlay open={activeView === 'about'} onClose={() => setActiveView('explore')} />
       <VikyModal open={vikyOpen} onClose={() => setVikyOpen(false)} />
+      <ArcadeGamesModal open={arcadeOpen} onClose={() => setArcadeOpen(false)} />
       <AvatarAssistant />
     </div>
   );

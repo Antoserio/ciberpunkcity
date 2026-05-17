@@ -70,4 +70,17 @@ export const STANDS = [
       { name: 'SHOWCASE XR', cat: 'Experiencia', color: '#7c3aed', stats: ['Ideal para demos', 'Escena inmersiva'], icon: '✨' },
     ],
   },
+  {
+    id: 'arcade_nexus',
+    key: 'P',
+    position: [-8, 0, 24],
+    color: '#00ffff',
+    colorInt: 0x00ffff,
+    title: 'NEXUS PLAY',
+    subtitle: 'Arcade · Snake · Pong · Breakout',
+    description: 'Una máquina arcade dentro de la ciudad. Acércate, pulsa Play y entra en una vista frontal para jugar tres clásicos.',
+    tags: ['ARCADE', 'SNAKE', 'PONG', 'BREAKOUT'],
+    icon: '🕹️',
+    type: 'arcade',
+  },
 ];

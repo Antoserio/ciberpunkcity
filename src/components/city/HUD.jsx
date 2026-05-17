@@ -88,6 +88,23 @@ export default function HUD({ isLocked, activeZone, nearStand, onActivateStand, 
       )}
 
 
+      {nearStand?.type === 'arcade' && (
+        <motion.div
+          key={nearStand.id}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 16 }}
+          className="fixed bottom-16 sm:bottom-24 left-1/2 z-30 -translate-x-1/2 max-w-[92vw]"
+        >
+          <button
+            onClick={() => onActivateStand?.(nearStand)}
+            className="rounded-full border border-cyan-300/45 bg-cyan-300/12 px-6 py-3 font-orbitron text-xs uppercase tracking-[0.3em] text-white shadow-[0_0_24px_rgba(0,255,255,0.18)] backdrop-blur-md transition hover:border-cyan-200 hover:bg-cyan-300/18"
+          >
+            PLAY
+          </button>
+        </motion.div>
+      )}
+
       {/* Zone proximity hint */}
       {activeZone && (
         <motion.div

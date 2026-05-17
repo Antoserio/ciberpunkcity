@@ -816,7 +816,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const handleKeyDown = (e) => {
       if (modalOpenRef.current) return;
 
-      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 4.5, 26)) < 16;
+      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 4.2, 35)) < 18;
       if (isNearCarousel && e.code === 'ArrowLeft') {
         e.preventDefault();
         worksCarousel.prev();
@@ -1012,7 +1012,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         }
       }
 
-      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 4.5, 26)) < 16;
+      const isNearCarousel = camera.position.distanceTo(new THREE.Vector3(0, 4.2, 35)) < 18;
       worksCarousel.setProximity(isNearCarousel);
       worksCarousel.update(frameCount * 0.016);
 
@@ -1378,18 +1378,18 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   const carouselRotation = Math.PI;
 
   const carouselFrame = new THREE.Mesh(
-    new THREE.BoxGeometry(14.8, 9.2, 0.55),
+    new THREE.BoxGeometry(13.2, 7.8, 0.55),
     new THREE.MeshBasicMaterial({ color: 0x04040a })
   );
-  carouselFrame.position.set(0, 4.5, 26);
+  carouselFrame.position.set(0, 4.2, 35);
   carouselFrame.rotation.y = carouselRotation;
   scene.add(carouselFrame);
 
   const carouselScreen = new THREE.Mesh(
-    new THREE.PlaneGeometry(14, 8.4),
+    new THREE.PlaneGeometry(12.4, 7),
     new THREE.MeshBasicMaterial({ map: worksCarousel.texture, toneMapped: false, side: THREE.DoubleSide })
   );
-  carouselScreen.position.set(0, 4.5, 25.7);
+  carouselScreen.position.set(0, 4.2, 34.7);
   carouselScreen.rotation.y = carouselRotation;
   carouselScreen.userData.onClick = (event) => {
     const point = event?.point;
@@ -1401,10 +1401,10 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   scene.add(carouselScreen);
 
   const carouselGlow = new THREE.Mesh(
-    new THREE.PlaneGeometry(15.2, 9),
+    new THREE.PlaneGeometry(13.8, 7.6),
     new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
   );
-  carouselGlow.position.set(0, 4.5, 25.5);
+  carouselGlow.position.set(0, 4.2, 34.5);
   carouselGlow.rotation.y = carouselRotation;
   scene.add(carouselGlow);
 
@@ -1613,63 +1613,113 @@ function createArcadeMachine(scene, stand, gt) {
   const [x, , z] = stand.position;
   const body = new THREE.Group();
 
+  const shellMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.34, metalness: 0.58 });
+  const trimMaterial = new THREE.MeshBasicMaterial({ color: 0xffc533 });
+  const panelMaterial = new THREE.MeshStandardMaterial({ color: 0x171717, roughness: 0.22, metalness: 0.42 });
+
   const base = new THREE.Mesh(
-    new THREE.BoxGeometry(2.8, 0.8, 2.4),
-    new THREE.MeshStandardMaterial({ color: 0x090d18, roughness: 0.35, metalness: 0.55 })
+    new THREE.BoxGeometry(2.2, 2.2, 1.75),
+    shellMaterial
   );
-  base.position.set(x, 0.4, z);
+  base.position.set(0, 1.1, 0);
   body.add(base);
 
-  const cabinet = new THREE.Mesh(
-    new THREE.BoxGeometry(2.4, 3.2, 1.8),
-    new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.28, metalness: 0.62 })
+  const lowerFront = new THREE.Mesh(
+    new THREE.BoxGeometry(1.8, 1.1, 0.16),
+    new THREE.MeshBasicMaterial({ color: 0x1a1a1a })
   );
-  cabinet.position.set(x, 2, z + 0.1);
-  body.add(cabinet);
+  lowerFront.position.set(0, 0.85, 0.92);
+  body.add(lowerFront);
+
+  const controlDeck = new THREE.Mesh(
+    new THREE.BoxGeometry(1.95, 0.18, 1.05),
+    panelMaterial
+  );
+  controlDeck.position.set(0, 2.05, 0.52);
+  controlDeck.rotation.x = -0.42;
+  body.add(controlDeck);
+
+  const upperCabinet = new THREE.Mesh(
+    new THREE.BoxGeometry(1.8, 1.85, 1.25),
+    shellMaterial
+  );
+  upperCabinet.position.set(0, 3.15, -0.1);
+  upperCabinet.rotation.x = 0.2;
+  body.add(upperCabinet);
 
   const marquee = new THREE.Mesh(
-    new THREE.BoxGeometry(2.45, 0.55, 0.35),
-    new THREE.MeshBasicMaterial({ color: 0x00e5ff })
+    new THREE.BoxGeometry(1.95, 0.48, 0.42),
+    trimMaterial
   );
-  marquee.position.set(x, 3.65, z + 0.78);
+  marquee.position.set(0, 4.15, 0.2);
   body.add(marquee);
 
-  const screen = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.45, 1.05),
-    new THREE.MeshBasicMaterial({ color: 0x05070f, side: THREE.DoubleSide })
+  const sideWingLeft = new THREE.Mesh(
+    new THREE.BoxGeometry(0.18, 2.7, 1.6),
+    shellMaterial
   );
-  screen.position.set(x, 2.3, z + 1.01);
+  sideWingLeft.position.set(-1.06, 2.55, -0.02);
+  sideWingLeft.rotation.z = 0.14;
+  body.add(sideWingLeft);
+
+  const sideWingRight = sideWingLeft.clone();
+  sideWingRight.position.x = 1.06;
+  sideWingRight.rotation.z = -0.14;
+  body.add(sideWingRight);
+
+  const screenFrame = new THREE.Mesh(
+    new THREE.BoxGeometry(1.42, 1.08, 0.08),
+    new THREE.MeshBasicMaterial({ color: 0x05070f })
+  );
+  screenFrame.position.set(0, 3.1, 0.74);
+  screenFrame.rotation.x = -0.32;
+  body.add(screenFrame);
+
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.18, 0.82),
+    new THREE.MeshBasicMaterial({ color: 0x101820, side: THREE.DoubleSide })
+  );
+  screen.position.set(0, 3.1, 0.79);
+  screen.rotation.x = -0.32;
   body.add(screen);
 
-  const controls = new THREE.Mesh(
-    new THREE.BoxGeometry(1.8, 0.18, 0.9),
-    new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.24, metalness: 0.45 })
-  );
-  controls.position.set(x, 1.25, z + 0.7);
-  controls.rotation.x = -0.45;
-  body.add(controls);
-
-  const buttonColors = [0xff4fd8, 0x70f0ff, 0xb47dff];
+  const buttonColors = [0xff5db1, 0x62f3ff, 0xff9f1c];
   buttonColors.forEach((color, index) => {
     const button = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.09, 0.09, 0.08, 24),
+      new THREE.CylinderGeometry(0.1, 0.1, 0.08, 24),
       new THREE.MeshBasicMaterial({ color })
     );
     button.rotation.x = Math.PI / 2;
-    button.position.set(x - 0.35 + index * 0.35, 1.3, z + 1.02);
+    button.position.set(-0.18 + index * 0.32, 2.12, 1.02);
     body.add(button);
   });
 
-  const joystick = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.03, 0.03, 0.24, 12),
+  const joystickBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 0.28, 16),
     new THREE.MeshBasicMaterial({ color: 0xffffff })
   );
-  joystick.position.set(x - 0.62, 1.36, z + 0.95);
-  body.add(joystick);
+  joystickBase.position.set(-0.58, 2.18, 0.94);
+  body.add(joystickBase);
+
+  const joystickBall = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1, 18, 18),
+    new THREE.MeshBasicMaterial({ color: 0xff3b3b })
+  );
+  joystickBall.position.set(-0.58, 2.33, 0.98);
+  body.add(joystickBall);
+
+  const marqueeGlow = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.8, 0.34),
+    new THREE.MeshBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.28, side: THREE.DoubleSide })
+  );
+  marqueeGlow.position.set(0, 4.15, 0.43);
+  body.add(marqueeGlow);
+
+  body.position.set(x, 0, z);
 
   const glowKey = colorToGlowKey(stand.colorInt || 0x00ffff);
-  addGlowSprite(scene, x, 3.2, z + 0.9, gt[glowKey], 5.5);
-  addGlowSprite(scene, x, 1.8, z + 0.8, gt[glowKey], 3.8);
+  addGlowSprite(scene, x, 3.7, z + 0.8, gt[glowKey], 6.4);
+  addGlowSprite(scene, x, 2.3, z + 0.9, gt[glowKey], 4.3);
 
   scene.add(body);
 }

@@ -8,7 +8,6 @@ import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 import useCameraTargetTransition from './useCameraTargetTransition';
-import { createEditableCamera, getTheatreSheet } from './theatreConfig.jsx';
 import { createSimpleBuildingLOD, getPerformanceConfig } from './cityPerformance';
 
 const CITY_VIDEO_SOURCES = [
@@ -777,8 +776,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       });
     }
 
-    const theatreSheet = getTheatreSheet();
-    createEditableCamera(theatreSheet, camera);
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();

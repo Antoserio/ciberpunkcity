@@ -2,19 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { AnimatePresence } from 'framer-motion';
 import CityWorld from '../components/city/CityWorld.jsx';
+import CinematicLoader from '../components/city/CinematicLoader.jsx';
 import HUD from '../components/city/HUD';
 import ZonePanel from '../components/city/ZonePanel';
 import AvatarAssistant from '../components/city/AvatarAssistant';
-import SplashScreen from '../components/city/SplashScreen';
 import MiniMap from '../components/city/MiniMap';
 import StandModal from '../components/city/StandModal';
 import TopNav from '../components/city/TopNav.jsx';
-import WorksScreen from '../components/city/WorksScreen.jsx';
 import AboutOverlay from '../components/city/AboutOverlay.jsx';
 import VikyModal from '../components/city/VikyModal.jsx';
 import ArcadeGamesModal from '../components/city/ArcadeGamesModal.jsx';
 import { STANDS } from '../components/city/standsData';
 import useAmbientAudio from '../components/city/useAmbientAudio';
+import useCityAssetLoader from '../components/city/useCityAssetLoader';
 
 export default function CyberCity() {
   const [started, setStarted] = useState(false);
@@ -39,6 +39,7 @@ export default function CyberCity() {
   });
 
   useAmbientAudio(audioEnabled);
+  const { progress, status, ready } = useCityAssetLoader(true);
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -148,7 +149,7 @@ export default function CyberCity() {
           onLeaveStand={() => setNearStand(null)}
           onActivateStand={handleActivateStand}
           onOpenViky={() => setVikyOpen(true)}
-          modalOpen={!!openStand || vikyOpen || arcadeOpen || showWelcomeOverlay}
+          modalOpen={!!openStand || vikyOpen || arcadeOpen || showWelcomeOverlay || !ready}
           plazaVideoUrl=""
           isMobile={isMobile}
           robotModelUrl={robotModelUrl}
@@ -161,7 +162,9 @@ export default function CyberCity() {
 
       <TopNav activeView={activeView} onChangeView={handleChangeView} />
 
-      {showWelcomeOverlay && (
+      <CinematicLoader visible={!ready} progress={progress} status={status} ready={ready} />
+
+      {showWelcomeOverlay && ready && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 px-4 text-white backdrop-blur-[10px]">
           <div className="w-full max-w-[560px] rounded-[32px] border border-cyan-400/20 bg-[rgba(10,10,30,0.55)] px-6 py-8 text-center shadow-[0_0_80px_rgba(0,255,255,0.08)] backdrop-blur-[24px] sm:px-10 sm:py-10">
             <p className="mb-3 font-rajdhani text-[11px] uppercase tracking-[0.45em] text-cyan-300/75">Bienvenido</p>

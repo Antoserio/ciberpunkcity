@@ -8,6 +8,8 @@ import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 import useCameraTargetTransition from './useCameraTargetTransition';
+import { createEditableCamera, getTheatreSheet } from './theatreConfig.js';
+import { createSimpleBuildingLOD, getPerformanceConfig } from './cityPerformance.js';
 
 const CITY_VIDEO_SOURCES = [
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
@@ -604,13 +606,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     }
 
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const performanceConfig = getPerformanceConfig(isMobile);
     const handleJoystickTouchMove = () => {};
     const handleJoystickTouchEnd = () => {};
     const joystickContainer = null;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 1.25));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, performanceConfig.pixelRatio));
     renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 0.6;
@@ -626,7 +629,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     composer.setSize(W, H);
     const renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), isMobile ? 0.45 : 0.6, 0.45, 0.75);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), performanceConfig.bloomStrength, 0.45, 0.75);
     composer.addPass(bloomPass);
 
     scene.add(new THREE.AmbientLight(0x3a2a68, 3.2));
@@ -686,7 +689,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       cityVideos.push({ video: plazaVideoElement, texture: plazaVideoTexture, group: plazaVideoScreen?.group || { position: new THREE.Vector3(-6.2, 4.9, -11.15), visible: true } });
     }
 
-    CITY_VIDEO_SCREEN_CONFIGS.slice(0, isMobile ? 2 : 4).forEach((config) => {
+    CITY_VIDEO_SCREEN_CONFIGS.slice(0, performanceConfig.videoScreens).forEach((config) => {
       const video = createCityVideoElement(CITY_VIDEO_SOURCES[config.sourceIndex]);
       const texture = new THREE.VideoTexture(video);
       texture.colorSpace = THREE.SRGBColorSpace;
@@ -773,6 +776,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         });
       });
     }
+
+    const theatreSheet = getTheatreSheet();
+    const theatreCamera = createEditableCamera(theatreSheet, camera);
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -1117,7 +1123,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
       cameraRef.current = null;
     };
-  }, [plazaVideoUrl, robotModelUrl]);
+  }, [plazaVideoUrl, robotModelUrl, isMobile]);
 
   return <div ref={mountRef} data-city-world="true" className="w-full h-full cursor-crosshair" />;
 }
@@ -1488,7 +1494,7 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTe
     makeWall(baseSeed + 2),
     makeWall(baseSeed + 3),
   ];
-  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w, 2, 4, 2), bodyMats);
+  const body = createSimpleBuildingLOD(w, h, w, bodyMats);
   body.position.set(x, h / 2, z);
   scene.add(body);
 
@@ -1828,8 +1834,10 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker) {
   const baseSeed = Math.abs(Math.round(x * 5 + z * 11)) % 100;
   const hexColor = '#' + nc.toString(16).padStart(6, '0');
   const makeMidWall = (s) => new THREE.MeshBasicMaterial({ map: makeBuildingWallTexture(hexColor, s) });
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(w, h, w * 0.9, 2, 4, 2),
+  const body = createSimpleBuildingLOD(
+    w,
+    h,
+    w * 0.9,
     [makeMidWall(baseSeed), makeMidWall(baseSeed+1), new THREE.MeshBasicMaterial({color:0x0a000f}), new THREE.MeshBasicMaterial({color:0x0a000f}), makeMidWall(baseSeed+2), makeMidWall(baseSeed+3)]
   );
   body.position.set(x, h / 2, z);

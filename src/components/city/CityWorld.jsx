@@ -351,7 +351,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     composer.addPass(cyberPostPass);
 
     const fxaaPass = new ShaderPass(FXAAShader);
-    fxaaPass.material.uniforms.resolution.value.set(1 / W, 1 / H);
+    fxaaPass.uniforms.resolution.value.set(1 / W, 1 / H);
     composer.addPass(fxaaPass);
 
     postFxStateRef.current = getAdaptivePostProcessingState(postProcessingSettings || createPostProcessingState({ tier: isMobile ? 'mobile' : 'high' }), 60);
@@ -753,7 +753,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       renderer.setSize(mount.clientWidth, mount.clientHeight);
       composer.setSize(mount.clientWidth, mount.clientHeight);
       cyberPostPass.uniforms.uResolution.value.set(mount.clientWidth, mount.clientHeight);
-      fxaaPass.material.uniforms.resolution.value.set(1 / mount.clientWidth, 1 / mount.clientHeight);
+      fxaaPass.uniforms.resolution.value.set(1 / mount.clientWidth, 1 / mount.clientHeight);
     };
     window.addEventListener('resize', handleResize);
 

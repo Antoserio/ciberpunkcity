@@ -9,7 +9,7 @@ import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 import useCameraTargetTransition from './useCameraTargetTransition';
 import { createSimpleBuildingLOD, getPerformanceConfig } from './cityPerformance';
-import { getTheatreSheet, createEditableCamera } from './theatreConfig';
+import { initializeTheatreStudio, getTheatreSheet, createEditableCamera } from './theatreConfig';
 
 const CITY_VIDEO_SOURCES = [
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
@@ -573,7 +573,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
 
   useEffect(() => {
-    console.log('🔄 useEffect EJECUTÁNDOSE');
+    initializeTheatreStudio();
 
     const mount = mountRef.current;
     const W = mount.clientWidth;
@@ -594,7 +594,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     cameraRef.current = camera;
     if (savedCameraPos) {
       camera.position.copy(savedCameraPos);
-      console.log('✅ RESTAURADA a:', camera.position);
       targetYawRef.current = savedYaw;
       yawRef.current = savedYaw;
       targetPitchRef.current = savedPitch;

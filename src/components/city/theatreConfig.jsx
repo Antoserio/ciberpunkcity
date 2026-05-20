@@ -1,6 +1,7 @@
 import { getProject, types } from '@theatre/core';
-import studio from '@theatre/studio';
 
+let theatreStudioModulePromise = null;
+let theatreStudio = null;
 let theatreStudioInitialized = false;
 let theatreProject = null;
 let theatreSheet = null;
@@ -21,13 +22,25 @@ const cameraConfig = {
   fov: types.number(75, { range: [20, 100] }),
 };
 
-export function getTheatreSheet() {
+export function initializeTheatreStudio() {
   const studioAvailable = typeof window !== 'undefined' && import.meta.env.DEV;
 
-  if (studioAvailable && !theatreStudioInitialized) {
-    studio.initialize();
-    theatreStudioInitialized = true;
+  if (!studioAvailable || theatreStudioInitialized) {
+    return theatreStudioModulePromise;
   }
+
+  theatreStudioModulePromise ??= import('@theatre/studio').then(({ default: studio }) => {
+    theatreStudio = studio;
+    theatreStudio.initialize();
+    theatreStudioInitialized = true;
+    return theatreStudio;
+  });
+
+  return theatreStudioModulePromise;
+}
+
+export function getTheatreSheet() {
+  const studioAvailable = typeof window !== 'undefined' && import.meta.env.DEV;
 
   if (!studioAvailable) {
     return null;

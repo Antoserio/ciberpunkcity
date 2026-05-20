@@ -347,7 +347,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       vertexShader: cyberPostVertexShader,
       fragmentShader: cyberPostFragmentShader,
     });
-    cyberPostPass.uniforms.uResolution.value.set(W, H);
+    cyberPostPass.uniforms.resolution.value.set(W, H);
     composer.addPass(cyberPostPass);
 
     const fxaaPass = new ShaderPass(FXAAShader);
@@ -736,8 +736,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         cyberPostPass.enabled = postFxStateRef.current.chromaticAberration || postFxStateRef.current.filmGrain || postFxStateRef.current.colorGrading;
         fxaaPass.enabled = !!postFxStateRef.current.fxaa;
         bloomPass.strength = postFxStateRef.current.bloom ? performanceConfig.bloomStrength : 0;
-        cyberPostPass.uniforms.uTime.value = frameCount * 0.016;
-        cyberPostPass.uniforms.uArcadePulse.value = arcadeFocusPulse;
+        cyberPostPass.uniforms.time.value = frameCount * 0.016;
       }
       composer.render();
       if (document.pointerLockElement && frameCount % 2 === 0) {
@@ -752,7 +751,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       camera.updateProjectionMatrix();
       renderer.setSize(mount.clientWidth, mount.clientHeight);
       composer.setSize(mount.clientWidth, mount.clientHeight);
-      cyberPostPass.uniforms.uResolution.value.set(mount.clientWidth, mount.clientHeight);
+      cyberPostPass.uniforms.resolution.value.set(mount.clientWidth, mount.clientHeight);
       fxaaPass.uniforms.resolution.value.set(1 / mount.clientWidth, 1 / mount.clientHeight);
     };
     window.addEventListener('resize', handleResize);

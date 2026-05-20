@@ -392,7 +392,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     let worksMediaElement = null;
     let worksMediaTexture = null;
     const cityVideos = [];
-    const worksCarousel = makeWorksCarouselScreen();
+    const worksCarousel = makeWorksCarouselScreen(WORKS);
 
     if (plazaVideoUrl) {
       plazaVideoElement = createCityVideoElement(plazaVideoUrl);

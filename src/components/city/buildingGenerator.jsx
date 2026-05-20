@@ -47,7 +47,16 @@ export function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   }
 }
 
-export function makeWorksCarouselScreen(WORKS) {
+export function makeWorksCarouselScreen(WORKS = []) {
+  const safeWorks = Array.isArray(WORKS) && WORKS.length > 0 ? WORKS : [
+    {
+      title: 'NEXUS 360',
+      subtitle: 'Interactive showcase',
+      description: 'Recorrido visual de proyectos y experiencias destacadas.',
+      color: '#00ffff',
+      videoUrl: '',
+    },
+  ];
   const canvas = document.createElement('canvas');
   canvas.width = 1920;
   canvas.height = 1080;
@@ -72,8 +81,8 @@ export function makeWorksCarouselScreen(WORKS) {
   let lastAdvance = performance.now();
 
   const loadVideo = () => {
-    const work = WORKS[activeIndex];
-    if (!work.videoUrl) return;
+    const work = safeWorks[activeIndex];
+    if (!work?.videoUrl) return;
     if (video.src !== work.videoUrl) {
       video.src = work.videoUrl;
       video.load();
@@ -82,7 +91,7 @@ export function makeWorksCarouselScreen(WORKS) {
   };
 
   const draw = (time = 0) => {
-    const work = WORKS[activeIndex];
+    const work = safeWorks[activeIndex];
     const accent = work.color;
     const pulse = 0.82 + Math.sin(time * 1.6) * 0.08;
 
@@ -142,9 +151,9 @@ export function makeWorksCarouselScreen(WORKS) {
     ctx.fillStyle = '#ffffff';
     ctx.font = '800 52px Rajdhani, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`PROYECTO ${activeIndex + 1} / ${WORKS.length}`, canvas.width / 2, canvas.height - 120);
-    for (let i = 0; i < WORKS.length; i++) {
-      ctx.fillStyle = i === activeIndex ? WORKS[i].color : '#ffffff33';
+    ctx.fillText(`PROYECTO ${activeIndex + 1} / ${safeWorks.length}`, canvas.width / 2, canvas.height - 120);
+    for (let i = 0; i < safeWorks.length; i++) {
+      ctx.fillStyle = i === activeIndex ? safeWorks[i].color : '#ffffff33';
       ctx.beginPath();
       ctx.arc(canvas.width / 2 - 63 + i * 42, 910, i === activeIndex ? 12 : 8, 0, Math.PI * 2);
       ctx.fill();
@@ -185,14 +194,14 @@ export function makeWorksCarouselScreen(WORKS) {
   };
 
   const next = () => {
-    activeIndex = (activeIndex + 1) % WORKS.length;
+    activeIndex = (activeIndex + 1) % safeWorks.length;
     lastAdvance = performance.now();
     loadVideo();
     draw(performance.now() * 0.001);
   };
 
   const prev = () => {
-    activeIndex = (activeIndex - 1 + WORKS.length) % WORKS.length;
+    activeIndex = (activeIndex - 1 + safeWorks.length) % safeWorks.length;
     lastAdvance = performance.now();
     loadVideo();
     draw(performance.now() * 0.001);

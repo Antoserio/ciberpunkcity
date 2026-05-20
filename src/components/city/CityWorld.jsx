@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -516,6 +516,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const touchStateRef = useRef({ moving: false, looking: false, moveId: null, lookId: null, moveStartX: 0, moveStartY: 0, moveX: 0, moveY: 0 });
   const mobileMovementRef = useRef({ x: 0, z: 0 });
   const cameraRef = useRef(null);
+  const [theatreReady, setTheatreReady] = useState(() => !import.meta.env.DEV);
   const worksTransitionRef = useRef({ active: activeView === 'works', startTime: performance.now(), duration: WORKS_CAMERA_TRANSITION_MS, startPos: new THREE.Vector3(15, 1.7, 15), targetPos: activeView === 'works' ? WORKS_CAMERA_POSITION.clone() : null, startYaw: 2.4, targetYaw: Math.PI, startPitch: -0.1, targetPitch: -0.03, token: worksTransitionToken });
 
   useCameraTargetTransition({ cameraTarget, worksTransitionRef, yawRef, pitchRef, cameraRef });
@@ -527,6 +528,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       isLockedRef.current = false;
     }
   }, [modalOpen]);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+
+    initializeTheatreStudio().then(() => {
+      setTheatreReady(true);
+    });
+  }, []);
 
   const checkZoneProximity = useCallback((pos) => {
     if (modalOpenRef.current) return;
@@ -573,8 +582,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
 
   useEffect(() => {
-    initializeTheatreStudio();
-
     const mount = mountRef.current;
     const W = mount.clientWidth;
     const H = mount.clientHeight;
@@ -1124,7 +1131,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       editableCamera?.unsubscribe?.();
       cameraRef.current = null;
     };
-  }, [plazaVideoUrl, robotModelUrl, isMobile]);
+  }, [plazaVideoUrl, robotModelUrl, isMobile, theatreReady]);
 
   return <div ref={mountRef} data-city-world="true" className="w-full h-full cursor-crosshair" />;
 }

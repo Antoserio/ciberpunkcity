@@ -42,7 +42,7 @@ export function initializeTheatreStudio() {
 export function getTheatreSheet() {
   const studioAvailable = typeof window !== 'undefined' && import.meta.env.DEV;
 
-  if (!studioAvailable) {
+  if (!studioAvailable || !theatreStudioInitialized) {
     return null;
   }
 

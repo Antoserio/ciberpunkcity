@@ -9,6 +9,7 @@ import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 import useCameraTargetTransition from './useCameraTargetTransition';
 import { createSimpleBuildingLOD, getPerformanceConfig } from './cityPerformance';
+import { getTheatreSheet, createEditableCamera } from './theatreConfig';
 
 const CITY_VIDEO_SOURCES = [
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
@@ -588,6 +589,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     scene.background = fogColor;
 
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
+    const theatreSheet = getTheatreSheet();
+    const editableCamera = createEditableCamera(theatreSheet, camera);
     cameraRef.current = camera;
     if (savedCameraPos) {
       camera.position.copy(savedCameraPos);
@@ -1118,6 +1121,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       vignette.remove();
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+      editableCamera?.unsubscribe?.();
       cameraRef.current = null;
     };
   }, [plazaVideoUrl, robotModelUrl, isMobile]);

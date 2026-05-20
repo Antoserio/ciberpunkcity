@@ -43,7 +43,9 @@ export default function CinematicLoader({ visible, progress = 0, status = 'Inici
               <p>&gt; boot.sequence --env=city.render</p>
               <p>&gt; preload critical textures...</p>
               <p>&gt; initialize theatre timeline...</p>
+              <p>&gt; decrypt neon district sectors...</p>
               <p>&gt; streaming district assets...</p>
+              <p>&gt; syncing cinematic camera rig...</p>
               <p className="text-fuchsia-300/80">&gt; status: {status.toLowerCase()}</p>
             </div>
           </div>

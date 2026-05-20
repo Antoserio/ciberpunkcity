@@ -8,8 +8,8 @@ import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 import useCameraTargetTransition from './useCameraTargetTransition';
-import { createEditableCamera, getTheatreSheet } from './theatreConfig.js';
-import { createSimpleBuildingLOD, getPerformanceConfig } from './cityPerformance.js';
+import { createEditableCamera, getTheatreSheet } from './theatreConfig';
+import { createSimpleBuildingLOD, getPerformanceConfig } from './cityPerformance';
 
 const CITY_VIDEO_SOURCES = [
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { AnimatePresence } from 'framer-motion';
 import CityWorld from '../components/city/CityWorld.jsx';
-import CinematicLoader from '../components/city/CinematicLoader.jsx';
+import CinematicLoader from '../components/city/CinematicLoader';
 import HUD from '../components/city/HUD';
 import ZonePanel from '../components/city/ZonePanel';
 import AvatarAssistant from '../components/city/AvatarAssistant';

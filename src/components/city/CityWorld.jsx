@@ -609,6 +609,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const performanceConfig = getPerformanceConfig(isMobile);
+    const farBuildingLimit = performanceConfig.farBuildings || 12;
     const handleJoystickTouchMove = () => {};
     const handleJoystickTouchEnd = () => {};
     const joystickContainer = null;
@@ -726,7 +727,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     vikyTexture.magFilter = THREE.LinearFilter;
     vikyTexture.generateMipmaps = false;
 
-    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture, vikyTexture, onOpenViky, worksCarousel);
+    const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture, vikyTexture, onOpenViky, worksCarousel, farBuildingLimit);
     extraCanvasesRef.current = extraCanvases;
 
     const robotSwarm = addFlyingRobots(scene);
@@ -1349,7 +1350,7 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   }
 }
 
-function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, worksCarousel) {
+function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, worksCarousel, farBuildingLimit = 16) {
   const extraCanvases = [];
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220, 80, 80),
@@ -1439,7 +1440,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   });
 
   const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < farBuildingLimit; i++) {
     const angle = (i / 16) * Math.PI * 2;
     const dist = 75 + (i % 4) * 8;
     const h = 14 + (i % 8) * 6;

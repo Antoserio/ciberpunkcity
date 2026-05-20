@@ -5,7 +5,11 @@ export function detectQualityTier() {
   const cores = navigator.hardwareConcurrency || 8;
   const pixelRatio = window.devicePixelRatio || 1;
 
-  if (memory <= 4 || cores <= 4 || pixelRatio > 2) {
+  if (memory <= 2 || cores <= 4) {
+    return 'low';
+  }
+
+  if (memory <= 4 || cores <= 6 || pixelRatio > 2) {
     return 'medium';
   }
 
@@ -19,9 +23,21 @@ export function getPerformanceConfig(isMobile = false) {
     return {
       tier: 'mobile',
       pixelRatio: 1,
-      videoScreens: 2,
-      bloomStrength: 0.42,
+      videoScreens: 1,
+      bloomStrength: 0.36,
       enableHeavyAtmospherics: false,
+      farBuildings: 8,
+    };
+  }
+
+  if (tier === 'low') {
+    return {
+      tier,
+      pixelRatio: 0.9,
+      videoScreens: 1,
+      bloomStrength: 0.32,
+      enableHeavyAtmospherics: false,
+      farBuildings: 10,
     };
   }
 
@@ -29,9 +45,10 @@ export function getPerformanceConfig(isMobile = false) {
     return {
       tier,
       pixelRatio: 1,
-      videoScreens: 3,
-      bloomStrength: 0.5,
+      videoScreens: 2,
+      bloomStrength: 0.46,
       enableHeavyAtmospherics: false,
+      farBuildings: 12,
     };
   }
 
@@ -41,6 +58,7 @@ export function getPerformanceConfig(isMobile = false) {
     videoScreens: 4,
     bloomStrength: 0.6,
     enableHeavyAtmospherics: true,
+    farBuildings: 16,
   };
 }
 

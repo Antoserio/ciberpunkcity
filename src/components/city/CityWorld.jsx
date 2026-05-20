@@ -8,7 +8,7 @@ import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 import useCameraTargetTransition from './useCameraTargetTransition';
-import { createEditableCamera, getTheatreSheet } from './theatreConfig.js';
+import { createEditableCamera, getTheatreSheet } from './theatreConfig.jsx';
 import { createSimpleBuildingLOD, getPerformanceConfig } from './cityPerformance';
 
 const CITY_VIDEO_SOURCES = [

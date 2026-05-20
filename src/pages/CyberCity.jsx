@@ -16,6 +16,10 @@ import ArcadeGamesModal from '../components/city/ArcadeGamesModal.jsx';
 import { STANDS } from '../components/city/standsData';
 import useAmbientAudio from '../components/city/useAmbientAudio';
 import useCityAssetLoader from '../components/city/useCityAssetLoader';
+import PostProcessingStatus from '../components/city/PostProcessingStatus.jsx';
+import PostFXOverlay from '../components/city/PostFXOverlay.jsx';
+import useArcadeFocusPulse from '../components/city/useArcadeFocusPulse';
+import { createPostProcessingState } from '../components/city/postprocessing/postProcessingConfig';
 
 export default function CyberCity() {
   const [started, setStarted] = useState(false);
@@ -38,9 +42,11 @@ export default function CyberCity() {
     position: { x: 15, y: 1.7, z: 15 }, 
     rotation: 2.4 
   });
+  const [postProcessingSettings, setPostProcessingSettings] = useState(null);
 
   useAmbientAudio(audioEnabled);
   const { progress, status, ready } = useCityAssetLoader(true);
+  const arcadeFocusPulse = useArcadeFocusPulse(arcadeOpen);
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
@@ -48,6 +54,10 @@ export default function CyberCity() {
     window.addEventListener('resize', updateMobile);
     return () => window.removeEventListener('resize', updateMobile);
   }, []);
+
+  useEffect(() => {
+    setPostProcessingSettings(createPostProcessingState({ tier: isMobile ? 'mobile' : 'high' }));
+  }, [isMobile]);
 
   useEffect(() => {
     const loadGlobalRobot = async () => {
@@ -158,10 +168,14 @@ export default function CyberCity() {
           activeWork={activeWork}
           worksTransitionToken={worksTransitionToken}
           cameraTarget={cameraTarget}
+          postProcessingSettings={postProcessingSettings}
+          arcadeFocusPulse={arcadeFocusPulse}
         />
       </div>
 
       {!showWelcomeOverlay && <TopNav activeView={activeView} onChangeView={handleChangeView} />}
+
+      {!showWelcomeOverlay && <PostFXOverlay focusPulse={arcadeFocusPulse} />}
 
       <CinematicLoader visible={!ready} progress={progress} status={status} ready={ready} />
 
@@ -207,18 +221,21 @@ export default function CyberCity() {
       {activeView === 'explore' && !isMobile && <MiniMap activeZone={activeZone} isMobile={isMobile} />}
 
       {!showWelcomeOverlay && (
-        <button
-          id="sound-toggle"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setHasClickedOnce(true);
-            setAudioEnabled((value) => !value);
-          }}
-          className="fixed bottom-28 left-4 z-[60] rounded-full border border-white/10 bg-black/60 px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white backdrop-blur-md transition hover:border-cyan-400/40 hover:text-cyan-300 sm:bottom-6 sm:left-6"
-        >
-          {audioEnabled ? 'SONIDO ON' : 'SONIDO OFF'}
-        </button>
+        <>
+          <button
+            id="sound-toggle"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setHasClickedOnce(true);
+              setAudioEnabled((value) => !value);
+            }}
+            className="fixed bottom-28 left-4 z-[60] rounded-full border border-white/10 bg-black/60 px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white backdrop-blur-md transition hover:border-cyan-400/40 hover:text-cyan-300 sm:bottom-6 sm:left-6"
+          >
+            {audioEnabled ? 'SONIDO ON' : 'SONIDO OFF'}
+          </button>
+          {postProcessingSettings && <PostProcessingStatus settings={postProcessingSettings} />}
+        </>
       )}
 
       <AboutOverlay open={activeView === 'about'} onClose={() => setActiveView('explore')} />

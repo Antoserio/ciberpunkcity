@@ -4,12 +4,17 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 import useCameraTargetTransition from './useCameraTargetTransition';
 import { createSimpleBuildingLOD, getPerformanceConfig } from './cityPerformance';
 import { initializeTheatreStudio, getTheatreSheet, createEditableCamera } from './theatreConfig';
+import { cyberPostFragmentShader, cyberPostVertexShader, createCyberPostUniforms } from './postprocessing/cyberPostShaders';
+import { createPostProcessingState, getAdaptivePostProcessingState } from './postprocessing/postProcessingConfig';
 
 const CITY_VIDEO_SOURCES = [
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
@@ -495,7 +500,7 @@ const ROBOT_NO_FLY_ZONES = [
   { x: 58, z: 30, radius: 8 },
 ];
 
-export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', activeView = 'explore', activeWork = null, worksTransitionToken = 0, cameraTarget = null }) {
+export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', activeView = 'explore', activeWork = null, worksTransitionToken = 0, cameraTarget = null, postProcessingSettings = null, arcadeFocusPulse = 0 }) {
   const mountRef = useRef(null);
   const heroRobotsRef = useRef([]);
   const keysRef = useRef({});
@@ -517,6 +522,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const mobileMovementRef = useRef({ x: 0, z: 0 });
   const cameraRef = useRef(null);
   const [theatreReady, setTheatreReady] = useState(() => !import.meta.env.DEV);
+  const postFxStateRef = useRef(null);
   const worksTransitionRef = useRef({ active: activeView === 'works', startTime: performance.now(), duration: WORKS_CAMERA_TRANSITION_MS, startPos: new THREE.Vector3(15, 1.7, 15), targetPos: activeView === 'works' ? WORKS_CAMERA_POSITION.clone() : null, startYaw: 2.4, targetYaw: Math.PI, startPitch: -0.1, targetPitch: -0.03, token: worksTransitionToken });
 
   useCameraTargetTransition({ cameraTarget, worksTransitionRef, yawRef, pitchRef, cameraRef });

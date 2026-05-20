@@ -24,9 +24,14 @@ export function getPerformanceConfig(isMobile = false) {
       tier: 'mobile',
       pixelRatio: 1,
       videoScreens: 1,
-      bloomStrength: 0.36,
+      bloomStrength: 0.42,
+      bloomRadius: 0.32,
+      bloomThreshold: 0.9,
       enableHeavyAtmospherics: false,
       farBuildings: 8,
+      reflections: 'basic',
+      postProcessingQuality: 'medium',
+      targetFps: 30,
     };
   }
 
@@ -35,9 +40,14 @@ export function getPerformanceConfig(isMobile = false) {
       tier,
       pixelRatio: 0.9,
       videoScreens: 1,
-      bloomStrength: 0.32,
+      bloomStrength: 0.55,
+      bloomRadius: 0.35,
+      bloomThreshold: 0.88,
       enableHeavyAtmospherics: false,
       farBuildings: 10,
+      reflections: 'basic',
+      postProcessingQuality: 'medium',
+      targetFps: 30,
     };
   }
 
@@ -46,9 +56,14 @@ export function getPerformanceConfig(isMobile = false) {
       tier,
       pixelRatio: 1,
       videoScreens: 2,
-      bloomStrength: 0.46,
+      bloomStrength: 1.15,
+      bloomRadius: 0.38,
+      bloomThreshold: 0.86,
       enableHeavyAtmospherics: false,
       farBuildings: 12,
+      reflections: 'blurred',
+      postProcessingQuality: 'high',
+      targetFps: 45,
     };
   }
 
@@ -56,9 +71,14 @@ export function getPerformanceConfig(isMobile = false) {
     tier,
     pixelRatio: 1.25,
     videoScreens: 4,
-    bloomStrength: 0.6,
+    bloomStrength: 1.5,
+    bloomRadius: 0.4,
+    bloomThreshold: 0.85,
     enableHeavyAtmospherics: true,
     farBuildings: 16,
+    reflections: 'blurred',
+    postProcessingQuality: 'ultra',
+    targetFps: 60,
   };
 }
 

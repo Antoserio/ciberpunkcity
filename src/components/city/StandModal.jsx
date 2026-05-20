@@ -1,96 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
-
-function VideoContent({ stand }) {
-  const c = stand.color;
-  return (
-    <div className="relative z-10">
-      <div
-        className="relative rounded overflow-hidden mb-4"
-        style={{ paddingBottom: '56.25%', background: '#000' }}
-      >
-        <iframe
-          className="absolute inset-0 w-full h-full"
-          src={stand.videoUrl}
-          frameBorder="0"
-          allow="autoplay; fullscreen; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
-    </div>
-  );
-}
-
-function ShowcaseContent({ stand }) {
-  const [idx, setIdx] = useState(0);
-  const items = stand.showcaseItems;
-  const c = stand.color;
-  const item = items[idx];
-  return (
-    <div className="relative z-10">
-      <div className="relative rounded overflow-hidden mb-4" style={{ aspectRatio: '16/9' }}>
-        <img src={item.img} alt={item.label} className="w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(0,0,0,0.8), transparent)` }} />
-        <div className="absolute bottom-3 left-3 right-3">
-          <p className="font-orbitron text-sm font-bold mb-1" style={{ color: c }}>{item.label}</p>
-          <p className="font-rajdhani text-xs text-gray-300">{item.desc}</p>
-        </div>
-        {/* Nav arrows */}
-        <button onClick={() => setIdx((idx - 1 + items.length) % items.length)}
-          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
-          style={{ background: 'rgba(0,0,0,0.7)', border: `1px solid ${c}50` }}>
-          <ChevronLeft size={16} style={{ color: c }} />
-        </button>
-        <button onClick={() => setIdx((idx + 1) % items.length)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
-          style={{ background: 'rgba(0,0,0,0.7)', border: `1px solid ${c}50` }}>
-          <ChevronRight size={16} style={{ color: c }} />
-        </button>
-      </div>
-      {/* Dots */}
-      <div className="flex justify-center gap-2">
-        {items.map((_, i) => (
-          <button key={i} onClick={() => setIdx(i)}
-            className="w-2 h-2 rounded-full transition-all"
-            style={{ background: i === idx ? c : `${c}40`, boxShadow: i === idx ? `0 0 8px ${c}` : 'none' }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ProjectsContent({ stand }) {
-  const c = stand.color;
-  return (
-    <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {stand.projects.map((p, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.08 }}
-          className="rounded p-3 cursor-pointer transition-all hover:scale-[1.03]"
-          style={{
-            background: `linear-gradient(135deg, rgba(0,0,0,0.8), ${c}10)`,
-            border: `1px solid ${c}40`,
-            boxShadow: `0 0 15px ${c}15`,
-          }}
-        >
-          <div className="text-2xl mb-2">{p.icon}</div>
-          <p className="font-orbitron text-xs font-bold mb-0.5" style={{ color: c }}>{p.name}</p>
-          <p className="font-rajdhani text-[10px] text-gray-500 mb-2">{p.cat}</p>
-          <div className="space-y-1">
-            {p.stats.map((s, j) => (
-              <p key={j} className="font-rajdhani text-[11px]" style={{ color: `${c}cc` }}>{s}</p>
-            ))}
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  );
-}
+import { X } from 'lucide-react';
+import { ProjectsContent, ShowcaseContent, VideoContent } from './StandModalMedia';
 
 export default function StandModal({ stand, onClose }) {
   if (!stand) return null;
@@ -119,78 +29,92 @@ export default function StandModal({ stand, onClose }) {
           animate={{ scale: 1, y: 0, opacity: 1 }}
           exit={{ scale: 0.88, y: 20, opacity: 0 }}
           transition={{ type: 'spring', damping: 22, stiffness: 260 }}
-          className="relative w-full rounded border max-h-[88vh] overflow-y-auto"
+          className="relative w-full max-h-[88vh] overflow-y-auto rounded-[30px] border"
           style={{
-            maxWidth: stand.type === 'projects' ? '540px' : '600px',
+            maxWidth: stand.type === 'projects' ? '880px' : '980px',
             background: `linear-gradient(135deg, rgba(3,4,20,0.99) 0%, ${c}10 100%)`,
-            borderColor: c,
-            boxShadow: `0 0 60px ${c}50, 0 0 120px ${c}15`,
+            borderColor: `${c}88`,
+            boxShadow: `0 0 60px ${c}40, 0 0 120px ${c}12`,
           }}
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Scanlines */}
-          <div className="absolute inset-0 pointer-events-none opacity-10"
+          <div
+            className="absolute inset-0 pointer-events-none opacity-10"
             style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.3) 2px, rgba(0,0,0,0.3) 4px)' }}
           />
 
-
-
-          {/* Header */}
-          <div className="relative z-10 px-4 sm:px-6 pt-4 sm:pt-5 pb-4 border-b flex items-start justify-between gap-3"
-            style={{ borderColor: `${c}30` }}>
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{stand.icon}</span>
-              <div>
-                <p className="font-orbitron text-[10px] tracking-widest mb-0.5" style={{ color: `${c}80` }}>
-                  [{stand.key}] · {stand.subtitle}
-                </p>
-                <h2 className="font-orbitron text-base sm:text-xl font-black tracking-widest"
-                  style={{ color: c, textShadow: `0 0 20px ${c}` }}>
-                  {stand.title}
-                </h2>
+          <div className="relative z-10 border-b px-5 pb-5 pt-5 sm:px-8 sm:pb-6 sm:pt-6" style={{ borderColor: `${c}28` }}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-3xl">
+                  {stand.icon}
+                </div>
+                <div>
+                  <p className="font-orbitron text-[10px] uppercase tracking-[0.28em]" style={{ color: `${c}88` }}>
+                    [{stand.key}] · {stand.subtitle}
+                  </p>
+                  <h2 className="mt-2 font-orbitron text-xl font-black uppercase tracking-[0.16em] sm:text-3xl" style={{ color: c, textShadow: `0 0 20px ${c}` }}>
+                    {stand.title}
+                  </h2>
+                  <p className="mt-3 max-w-2xl font-rajdhani text-sm leading-relaxed text-white/66 sm:text-base">
+                    {stand.description}
+                  </p>
+                </div>
               </div>
+              <button onClick={onClose} className="rounded-full border border-white/10 bg-black/20 p-2 text-white/55 transition hover:text-white">
+                <X size={20} />
+              </button>
             </div>
-            <button onClick={onClose} className="text-gray-600 hover:text-white transition-colors ml-4">
-              <X size={20} />
-            </button>
           </div>
 
-          {/* Main content */}
-          <div className="relative z-10 p-4 sm:p-6">
-            {renderContent()}
-
-            {/* Description */}
-            <p className="font-rajdhani text-sm text-gray-300 leading-relaxed mt-4 mb-4">
-              {stand.description}
-            </p>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {stand.tags.map(tag => (
-                <span key={tag} className="font-orbitron text-[10px] px-2 py-1 rounded tracking-widest"
-                  style={{ color: c, border: `1px solid ${c}50`, background: `${c}12` }}>
-                  {tag}
-                </span>
-              ))}
+          <div className="relative z-10 grid gap-6 p-5 sm:p-8 lg:grid-cols-[1.2fr_0.8fr]">
+            <div>
+              {renderContent()}
             </div>
 
-            {/* CTA */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open('mailto:info@agency360.com?subject=Interesado en ' + stand.title, '_blank');
-              }}
-              className="w-full py-3 font-orbitron text-sm font-bold tracking-widest rounded transition-all"
-              style={{
-                background: `linear-gradient(135deg, ${c}25, ${c}40)`,
-                border: `1px solid ${c}70`,
-                color: c,
-                boxShadow: `0 0 20px ${c}30`,
-              }}
-            >
-              CONTACTAR SOBRE ESTE SERVICIO →
-            </motion.button>
+            <div className="space-y-5">
+              <div className="rounded-[26px] border border-white/10 bg-white/5 p-5 backdrop-blur-lg">
+                <p className="font-orbitron text-[10px] uppercase tracking-[0.28em] text-white/45">Keywords</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {stand.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full px-3 py-2 font-orbitron text-[10px] uppercase tracking-[0.2em]"
+                      style={{ color: c, border: `1px solid ${c}50`, background: `${c}14` }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5">
+                <p className="font-orbitron text-[10px] uppercase tracking-[0.28em] text-white/45">Project pulse</p>
+                <div className="mt-4 space-y-3 font-rajdhani text-sm text-white/70">
+                  <div className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3">Experiencia visual enfocada a impacto, presentación y engagement.</div>
+                  <div className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3">Diseño inmersivo con narrativa, motion y presencia escénica.</div>
+                  <div className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3">Formato listo para activaciones, eventos o showroom digital.</div>
+                </div>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open('mailto:info@agency360.com?subject=Interesado en ' + stand.title, '_blank');
+                }}
+                className="w-full rounded-full py-4 font-orbitron text-sm font-bold uppercase tracking-[0.24em] transition-all"
+                style={{
+                  background: `linear-gradient(135deg, ${c}28, ${c}46)`,
+                  border: `1px solid ${c}70`,
+                  color: c,
+                  boxShadow: `0 0 20px ${c}28`,
+                }}
+              >
+                Contactar sobre este servicio →
+              </motion.button>
+            </div>
           </div>
         </motion.div>
       </motion.div>

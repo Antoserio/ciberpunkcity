@@ -778,7 +778,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     }
 
     const theatreSheet = getTheatreSheet();
-    const theatreCamera = createEditableCamera(theatreSheet, camera);
+    createEditableCamera(theatreSheet, camera);
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();

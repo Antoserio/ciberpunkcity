@@ -22,9 +22,15 @@ const cameraConfig = {
 };
 
 export function getTheatreSheet() {
-  if (typeof window !== 'undefined' && import.meta.env.DEV && !theatreStudioInitialized) {
+  const studioAvailable = typeof window !== 'undefined' && import.meta.env.DEV;
+
+  if (studioAvailable && !theatreStudioInitialized) {
     studio.initialize();
     theatreStudioInitialized = true;
+  }
+
+  if (!studioAvailable) {
+    return null;
   }
 
   if (!theatreProject) {
@@ -36,6 +42,14 @@ export function getTheatreSheet() {
 }
 
 export function createEditableCamera(sheet, camera) {
+  if (!sheet) {
+    camera.position.set(15, 1.7, 15);
+    camera.rotation.set(-0.1, 2.4, 0);
+    camera.fov = 75;
+    camera.updateProjectionMatrix();
+    return null;
+  }
+
   if (!theatreCameraObject) {
     theatreCameraObject = sheet.object('MainCamera', cameraConfig);
   }

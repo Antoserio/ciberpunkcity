@@ -646,24 +646,23 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), performanceConfig.bloomStrength * 0.22, 0.55, 0.72);
     composer.addPass(bloomPass);
 
-    scene.add(new THREE.AmbientLight(0x4433bb, 4.0));
-    scene.add(new THREE.HemisphereLight(0x7744ee, 0x180d35, 1.8));
-    // Warm soft overhead — amber sky glow like distant city lights
-    const warmOverhead = new THREE.HemisphereLight(0xffaa55, 0x150a30, 1.2);
+    scene.add(new THREE.AmbientLight(0x5544cc, 5.5));
+    scene.add(new THREE.HemisphereLight(0x8866ff, 0x251050, 2.4));
+    const warmOverhead = new THREE.HemisphereLight(0xffbb66, 0x1a0d40, 1.8);
     scene.add(warmOverhead);
-    const keyLight = new THREE.DirectionalLight(0xffe8cc, 2.2);
+    const keyLight = new THREE.DirectionalLight(0xfff0dd, 3.0);
     keyLight.position.set(24, 30, 14);
     scene.add(keyLight);
-    const fillLight = new THREE.PointLight(0xff44cc, 5, 120, 2);
+    const fillLight = new THREE.PointLight(0xff44cc, 7, 140, 1.8);
     fillLight.position.set(0, 22, 0);
     scene.add(fillLight);
-    const cyanWash = new THREE.PointLight(0x00e5ff, 4, 90, 2);
+    const cyanWash = new THREE.PointLight(0x00e5ff, 6, 110, 1.8);
     cyanWash.position.set(-24, 14, -8);
     scene.add(cyanWash);
-    const magentaWash = new THREE.PointLight(0xff00c8, 4, 100, 2);
+    const magentaWash = new THREE.PointLight(0xff00c8, 6, 120, 1.8);
     magentaWash.position.set(24, 16, 6);
     scene.add(magentaWash);
-    const violetWash = new THREE.PointLight(0x7c3aed, 3.5, 80, 2);
+    const violetWash = new THREE.PointLight(0x7c3aed, 5, 100, 1.8);
     violetWash.position.set(0, 18, -24);
     scene.add(violetWash);
 
@@ -808,6 +807,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       }
       glitchMaterialsRef.current = glitchList;
     }
+
+    placeBillboards(scene);
 
     const robotSwarm = addFlyingRobots(scene);
 
@@ -1504,7 +1505,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   }
 
   // Soft moonlight-style overhead to illuminate the floor
-  const moonLight = new THREE.PointLight(0x2244aa, 12, 200, 1.4);
+  const moonLight = new THREE.PointLight(0x3355cc, 20, 220, 1.3);
   moonLight.position.set(0, 90, 0);
   scene.add(moonLight);
 
@@ -1512,11 +1513,11 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220, 80, 80),
     new THREE.MeshStandardMaterial({
-      color: 0x111a40,
-      emissive: new THREE.Color(0x0d1a3a),
-      emissiveIntensity: 1.1,
-      roughness: 0.4,
-      metalness: 0.25,
+      color: 0x182050,
+      emissive: new THREE.Color(0x121e48),
+      emissiveIntensity: 1.6,
+      roughness: 0.35,
+      metalness: 0.3,
     })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -1829,6 +1830,97 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
   });
 
   setTimeout(() => vikyVideo.play().catch(() => {}), 200);
+}
+
+// ── Billboard helper ───────────────────────────────────────────────────────
+function makeBillboardTexture(line1, line2, color1, color2) {
+  const W = 512, H = 256;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  // Dark panel base — like arcade machine side
+  ctx.fillStyle = '#06030f';
+  ctx.fillRect(0, 0, W, H);
+  // Outer neon border
+  ctx.strokeStyle = color1;
+  ctx.lineWidth = 4;
+  ctx.shadowBlur = 18; ctx.shadowColor = color1;
+  ctx.strokeRect(4, 4, W - 8, H - 8);
+  // Inner accent line
+  ctx.strokeStyle = color2;
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 10; ctx.shadowColor = color2;
+  ctx.strokeRect(14, 14, W - 28, H - 28);
+  // Horizontal divider
+  ctx.beginPath(); ctx.moveTo(14, H / 2); ctx.lineTo(W - 14, H / 2);
+  ctx.strokeStyle = color1; ctx.lineWidth = 1; ctx.shadowBlur = 6;
+  ctx.stroke();
+  // Main text
+  ctx.shadowBlur = 20; ctx.shadowColor = color1;
+  ctx.fillStyle = color1;
+  ctx.font = 'bold 52px monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(line1, W / 2, H * 0.32);
+  // Sub text
+  ctx.shadowColor = color2; ctx.fillStyle = color2;
+  ctx.font = '28px monospace';
+  ctx.fillText(line2, W / 2, H * 0.72);
+  // Corner pixels (arcade machine aesthetic)
+  [color1, color2].forEach((col, ci) => {
+    ctx.fillStyle = col; ctx.shadowBlur = 0;
+    const corners = [[8,8],[W-16,8],[8,H-16],[W-16,H-16]];
+    corners.forEach(([cx,cy]) => ctx.fillRect(cx + ci*4, cy + ci*4, 6, 6));
+  });
+  const tex = new THREE.CanvasTexture(c);
+  tex.userData = { noGlitch: true };
+  return tex;
+}
+
+function placeBillboards(scene) {
+  const loader = new GLTFLoader();
+  const configs = [
+    { pos: [-22, 0, -18], ry: 0.5,        l1: 'GIRASOMNIS', l2: 'IMMERSIVE SHOWS',  c1: '#00ffcc', c2: '#ff00aa' },
+    { pos: [22,  0, -18], ry: -0.5,       l1: 'AGENCY°360', l2: 'CREATIVE CITY',    c1: '#ff2d2d', c2: '#ffaa00' },
+    { pos: [-28, 0,  8],  ry: Math.PI/2,  l1: 'HORIZONS',   l2: 'DANCE & VISUALS',  c1: '#00c8ff', c2: '#ff00ff' },
+    { pos: [28,  0,  8],  ry: -Math.PI/2, l1: 'GENESIS LUX', l2: 'VIOLIN · LUZ',     c1: '#ffaa00', c2: '#ff4444' },
+    { pos: [-10, 0, -30], ry: 0.2,        l1: 'LUMINA',     l2: 'LUZ · EFECTOS',    c1: '#ff00ff', c2: '#00ffff' },
+    { pos: [10,  0, -30], ry: -0.2,       l1: 'LIDAR TECH', l2: 'INTERACTIVE ART',  c1: '#00ff88', c2: '#0088ff' },
+  ];
+
+  configs.forEach(({ pos, ry, l1, l2, c1, c2 }) => {
+    const tex = makeBillboardTexture(l1, l2, c1, c2);
+    loader.load('/bilboard.glb', (gltf) => {
+      const model = gltf.scene.clone();
+      // Scale billboard to ~6 units wide
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const s = 6 / Math.max(size.x, size.z, 0.1);
+      model.scale.setScalar(s);
+      model.rotation.y = ry;
+      model.position.set(...pos);
+      model.updateMatrixWorld(true);
+      const scaledBox = new THREE.Box3().setFromObject(model);
+      model.position.y = -scaledBox.min.y;
+      // Apply arcade-style texture
+      model.traverse((child) => {
+        if (!child.isMesh) return;
+        child.material = new THREE.MeshStandardMaterial({
+          map: tex,
+          emissiveMap: tex,
+          emissive: new THREE.Color(c1),
+          emissiveIntensity: 0.4,
+          roughness: 0.4,
+          metalness: 0.5,
+        });
+        child.userData.noGlitch = true;
+      });
+      scene.add(model);
+      // Neon light in front of each billboard
+      const light = new THREE.PointLight(new THREE.Color(c1), 4, 12, 2);
+      light.position.set(pos[0], pos[1] + 3, pos[2] + 1.5);
+      scene.add(light);
+    });
+  });
 }
 
 function createArcadeMachine(scene, stand, gt) {

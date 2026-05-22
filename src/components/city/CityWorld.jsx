@@ -604,7 +604,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const savedPitch = pitchRef.current;
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x050e22, 0.028);
+    scene.fog = new THREE.FogExp2(0x0a1830, 0.020);  // lighter density so skyline model shows
     // Sky handled by sky sphere in buildCity — no flat background
 
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
@@ -761,28 +761,48 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
-        const targetSize = 160;
+        const targetSize = 180;
         const scale = targetSize / maxDim;
         model.scale.setScalar(scale);
 
-        // Position: behind the scene, elevated
-        model.position.set(-20, -8, -90);
-        model.rotation.y = Math.PI * 0.15;
+        // Bring closer so fog doesn't swallow it; sit at floor level
+        model.position.set(-10, 0, -55);
+        model.rotation.y = Math.PI * 0.08;
 
-        // Tint it cyberpunk — dark purple with neon edge hint
+        // White-silver futuristic spires — reference style
+        // Use fog=false so the model cuts through the scene fog and stays visible
         model.traverse((child) => {
           if (!child.isMesh) return;
+
+          // Pick a slight color variation per mesh index for depth
+          const idx = child.id % 4;
+          const baseColors   = [0xd8eeff, 0xc8dcf4, 0xe4f0ff, 0xb8d0ee];
+          const emissColors  = [0x5588dd, 0x3366cc, 0x6699ee, 0x4477bb];
+
           child.material = new THREE.MeshStandardMaterial({
-            color: 0x0d0820,
-            emissive: new THREE.Color(0x1a0840),
-            emissiveIntensity: 0.6,
-            roughness: 0.8,
-            metalness: 0.3,
+            color: new THREE.Color(baseColors[idx]),
+            emissive: new THREE.Color(emissColors[idx]),
+            emissiveIntensity: 1.4,
+            roughness: 0.42,
+            metalness: 0.55,
+            fog: false,          // punch through fog — always visible
           });
           child.userData.noGlitch = true;
         });
 
         scene.add(model);
+
+        // Dedicated sky light aimed at the skyline (cool blue from above)
+        const skylineLight = new THREE.DirectionalLight(0x88bbff, 4.5);
+        skylineLight.position.set(-10, 60, -40);
+        skylineLight.target.position.set(-10, 0, -55);
+        scene.add(skylineLight);
+        scene.add(skylineLight.target);
+
+        // Warm horizon rim from below (golden/orange like the reference sunset)
+        const rimLight = new THREE.PointLight(0xffaa44, 18, 120, 1.4);
+        rimLight.position.set(0, -5, -55);
+        scene.add(rimLight);
       });
     }
 
@@ -1471,38 +1491,56 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, worksCarousel, farBuildingLimit = 16) {
   const extraCanvases = [];
 
-  // ── Sky sphere ───────────────────────────────────────────────────────────
+  // ── Sky sphere — matches reference: deep blue zenith → golden horizon ──────
   {
-    const sw = 1024, sh = 512;
+    const sw = 2048, sh = 1024;
     const skyCanvas = document.createElement('canvas');
     skyCanvas.width = sw; skyCanvas.height = sh;
     const sk = skyCanvas.getContext('2d');
-    // Base gradient: dark navy at zenith → dark indigo at horizon
+
+    // Base gradient: deep blue top → steel blue mid → golden orange horizon
     const grad = sk.createLinearGradient(0, 0, 0, sh);
-    grad.addColorStop(0,    '#020b1c');
-    grad.addColorStop(0.45, '#060f28');
-    grad.addColorStop(0.78, '#0c1a40');
-    grad.addColorStop(1,    '#16254e');
+    grad.addColorStop(0,    '#050e22');   // deep midnight blue (zenith)
+    grad.addColorStop(0.30, '#0d1e42');   // dark blue
+    grad.addColorStop(0.55, '#1a3266');   // steel blue (mid sky)
+    grad.addColorStop(0.72, '#2a4a80');   // lighter blue
+    grad.addColorStop(0.84, '#5a6e8a');   // blue-grey near horizon
+    grad.addColorStop(0.92, '#a07040');   // warm golden band
+    grad.addColorStop(0.97, '#c8842a');   // orange horizon glow
+    grad.addColorStop(1.00, '#8a4a10');   // dark amber at very bottom
     sk.fillStyle = grad;
     sk.fillRect(0, 0, sw, sh);
-    // Subtle grey-blue cloud wisps
-    const clouds = [
-      [120, 110, 200, 38], [400, 85, 260, 45], [720, 120, 190, 36],
-      [950, 95, 170, 32],  [210, 195, 280, 50], [560, 175, 220, 42],
-      [820, 210, 260, 48], [70, 260, 180, 36],  [1000, 240, 200, 40],
+
+    // Horizontal cloud streaks — bright white/grey like reference
+    const cloudRows = [
+      // [y_center, count, opacity]
+      [sh * 0.30, 6, 0.18],
+      [sh * 0.40, 5, 0.22],
+      [sh * 0.50, 7, 0.28],
+      [sh * 0.60, 4, 0.20],
     ];
-    clouds.forEach(([cx, cy, rx, ry]) => {
-      const cg = sk.createRadialGradient(cx, cy, 0, cx, cy, rx);
-      cg.addColorStop(0, 'rgba(140,160,210,0.09)');
-      cg.addColorStop(1, 'rgba(140,160,210,0)');
-      sk.fillStyle = cg;
-      sk.beginPath(); sk.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); sk.fill();
+    cloudRows.forEach(([cy, count, alpha]) => {
+      for (let i = 0; i < count; i++) {
+        const cx = (sw / count) * i + sw / (count * 2) + (Math.random() - 0.5) * 120;
+        const rx = 180 + Math.random() * 160;
+        const ry = 28 + Math.random() * 22;
+        const cg = sk.createRadialGradient(cx, cy, 0, cx, cy, rx);
+        cg.addColorStop(0, `rgba(200,220,255,${alpha})`);
+        cg.addColorStop(0.5, `rgba(180,200,240,${alpha * 0.5})`);
+        cg.addColorStop(1,   'rgba(180,200,240,0)');
+        sk.fillStyle = cg;
+        sk.beginPath(); sk.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); sk.fill();
+      }
     });
-    // Warm city-glow haze at the very bottom edge
-    const haze = sk.createLinearGradient(0, sh * 0.8, 0, sh);
-    haze.addColorStop(0, 'rgba(40,30,90,0)');
-    haze.addColorStop(1, 'rgba(60,30,120,0.18)');
-    sk.fillStyle = haze; sk.fillRect(0, sh * 0.8, sw, sh * 0.2);
+
+    // Warm golden glow bloom at horizon centre
+    const sunGlow = sk.createRadialGradient(sw * 0.55, sh * 0.90, 0, sw * 0.55, sh * 0.90, sw * 0.35);
+    sunGlow.addColorStop(0,    'rgba(255,180,60,0.30)');
+    sunGlow.addColorStop(0.35, 'rgba(220,140,40,0.14)');
+    sunGlow.addColorStop(1,    'rgba(220,140,40,0)');
+    sk.fillStyle = sunGlow;
+    sk.fillRect(0, sh * 0.55, sw, sh * 0.45);
+
     const skyTex = new THREE.CanvasTexture(skyCanvas);
     const skySphere = new THREE.Mesh(
       new THREE.SphereGeometry(195, 32, 16),

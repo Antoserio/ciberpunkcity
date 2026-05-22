@@ -6,7 +6,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
-import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
+// Reflector removed — replaced with emissive wet puddle to avoid dark-disc artifact
 import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
@@ -18,6 +18,9 @@ import { createPostProcessingState, getAdaptivePostProcessingState } from './pos
 const CITY_VIDEO_SOURCES = [
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
+  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
+  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
+  // Video mapping showcase
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
 ];
@@ -33,6 +36,11 @@ const CITY_VIDEO_SCREEN_CONFIGS = [
   { x: 0,    y: 18,   z: -28,  width: 10.5, height: 5.9,  rotationY: 0,              frameColor: 0x00ff88, glowColor: 0x00ff88, sourceIndex: 0 },
   // — Extra: right diagonal building facade —
   { x: 28,   y: 13,   z: -8,   width: 7.5,  height: 4.2,  rotationY: -Math.PI / 2,   frameColor: 0xff8800, glowColor: 0xff8800, sourceIndex: 1 },
+  // — Video mapping / immersive web — 4 extra screens —
+  { x: -34.2, y: 13,  z: -5,   width: 6.4,  height: 3.6,  rotationY: Math.PI / 2,    frameColor: 0xff00aa, glowColor: 0xff00aa, sourceIndex: 0 },
+  { x: 34.2,  y: 14,  z: 5,    width: 6.4,  height: 3.6,  rotationY: -Math.PI / 2,   frameColor: 0x00aaff, glowColor: 0x00aaff, sourceIndex: 1 },
+  { x: -18,  y: 12.5, z: 28,   width: 7.0,  height: 3.9,  rotationY: Math.PI,        frameColor: 0xaaff00, glowColor: 0xaaff00, sourceIndex: 2 },
+  { x: 18,   y: 12.5, z: 28,   width: 7.0,  height: 3.9,  rotationY: Math.PI,        frameColor: 0xff6600, glowColor: 0xff6600, sourceIndex: 3 },
 ];
 
 function createCityVideoElement(src) {
@@ -630,7 +638,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, performanceConfig.pixelRatio));
     renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.5;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
@@ -646,9 +654,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), performanceConfig.bloomStrength * 0.22, 0.55, 0.72);
     composer.addPass(bloomPass);
 
-    scene.add(new THREE.AmbientLight(0x5544cc, 5.5));
-    scene.add(new THREE.HemisphereLight(0x8866ff, 0x251050, 2.4));
-    const warmOverhead = new THREE.HemisphereLight(0xffbb66, 0x1a0d40, 1.8);
+    scene.add(new THREE.AmbientLight(0x6655dd, 8.0));
+    scene.add(new THREE.HemisphereLight(0x9977ff, 0x352060, 3.5));
+    const warmOverhead = new THREE.HemisphereLight(0xffcc77, 0x1a0d40, 2.8);
     scene.add(warmOverhead);
     const keyLight = new THREE.DirectionalLight(0xfff0dd, 3.0);
     keyLight.position.set(24, 30, 14);
@@ -1563,32 +1571,22 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   groundSheen.position.y = 0.015;
   scene.add(groundSheen);
 
-  // Reflective wet floor — central area only for performance
-  const reflector = new Reflector(
+  // Wet puddle effect — simple emissive disc, no Reflector artifact
+  const wetPuddle = new THREE.Mesh(
     new THREE.CircleGeometry(55, 64),
-    {
-      clipBias: 0.003,
-      textureWidth: 512,
-      textureHeight: 512,
-      color: new THREE.Color(0x0a1840),
-    }
-  );
-  reflector.rotation.x = -Math.PI / 2;
-  reflector.position.y = 0.03;
-  scene.add(reflector);
-
-  // Distortion overlay to make it look wet/rough, not perfect mirror
-  const wetOverlay = new THREE.Mesh(
-    new THREE.CircleGeometry(55, 64),
-    new THREE.MeshBasicMaterial({
-      color: 0x000000,
+    new THREE.MeshStandardMaterial({
+      color: 0x0a1840,
+      emissive: new THREE.Color(0x0a1840),
+      emissiveIntensity: 0.35,
+      roughness: 0.12,
+      metalness: 0.6,
       transparent: true,
-      opacity: 0.04,
+      opacity: 0.55,
     })
   );
-  wetOverlay.rotation.x = -Math.PI / 2;
-  wetOverlay.position.y = 0.04;
-  scene.add(wetOverlay);
+  wetPuddle.rotation.x = -Math.PI / 2;
+  wetPuddle.position.y = 0.03;
+  scene.add(wetPuddle);
 
   const plaza = new THREE.Mesh(
     new THREE.CircleGeometry(32, 64),
@@ -1891,16 +1889,18 @@ function placeBillboards(scene) {
     const tex = makeBillboardTexture(l1, l2, c1, c2);
     loader.load('/bilboard.glb', (gltf) => {
       const model = gltf.scene.clone();
-      // Scale billboard to ~6 units wide
+      // Scale billboard to ~6 units — use largest dimension so vertical boards scale correctly
       const box = new THREE.Box3().setFromObject(model);
       const size = box.getSize(new THREE.Vector3());
-      const s = 6 / Math.max(size.x, size.z, 0.1);
+      const s = 6 / Math.max(size.x, size.y, size.z, 0.1);
       model.scale.setScalar(s);
       model.rotation.y = ry;
-      model.position.set(...pos);
+      // Place elevated: base at y=3 so the billboard floats above ground
+      model.position.set(pos[0], pos[1] + 3, pos[2]);
       model.updateMatrixWorld(true);
       const scaledBox = new THREE.Box3().setFromObject(model);
-      model.position.y = -scaledBox.min.y;
+      // Adjust so bottom of model is at our desired y
+      model.position.y = pos[1] + 3 - scaledBox.min.y;
       // Apply arcade-style texture
       model.traverse((child) => {
         if (!child.isMesh) return;
@@ -1908,17 +1908,20 @@ function placeBillboards(scene) {
           map: tex,
           emissiveMap: tex,
           emissive: new THREE.Color(c1),
-          emissiveIntensity: 0.4,
-          roughness: 0.4,
+          emissiveIntensity: 2.0,
+          roughness: 0.3,
           metalness: 0.5,
         });
         child.userData.noGlitch = true;
       });
       scene.add(model);
-      // Neon light in front of each billboard
-      const light = new THREE.PointLight(new THREE.Color(c1), 4, 12, 2);
-      light.position.set(pos[0], pos[1] + 3, pos[2] + 1.5);
-      scene.add(light);
+      // Neon lights — front + back so billboard is visible from both sides
+      const lightFront = new THREE.PointLight(new THREE.Color(c1), 8, 14, 1.8);
+      lightFront.position.set(pos[0], pos[1] + 4, pos[2] + 2);
+      scene.add(lightFront);
+      const lightBack = new THREE.PointLight(new THREE.Color(c2), 5, 10, 2);
+      lightBack.position.set(pos[0], pos[1] + 4, pos[2] - 2);
+      scene.add(lightBack);
     });
   });
 }

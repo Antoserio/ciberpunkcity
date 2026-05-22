@@ -761,16 +761,16 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
-        const targetSize = 95;            // much smaller
+        const targetSize = 55;            // distant backdrop — small
         const scale = targetSize / maxDim;
         model.scale.setScalar(scale);
 
-        // Push far back so it sits on the horizon, not blocking foreground
-        model.position.set(0, 0, -78);
+        // Far on the horizon — not blocking anything
+        model.position.set(0, 0, -105);
         model.rotation.y = 0;
         model.updateMatrixWorld(true);
 
-        // Lift base to floor level
+        // Lift base to ground level
         const scaledBox = new THREE.Box3().setFromObject(model);
         model.position.y = -scaledBox.min.y;
 
@@ -1617,32 +1617,67 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   groundSheen.position.y = 0.015;
   scene.add(groundSheen);
 
-  // --- Fake-reflective wet floor ---
-  // Wet reflective floor — metallic but subdued; neon lights give it colour
-  const wetFloor = new THREE.Mesh(
-    new THREE.PlaneGeometry(140, 140),
-    new THREE.MeshStandardMaterial({
-      color: 0x08102e,
-      emissive: new THREE.Color(0x05102a),
-      emissiveIntensity: 0.12,  // subtle — doesn't overpower
-      roughness: 0.06,          // smooth → reflective sheen
-      metalness: 0.96,
-      transparent: true,
-      opacity: 0.70,            // slightly less solid
-    })
-  );
-  wetFloor.rotation.x = -Math.PI / 2;
-  wetFloor.position.y = 0.025;
-  scene.add(wetFloor);
+  // ── Wet reflective floor ─────────────────────────────────────────────────
+  // Step 1: caustic/ripple canvas texture — gives the "puddle" look
+  {
+    const fCvs = document.createElement('canvas');
+    fCvs.width = 512; fCvs.height = 512;
+    const fCtx = fCvs.getContext('2d');
+    fCtx.fillStyle = '#06101e';
+    fCtx.fillRect(0, 0, 512, 512);
+    // Elongated light-caustic ellipses (simulate light bouncing off wet surface)
+    for (let i = 0; i < 32; i++) {
+      const cx = Math.random() * 512, cy = Math.random() * 512;
+      const rx = 18 + Math.random() * 55, ry = 6 + Math.random() * 16;
+      const angle = Math.random() * Math.PI;
+      const grad = fCtx.createRadialGradient(cx, cy, 0, cx, cy, rx);
+      grad.addColorStop(0,   'rgba(40,100,255,0.22)');
+      grad.addColorStop(0.5, 'rgba(20,60,180,0.10)');
+      grad.addColorStop(1,   'rgba(10,30,100,0)');
+      fCtx.save();
+      fCtx.translate(cx, cy); fCtx.rotate(angle); fCtx.scale(1, ry / rx); fCtx.translate(-cx, -cy);
+      fCtx.fillStyle = grad;
+      fCtx.beginPath(); fCtx.ellipse(cx, cy, rx, rx, 0, 0, Math.PI * 2); fCtx.fill();
+      fCtx.restore();
+    }
+    // Faint bright streaks
+    for (let i = 0; i < 10; i++) {
+      const y = Math.random() * 512;
+      fCtx.strokeStyle = `rgba(80,160,255,${0.04 + Math.random() * 0.06})`;
+      fCtx.lineWidth = 1 + Math.random() * 2;
+      fCtx.beginPath(); fCtx.moveTo(0, y); fCtx.lineTo(512, y + (Math.random() - 0.5) * 40); fCtx.stroke();
+    }
+    const floorCausticTex = new THREE.CanvasTexture(fCvs);
+    floorCausticTex.wrapS = floorCausticTex.wrapT = THREE.RepeatWrapping;
+    floorCausticTex.repeat.set(5, 5);
 
-  // Gentle neon PointLights at floor level — give colour to the reflective surface
-  const floorGlowCyan = new THREE.PointLight(0x00aaff, 7, 55, 1.8);
+    // Step 2: metallic plane with caustic texture — half-transparent so grid shows through
+    const wetFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(140, 140),
+      new THREE.MeshStandardMaterial({
+        map: floorCausticTex,
+        color: 0x0a1432,
+        emissive: new THREE.Color(0x080e28),
+        emissiveIntensity: 0.18,
+        roughness: 0.08,   // smooth = picks up neon lights
+        metalness: 0.92,
+        transparent: true,
+        opacity: 0.58,     // let the grid show through = not fully solid
+      })
+    );
+    wetFloor.rotation.x = -Math.PI / 2;
+    wetFloor.position.y = 0.025;
+    scene.add(wetFloor);
+  }
+
+  // Neon PointLights that "bounce" off the metallic surface
+  const floorGlowCyan = new THREE.PointLight(0x00aaff, 8, 58, 1.7);
   floorGlowCyan.position.set(-10, 0.3, 0);
   scene.add(floorGlowCyan);
-  const floorGlowMag  = new THREE.PointLight(0xff00cc, 6, 45, 1.8);
+  const floorGlowMag  = new THREE.PointLight(0xff00cc, 7, 48, 1.7);
   floorGlowMag.position.set(10, 0.3, 8);
   scene.add(floorGlowMag);
-  const floorGlowBlue = new THREE.PointLight(0x2255ff, 9, 70, 1.5);
+  const floorGlowBlue = new THREE.PointLight(0x2255ff, 10, 72, 1.5);
   floorGlowBlue.position.set(0, 0.3, -10);
   scene.add(floorGlowBlue);
 
@@ -1814,54 +1849,66 @@ function makeArcadePanelTex(neonColor) {
 }
 
 function addArcadePanels(scene) {
-  const palette = ['#00ffcc','#ff00cc','#ffdd00','#00bbff','#ff4488','#88ff00'];
-  // [x, y_centre, z, width, height, rotY]
-  const placements = [
-    // North wall panels (high up, visible from centre)
-    [-18, 9,  -24, 5.5, 5.5,  0],
-    [ 18, 9,  -24, 5.5, 5.5,  0],
-    [  0, 14, -26, 4.0, 4.0,  0],
-    // Left wall (facing right)
-    [-32, 7,   -8, 5.0, 5.0,  Math.PI / 2],
-    [-32, 7,   10, 5.0, 5.0,  Math.PI / 2],
-    [-32, 13,   0, 4.5, 4.5,  Math.PI / 2],
-    // Right wall (facing left)
-    [ 32, 7,   -8, 5.0, 5.0, -Math.PI / 2],
-    [ 32, 7,   10, 5.0, 5.0, -Math.PI / 2],
-    [ 32, 13,   0, 4.5, 4.5, -Math.PI / 2],
-    // Mid-city scattered panels
-    [-24, 6,    2, 4.0, 4.0,  0.6],
-    [ 24, 6,    2, 4.0, 4.0, -0.6],
-    [-14, 8,  -18, 3.5, 3.5,  0.3],
-    [ 14, 8,  -18, 3.5, 3.5, -0.3],
-    // High towers
-    [-36, 16,  -32, 4.0, 4.0,  0.4],
-    [ 36, 16,  -32, 4.0, 4.0, -0.4],
+  const palette = ['#00ffcc', '#ff00cc', '#ffdd00', '#00bbff', '#ff4488', '#88ff00'];
+
+  // Each entry: building [bx, bz] + face direction.
+  // facing = which face of the building the panel goes on (toward city center).
+  // halfW = half-width of that building face (to push panel flush to surface).
+  // panels at two heights: low (y≈5) and mid (y≈10).
+  const buildingFaces = [
+    // Inner ring buildings — face pointing toward center
+    { bx: -18, bz: -30, halfW: 3.5, faceAngle: Math.atan2( 18,  30) }, // NW → SE face
+    { bx:  18, bz: -30, halfW: 3.5, faceAngle: Math.atan2(-18,  30) }, // NE → SW face
+    { bx: -30, bz:  18, halfW: 3.5, faceAngle: Math.atan2( 30, -18) }, // W  → E face
+    { bx:  30, bz:  18, halfW: 3.5, faceAngle: Math.atan2(-30, -18) }, // E  → W face
+    { bx: -34, bz: -34, halfW: 4.0, faceAngle: Math.atan2( 34,  34) },
+    { bx:  34, bz: -34, halfW: 4.0, faceAngle: Math.atan2(-34,  34) },
+    { bx: -34, bz:  34, halfW: 4.0, faceAngle: Math.atan2( 34, -34) },
+    { bx:  34, bz:  34, halfW: 4.0, faceAngle: Math.atan2(-34, -34) },
+    // Outer ring
+    { bx: -46, bz: -18, halfW: 4.5, faceAngle: Math.atan2( 46,  18) },
+    { bx:  46, bz: -18, halfW: 4.5, faceAngle: Math.atan2(-46,  18) },
+    { bx: -46, bz:  18, halfW: 4.5, faceAngle: Math.atan2( 46, -18) },
+    { bx:  46, bz:  18, halfW: 4.5, faceAngle: Math.atan2(-46, -18) },
   ];
 
-  placements.forEach(([x, y, z, w, h, ry], i) => {
-    const col = palette[i % palette.length];
-    const tex = makeArcadePanelTex(col);
+  const HEIGHTS = [5.5, 10.5];   // two panels per building: low and mid
+  const PW = 4.2, PH = 4.2;       // panel face size
 
-    // Panel face
-    const panel = new THREE.Mesh(
-      new THREE.PlaneGeometry(w, h),
-      new THREE.MeshStandardMaterial({
-        map: tex, emissiveMap: tex,
-        emissive: new THREE.Color(col),
-        emissiveIntensity: 1.6,
-        roughness: 0.25, metalness: 0.4,
-      })
-    );
-    panel.position.set(x, y, z);
-    panel.rotation.y = ry;
-    panel.userData.noGlitch = true;
-    scene.add(panel);
+  let idx = 0;
+  buildingFaces.forEach(({ bx, bz, halfW, faceAngle }) => {
+    // Direction vector from building center toward city center (0,0)
+    const len = Math.sqrt(bx * bx + bz * bz);
+    const dx = -bx / len, dz = -bz / len;
 
-    // Faint neon fill light in front
-    const pl = new THREE.PointLight(new THREE.Color(col), 3.5, 10, 2);
-    pl.position.set(x, y, z + 1.2);
-    scene.add(pl);
+    HEIGHTS.forEach((py) => {
+      const col = palette[(idx++) % palette.length];
+      const tex = makeArcadePanelTex(col);
+
+      // Panel surface sits flush on building face + tiny gap (0.06)
+      const px = bx + dx * (halfW + 0.06);
+      const pz = bz + dz * (halfW + 0.06);
+
+      const panel = new THREE.Mesh(
+        new THREE.PlaneGeometry(PW, PH),
+        new THREE.MeshStandardMaterial({
+          map: tex, emissiveMap: tex,
+          emissive: new THREE.Color(col),
+          emissiveIntensity: 1.8,
+          roughness: 0.22, metalness: 0.35,
+        })
+      );
+      panel.position.set(px, py, pz);
+      // Rotate to face inward (toward city center)
+      panel.rotation.y = Math.atan2(dx, dz);
+      panel.userData.noGlitch = true;
+      scene.add(panel);
+
+      // Small neon light just in front of the panel
+      const pl = new THREE.PointLight(new THREE.Color(col), 4, 11, 2);
+      pl.position.set(px + dx * 1.5, py, pz + dz * 1.5);
+      scene.add(pl);
+    });
   });
 }
 

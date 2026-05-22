@@ -765,44 +765,47 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         const scale = targetSize / maxDim;
         model.scale.setScalar(scale);
 
-        // Bring closer so fog doesn't swallow it; sit at floor level
-        model.position.set(-10, 0, -55);
-        model.rotation.y = Math.PI * 0.08;
+        // Centre of model — align base to floor, spread wide as backdrop
+        const centreBox = new THREE.Box3().setFromObject(model);
+        model.position.set(0, -centreBox.min.y * scale, -48);
+        model.rotation.y = 0;
 
-        // White-silver futuristic spires — reference style
-        // Use fog=false so the model cuts through the scene fog and stays visible
+        // White-silver spires like reference — fog:false so always visible
+        let meshIdx = 0;
         model.traverse((child) => {
           if (!child.isMesh) return;
-
-          // Pick a slight color variation per mesh index for depth
-          const idx = child.id % 4;
-          const baseColors   = [0xd8eeff, 0xc8dcf4, 0xe4f0ff, 0xb8d0ee];
-          const emissColors  = [0x5588dd, 0x3366cc, 0x6699ee, 0x4477bb];
-
+          const idx = (meshIdx++) % 4;
+          const baseColors  = [0xddeeff, 0xc8daf8, 0xe8f2ff, 0xb8ccee];
+          const emissColors = [0x6699ff, 0x4477ee, 0x88aaff, 0x5588dd];
           child.material = new THREE.MeshStandardMaterial({
             color: new THREE.Color(baseColors[idx]),
             emissive: new THREE.Color(emissColors[idx]),
-            emissiveIntensity: 1.4,
-            roughness: 0.42,
-            metalness: 0.55,
-            fog: false,          // punch through fog — always visible
+            emissiveIntensity: 2.8,   // very bright — punches through fog
+            roughness: 0.38,
+            metalness: 0.60,
+            fog: false,               // ignore scene fog entirely
           });
           child.userData.noGlitch = true;
         });
 
         scene.add(model);
 
-        // Dedicated sky light aimed at the skyline (cool blue from above)
-        const skylineLight = new THREE.DirectionalLight(0x88bbff, 4.5);
-        skylineLight.position.set(-10, 60, -40);
-        skylineLight.target.position.set(-10, 0, -55);
+        // Cool blue sky light from above
+        const skylineLight = new THREE.DirectionalLight(0x88ccff, 6.0);
+        skylineLight.position.set(0, 80, -30);
+        skylineLight.target.position.set(0, 0, -48);
         scene.add(skylineLight);
         scene.add(skylineLight.target);
 
-        // Warm horizon rim from below (golden/orange like the reference sunset)
-        const rimLight = new THREE.PointLight(0xffaa44, 18, 120, 1.4);
-        rimLight.position.set(0, -5, -55);
+        // Golden/orange warm rim from below-front (reference sunset feel)
+        const rimLight = new THREE.PointLight(0xffbb44, 25, 180, 1.3);
+        rimLight.position.set(0, 2, -20);
         scene.add(rimLight);
+
+        // Extra fill — warm right side
+        const fillRight = new THREE.PointLight(0xff8833, 12, 130, 1.5);
+        fillRight.position.set(60, 20, -40);
+        scene.add(fillRight);
       });
     }
 
@@ -1596,12 +1599,13 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   groundGrid.userData.noGlitch = true;
   scene.add(groundGrid);
 
+  // Thin blue additive sheen across the whole floor
   const groundSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshBasicMaterial({
-      color: 0x1a33ff,
+      color: 0x1144ff,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.10,
       blending: THREE.AdditiveBlending,
     })
   );
@@ -1609,30 +1613,35 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   groundSheen.position.y = 0.015;
   scene.add(groundSheen);
 
-  // Wet puddle effect — simple emissive disc, no Reflector artifact
-  const wetPuddle = new THREE.Mesh(
-    new THREE.CircleGeometry(55, 64),
+  // --- Fake-reflective wet floor ---
+  // A highly metallic plane picks up every neon light and gives a mirror-like look
+  // without the black-disc Reflector artifact.
+  const wetFloor = new THREE.Mesh(
+    new THREE.PlaneGeometry(140, 140),
     new THREE.MeshStandardMaterial({
-      color: 0x0a1840,
-      emissive: new THREE.Color(0x0a1840),
-      emissiveIntensity: 0.35,
-      roughness: 0.12,
-      metalness: 0.6,
+      color: 0x060e28,
+      emissive: new THREE.Color(0x0a1a50),
+      emissiveIntensity: 0.4,
+      roughness: 0.04,   // very smooth  → picks up lights like a mirror
+      metalness: 0.98,   // highly metallic
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.82,
     })
   );
-  wetPuddle.rotation.x = -Math.PI / 2;
-  wetPuddle.position.y = 0.03;
-  scene.add(wetPuddle);
+  wetFloor.rotation.x = -Math.PI / 2;
+  wetFloor.position.y = 0.025;
+  scene.add(wetFloor);
 
-  const plaza = new THREE.Mesh(
-    new THREE.CircleGeometry(32, 64),
-    new THREE.MeshBasicMaterial({ color: 0x0b0820, transparent: true, opacity: 0.22 })
-  );
-  plaza.rotation.x = -Math.PI / 2;
-  plaza.position.y = 0.012;
-  scene.add(plaza);
+  // Upward neon PointLights that bounce off the metallic floor to give colour
+  const floorGlowCyan  = new THREE.PointLight(0x00ccff, 12, 60, 1.6);
+  floorGlowCyan.position.set(-10, 0.5, 0);
+  scene.add(floorGlowCyan);
+  const floorGlowMag   = new THREE.PointLight(0xff00cc, 10, 50, 1.6);
+  floorGlowMag.position.set(10, 0.5, 8);
+  scene.add(floorGlowMag);
+  const floorGlowBlue  = new THREE.PointLight(0x2244ff, 14, 80, 1.4);
+  floorGlowBlue.position.set(0, 0.5, -10);
+  scene.add(floorGlowBlue);
 
   const carouselRotation = Math.PI;
 
@@ -1913,54 +1922,95 @@ function makeBillboardTexture(line1, line2, color1, color2) {
 }
 
 function placeBillboards(scene) {
-  const loader = new GLTFLoader();
+  // Build billboards directly in Three.js — vertical plane + pole.
+  // No GLB dependency so orientation is always correct.
   const configs = [
-    { pos: [-22, 0, -18], ry: 0.5,        l1: 'GIRASOMNIS', l2: 'IMMERSIVE SHOWS',  c1: '#00ffcc', c2: '#ff00aa' },
-    { pos: [22,  0, -18], ry: -0.5,       l1: 'AGENCY°360', l2: 'CREATIVE CITY',    c1: '#ff2d2d', c2: '#ffaa00' },
-    { pos: [-28, 0,  8],  ry: Math.PI/2,  l1: 'HORIZONS',   l2: 'DANCE & VISUALS',  c1: '#00c8ff', c2: '#ff00ff' },
+    { pos: [-22, 0, -18], ry: 0.5,        l1: 'GIRASOMNIS',  l2: 'IMMERSIVE SHOWS',  c1: '#00ffcc', c2: '#ff00aa' },
+    { pos: [22,  0, -18], ry: -0.5,       l1: 'AGENCY°360',  l2: 'CREATIVE CITY',    c1: '#ff2d2d', c2: '#ffaa00' },
+    { pos: [-28, 0,  8],  ry: Math.PI/2,  l1: 'HORIZONS',    l2: 'DANCE & VISUALS',  c1: '#00c8ff', c2: '#ff00ff' },
     { pos: [28,  0,  8],  ry: -Math.PI/2, l1: 'GENESIS LUX', l2: 'VIOLIN · LUZ',     c1: '#ffaa00', c2: '#ff4444' },
-    { pos: [-10, 0, -30], ry: 0.2,        l1: 'LUMINA',     l2: 'LUZ · EFECTOS',    c1: '#ff00ff', c2: '#00ffff' },
-    { pos: [10,  0, -30], ry: -0.2,       l1: 'LIDAR TECH', l2: 'INTERACTIVE ART',  c1: '#00ff88', c2: '#0088ff' },
+    { pos: [-10, 0, -30], ry: 0.2,        l1: 'LUMINA',      l2: 'LUZ · EFECTOS',    c1: '#ff00ff', c2: '#00ffff' },
+    { pos: [10,  0, -30], ry: -0.2,       l1: 'LIDAR TECH',  l2: 'INTERACTIVE ART',  c1: '#00ff88', c2: '#0088ff' },
   ];
+
+  const BW = 6.0, BH = 3.4;
 
   configs.forEach(({ pos, ry, l1, l2, c1, c2 }) => {
     const tex = makeBillboardTexture(l1, l2, c1, c2);
-    loader.load('/bilboard.glb', (gltf) => {
-      const model = gltf.scene.clone();
-      // Scale billboard to ~6 units — use largest dimension so vertical boards scale correctly
-      const box = new THREE.Box3().setFromObject(model);
-      const size = box.getSize(new THREE.Vector3());
-      const s = 6 / Math.max(size.x, size.y, size.z, 0.1);
-      model.scale.setScalar(s);
-      model.rotation.y = ry;
-      // Place elevated: base at y=3 so the billboard floats above ground
-      model.position.set(pos[0], pos[1] + 3, pos[2]);
-      model.updateMatrixWorld(true);
-      const scaledBox = new THREE.Box3().setFromObject(model);
-      // Adjust so bottom of model is at our desired y
-      model.position.y = pos[1] + 3 - scaledBox.min.y;
-      // Apply arcade-style texture
-      model.traverse((child) => {
-        if (!child.isMesh) return;
-        child.material = new THREE.MeshStandardMaterial({
-          map: tex,
-          emissiveMap: tex,
-          emissive: new THREE.Color(c1),
-          emissiveIntensity: 2.0,
-          roughness: 0.3,
-          metalness: 0.5,
-        });
-        child.userData.noGlitch = true;
-      });
-      scene.add(model);
-      // Neon lights — front + back so billboard is visible from both sides
-      const lightFront = new THREE.PointLight(new THREE.Color(c1), 8, 14, 1.8);
-      lightFront.position.set(pos[0], pos[1] + 4, pos[2] + 2);
-      scene.add(lightFront);
-      const lightBack = new THREE.PointLight(new THREE.Color(c2), 5, 10, 2);
-      lightBack.position.set(pos[0], pos[1] + 4, pos[2] - 2);
-      scene.add(lightBack);
-    });
+    const group = new THREE.Group();
+
+    // Dark outer frame
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(BW + 0.3, BH + 0.3, 0.25),
+      new THREE.MeshStandardMaterial({ color: 0x050010, metalness: 0.85, roughness: 0.25 })
+    );
+    frame.userData.noGlitch = true;
+    group.add(frame);
+
+    // Neon edge glow plane
+    const borderGlow = new THREE.Mesh(
+      new THREE.PlaneGeometry(BW + 0.15, BH + 0.15),
+      new THREE.MeshBasicMaterial({
+        color: new THREE.Color(c1),
+        transparent: true, opacity: 0.5,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    borderGlow.position.z = 0.14;
+    borderGlow.userData.noGlitch = true;
+    group.add(borderGlow);
+
+    // Screen front
+    const screenFront = new THREE.Mesh(
+      new THREE.PlaneGeometry(BW, BH),
+      new THREE.MeshStandardMaterial({
+        map: tex, emissiveMap: tex,
+        emissive: new THREE.Color(c1),
+        emissiveIntensity: 2.2,
+        roughness: 0.2, metalness: 0.3,
+      })
+    );
+    screenFront.position.z = 0.145;
+    screenFront.userData.noGlitch = true;
+    group.add(screenFront);
+
+    // Screen back
+    const screenBack = new THREE.Mesh(
+      new THREE.PlaneGeometry(BW, BH),
+      new THREE.MeshStandardMaterial({
+        map: tex, emissiveMap: tex,
+        emissive: new THREE.Color(c2),
+        emissiveIntensity: 1.8,
+        roughness: 0.2, metalness: 0.3,
+      })
+    );
+    screenBack.rotation.y = Math.PI;
+    screenBack.position.z = -0.145;
+    screenBack.userData.noGlitch = true;
+    group.add(screenBack);
+
+    // Support pole
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.07, 0.10, 5.5, 8),
+      new THREE.MeshStandardMaterial({ color: 0x1a1a2e, metalness: 0.9, roughness: 0.2 })
+    );
+    pole.position.y = -(BH / 2 + 5.5 / 2);
+    pole.userData.noGlitch = true;
+    group.add(pole);
+
+    // Centre of face at y = 4 + BH/2, bottom of pole at y ≈ 0
+    group.position.set(pos[0], 4 + BH / 2, pos[2]);
+    group.rotation.y = ry;
+    group.userData.noGlitch = true;
+    scene.add(group);
+
+    // Neon PointLights front & back
+    const lf = new THREE.PointLight(new THREE.Color(c1), 9, 16, 1.7);
+    lf.position.set(pos[0], 4 + BH / 2, pos[2] + 2.5);
+    scene.add(lf);
+    const lb = new THREE.PointLight(new THREE.Color(c2), 6, 12, 2.0);
+    lb.position.set(pos[0], 4 + BH / 2, pos[2] - 2.5);
+    scene.add(lb);
   });
 }
 

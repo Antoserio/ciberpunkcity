@@ -10,18 +10,495 @@ import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
-import { CITY_VIDEO_SCREEN_CONFIGS, CITY_VIDEO_SOURCES, HERO_COLORS, ROBOT_NO_FLY_ZONES, WORKS, WORKS_CAMERA_POSITION, WORKS_CAMERA_TRANSITION_MS } from './cityWorldConstants';
-import { createCityVideoElement, createCityVideoScreen, syncCityVideos } from './cityVideoUtils';
 import useCameraTargetTransition from './useCameraTargetTransition';
 import { createSimpleBuildingLOD, getPerformanceConfig } from './cityPerformance';
 import { initializeTheatreStudio, getTheatreSheet, createEditableCamera } from './theatreConfig';
 import { cyberPostFragmentShader, cyberPostVertexShader, createCyberPostUniforms } from './postprocessing/cyberPostShaders';
 import { createPostProcessingState, getAdaptivePostProcessingState } from './postprocessing/postProcessingConfig';
-import { makeGlowTexture, makeVideoCanvasTexture, makeBuildingWallTexture, makeNeonSignTexture } from './textureGenerator';
-import { buildCityScene, makeWorksCarouselScreen } from './buildingGenerator';
-import { applyCameraRotation, clampCameraPosition, LOOK_SPEED, MAX_PITCH, updateCameraMovement, updateWorksCameraTransition } from './cameraController';
+
+const CITY_VIDEO_SOURCES = [
+  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
+  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
+  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
+  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
+];
+
+const CITY_VIDEO_SCREEN_CONFIGS = [
+  { x: -30, y: 10.5, z: -25.4, width: 7.2, height: 4.05, rotationY: 0, frameColor: 0x00ffff, glowColor: 0x00ffff, sourceIndex: 0 },
+  { x: 30, y: 11.5, z: -25.4, width: 7.2, height: 4.05, rotationY: 0, frameColor: 0xff00ff, glowColor: 0xff00ff, sourceIndex: 1 },
+  { x: -34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: Math.PI / 2, frameColor: 0xffff00, glowColor: 0xffff00, sourceIndex: 2 },
+  { x: 34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: -Math.PI / 2, frameColor: 0x4488ff, glowColor: 0x4488ff, sourceIndex: 3 },
+];
+
+function createCityVideoElement(src) {
+  const video = document.createElement('video');
+  video.src = src;
+  video.crossOrigin = 'anonymous';
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.autoplay = false;
+  video.preload = 'metadata';
+  video.setAttribute('playsinline', '');
+  video.setAttribute('webkit-playsinline', '');
+  video.setAttribute('muted', '');
+  video.load();
+
+  video.addEventListener('loadeddata', () => {
+    if (video.paused) video.play().catch(() => {});
+  });
+
+  video.addEventListener('canplay', () => {
+    if (video.paused) video.play().catch(() => {});
+  });
+
+  return video;
+}
+
+function createCityVideoScreen(scene, config, texture) {
+  const group = new THREE.Group();
+  const depth = 0.22;
+  const frame = new THREE.Mesh(
+    new THREE.BoxGeometry(config.width + 0.42, config.height + 0.42, depth),
+    new THREE.MeshBasicMaterial({ color: 0x04040a })
+  );
+  group.add(frame);
+
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(config.width, config.height),
+    new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, toneMapped: false, color: 0xffffff })
+  );
+  screen.position.z = depth * 0.55;
+  group.add(screen);
+
+  const border = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(config.width + 0.12, config.height + 0.12, 0.06)),
+    new THREE.LineBasicMaterial({ color: config.frameColor })
+  );
+  border.position.z = depth * 0.42;
+  group.add(border);
+
+  const glow = new THREE.Mesh(
+    new THREE.PlaneGeometry(config.width + 0.8, config.height + 0.8),
+    new THREE.MeshBasicMaterial({ color: config.glowColor, transparent: true, opacity: 0.09, side: THREE.DoubleSide })
+  );
+  glow.position.z = 0.02;
+  group.add(glow);
 
 
+  group.position.set(config.x, config.y, config.z);
+  group.rotation.y = config.rotationY || 0;
+  group.userData.screen = screen;
+  scene.add(group);
+  return group;
+}
+
+function syncCityVideos(cityVideos, camera) {
+  const nearestVideos = cityVideos
+    .map((item) => ({ item, distance: camera.position.distanceTo(item.group.position) }))
+    .sort((a, b) => a.distance - b.distance);
+
+  nearestVideos.forEach(({ item, distance }, index) => {
+    const shouldShow = distance < 62;
+    const shouldPlay = shouldShow && index < 2;
+    item.group.visible = shouldShow;
+
+    if (shouldPlay && item.video.paused) {
+      item.video.play().catch(() => {});
+    } else if (!shouldPlay && !item.video.paused) {
+      item.video.pause();
+    }
+
+    if (shouldPlay && item.video.readyState >= item.video.HAVE_CURRENT_DATA) {
+      item.texture.needsUpdate = true;
+      const screenMesh = item.group.userData.screen;
+      if (screenMesh && screenMesh.material) {
+        screenMesh.material.map = item.texture;
+        screenMesh.material.needsUpdate = true;
+      }
+    }
+  });
+}
+
+function makeGlowTexture(hex) {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  grad.addColorStop(0, hex + 'ff');
+  grad.addColorStop(0.25, hex + 'bb');
+  grad.addColorStop(0.6, hex + '44');
+  grad.addColorStop(1, hex + '00');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  return new THREE.CanvasTexture(canvas);
+}
+
+function makeVideoCanvasTexture(label, accentColor, mode = 'generic') {
+  label = label || 'AGENCY360';
+  accentColor = accentColor || '#ff00ff';
+  const W = 512, H = 288;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const tex = new THREE.CanvasTexture(canvas);
+
+  function draw(t) {
+    ctx.fillStyle = '#050010';
+    ctx.fillRect(0, 0, W, H);
+
+    const grd = ctx.createLinearGradient(0, 0, W, H);
+    grd.addColorStop(0, `hsla(280,100%,${20 + 10 * Math.sin(t * 0.3)}%,0.9)`);
+    grd.addColorStop(0.5, `hsla(200,100%,${15 + 8 * Math.cos(t * 0.5)}%,0.7)`);
+    grd.addColorStop(1, `hsla(320,100%,${18 + 6 * Math.sin(t * 0.7)}%,0.8)`);
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+
+    for (let i = 0; i < 4; i++) {
+      const y = (Math.sin(t * 2.1 + i * 1.3) * 0.5 + 0.5) * H;
+      const alpha = 0.08 + 0.05 * Math.sin(t * 3 + i);
+      ctx.fillStyle = `rgba(0,255,255,${alpha})`;
+      ctx.fillRect(0, y, W, 2 + Math.random() * 4);
+    }
+
+    ctx.strokeStyle = 'rgba(0,255,255,0.12)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < W; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 18) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+    const pulse = 0.8 + 0.2 * Math.sin(t * 1.5);
+    if (mode === 'dance') {
+      ctx.save();
+      ctx.globalAlpha = 0.32 + 0.08 * Math.sin(t * 1.4);
+      ctx.fillStyle = '#ff4db8';
+      for (let i = 0; i < 7; i++) {
+        const barX = 40 + i * 70 + Math.sin(t * 0.8 + i) * 8;
+        ctx.fillRect(barX, 20, 18, H - 40);
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(W * 0.32 + Math.sin(t * 1.2) * 14, H * 0.6 + Math.cos(t * 1.5) * 10);
+      ctx.rotate(-0.28 + Math.sin(t * 0.9) * 0.05);
+      ctx.fillStyle = 'rgba(255, 210, 240, 0.92)';
+      ctx.shadowBlur = 35;
+      ctx.shadowColor = accentColor;
+      ctx.fillRect(-16, -90, 24, 110);
+      ctx.fillRect(-42, -20, 80, 22);
+      ctx.fillRect(-30, 18, 20, 92);
+      ctx.fillRect(2, 18, 20, 92);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(W * 0.58 + Math.sin(t * 1.5 + 1.2) * 16, H * 0.58 + Math.cos(t * 1.1 + 0.4) * 12);
+      ctx.rotate(0.22 + Math.sin(t * 1.1) * 0.06);
+      ctx.fillStyle = 'rgba(255, 235, 245, 0.95)';
+      ctx.shadowBlur = 35;
+      ctx.shadowColor = '#ffffff';
+      ctx.fillRect(-12, -84, 22, 102);
+      ctx.fillRect(-34, -12, 66, 20);
+      ctx.fillRect(-24, 18, 18, 84);
+      ctx.fillRect(2, 18, 18, 84);
+      ctx.restore();
+
+      const tickerOffset = (t * 90) % (W + 900);
+      ctx.shadowColor = accentColor;
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = 'rgba(255,120,210,0.95)';
+      ctx.font = 'bold 14px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('◆ STUDIO 360 ◆ DANCE MAPPING ◆ PERFORMANCE VISUAL ◆ AGENCY360 ◆', W - tickerOffset, H - 16);
+    } else {
+      ctx.shadowBlur = 30;
+      ctx.shadowColor = accentColor;
+      ctx.fillStyle = accentColor;
+      ctx.globalAlpha = pulse;
+      ctx.font = 'bold 52px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, W / 2, H / 2 - 18);
+      ctx.globalAlpha = 1;
+
+      ctx.shadowColor = '#00ffff';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = `rgba(0,255,255,${0.6 + 0.3 * Math.sin(t * 2)})`;
+      ctx.font = '18px monospace';
+      ctx.fillText('AGENCY360 · CREATIVE · XR', W / 2, H / 2 + 18);
+
+      const tickerOffset = (t * 60) % (W + 800);
+      ctx.shadowColor = '#ffff00';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = 'rgba(255,255,0,0.9)';
+      ctx.font = '13px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('◆ SOFTWARE  ◆ VIDEO 360°  ◆ AVATARES 3D  ◆ EVENTOS XR  ◆ METAVERSO  ◆ STREAMING  ', W - tickerOffset, H - 14);
+    }
+
+    for (let y = 0; y < H; y += 3) {
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fillRect(0, y, W, 1.5);
+    }
+
+    tex.needsUpdate = true;
+  }
+
+  return { canvas, tex, draw };
+}
+
+const KANJI = ['声','石','山','テレビ','ゲーム','電子','未来','空間','光','都市','次元','波','夢','速','力'];
+const WALL_TEXTS = [
+  ['AGENCY360','SOFTWARE','12/20/2021','◆ XR'],
+  ['VIRTUAL','CREATIVE','VIDEO 360°','METAVERSE'],
+  ['STREAMING','AVATARES','EVENTOS','DIGITAL'],
+  ['◉ SPORT','◉ TECH','◉ ART','◉ XR'],
+  ['360°','3D','AR/VR','LIVE'],
+];
+const WALL_PALETTES = [
+  ['#ff0044','#ff4488','#ffffff'],
+  ['#00ffff','#0088ff','#ffffff'],
+  ['#ff00ff','#ff44cc','#ffffff'],
+  ['#ffff00','#ffaa00','#ffffff'],
+  ['#ff6600','#ff9900','#ffffff'],
+  ['#00ff88','#00ffcc','#ffffff'],
+];
+
+function makeBuildingWallTexture(accentColor, seed) {
+  seed = seed || 0;
+  const W = 512, H = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  let s = seed * 9301 + 49297;
+  const rng = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+
+  const palette = WALL_PALETTES[seed % WALL_PALETTES.length];
+  const c1 = palette[0], c2 = palette[1], cw = palette[2];
+
+  const grd = ctx.createLinearGradient(0, 0, 0, H);
+  grd.addColorStop(0, '#060008');
+  grd.addColorStop(0.5, '#0a000f');
+  grd.addColorStop(1, '#020005');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  const panelCount = 4 + Math.floor(rng() * 5);
+  for (let i = 0; i < panelCount; i++) {
+    const px = Math.floor(rng() * W * 0.8);
+    const py = Math.floor(rng() * H * 0.7);
+    const pw = 60 + Math.floor(rng() * 180);
+    const ph = 40 + Math.floor(rng() * 120);
+    const alpha = 0.08 + rng() * 0.18;
+    ctx.fillStyle = i % 2 === 0 ? c1 : c2;
+    ctx.globalAlpha = alpha;
+    ctx.fillRect(px, py, pw, ph);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = i % 2 === 0 ? c1 : c2;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.4 + rng() * 0.4;
+    ctx.strokeRect(px, py, pw, ph);
+    ctx.globalAlpha = 1;
+  }
+
+  const lineCount = 3 + Math.floor(rng() * 4);
+  for (let i = 0; i < lineCount; i++) {
+    const ly = Math.floor(rng() * H);
+    const lw = rng() > 0.5 ? W : W * (0.3 + rng() * 0.6);
+    const lx = rng() > 0.5 ? 0 : Math.floor(rng() * (W - lw));
+    ctx.strokeStyle = rng() > 0.5 ? c1 : c2;
+    ctx.lineWidth = 1 + Math.floor(rng() * 2);
+    ctx.shadowBlur = 8 + rng() * 10;
+    ctx.shadowColor = rng() > 0.5 ? c1 : c2;
+    ctx.globalAlpha = 0.6 + rng() * 0.4;
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + lw, ly); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  for (let i = 0; i < 2; i++) {
+    const vx = Math.floor(rng() * W);
+    ctx.strokeStyle = rng() > 0.5 ? c1 : c2;
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = rng() > 0.5 ? c1 : c2;
+    ctx.globalAlpha = 0.5 + rng() * 0.4;
+    ctx.beginPath(); ctx.moveTo(vx, 0); ctx.lineTo(vx, H); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  const kanjiCount = 2 + Math.floor(rng() * 3);
+  for (let i = 0; i < kanjiCount; i++) {
+    const kj = KANJI[Math.floor(rng() * KANJI.length)];
+    const kx = 40 + Math.floor(rng() * (W - 80));
+    const ky = 60 + Math.floor(rng() * (H - 120));
+    const ks = 60 + Math.floor(rng() * 80);
+    ctx.shadowBlur = 20 + rng() * 20;
+    ctx.shadowColor = rng() > 0.5 ? c1 : c2;
+    ctx.fillStyle = rng() > 0.3 ? cw : (rng() > 0.5 ? c1 : c2);
+    ctx.globalAlpha = 0.7 + rng() * 0.3;
+    ctx.font = `bold ${ks}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(kj, kx, ky);
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  const texts = WALL_TEXTS[seed % WALL_TEXTS.length];
+  const mainText = texts[0];
+  const subText = texts[1 + (seed % (texts.length - 1))];
+
+  ctx.shadowBlur = 30;
+  ctx.shadowColor = c1;
+  ctx.fillStyle = c1;
+  ctx.globalAlpha = 0.95;
+  ctx.font = `bold ${38 + Math.floor(rng() * 18)}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(mainText, W / 2, H * 0.38);
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+  ctx.shadowBlur = 14;
+  ctx.shadowColor = c2;
+  ctx.fillStyle = c2;
+  ctx.globalAlpha = 0.85;
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText(subText, W / 2, H * 0.38 + 50);
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+  if (rng() > 0.4) {
+    const dateStr = `${Math.floor(rng()*12+1).toString().padStart(2,'0')}/${Math.floor(rng()*28+1).toString().padStart(2,'0')}/202${Math.floor(rng()*5)}`;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = cw;
+    ctx.fillStyle = cw;
+    ctx.globalAlpha = 0.6;
+    ctx.font = 'bold 28px monospace';
+    ctx.fillText(dateStr, W / 2, H * 0.62);
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  if (rng() > 0.5) {
+    const cx2 = 60 + Math.floor(rng() * (W - 120));
+    const cy2 = H * 0.72 + Math.floor(rng() * 60);
+    const cr = 28 + Math.floor(rng() * 30);
+    ctx.strokeStyle = rng() > 0.5 ? c1 : c2;
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = rng() > 0.5 ? c1 : c2;
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath(); ctx.arc(cx2, cy2, cr, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath(); ctx.moveTo(cx2 - cr, cy2); ctx.lineTo(cx2 + cr, cy2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx2, cy2 - cr); ctx.lineTo(cx2, cy2 + cr); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  const tickerTexts = ['◆ SOFTWARE  ◆ VIDEO 360°  ', '◆ AVATARES 3D  ◆ EVENTOS XR  ', '◆ METAVERSO  ◆ STREAMING  ', '◆ AR/VR  ◆ MAPPING  ◆ XR  '];
+  ctx.shadowBlur = 8;
+  ctx.shadowColor = c2;
+  ctx.fillStyle = c2;
+  ctx.globalAlpha = 0.8;
+  ctx.font = '14px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(tickerTexts[seed % tickerTexts.length], 10, H - 14);
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+  for (let y = 0; y < H; y += 4) {
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.fillRect(0, y, W, 2);
+  }
+
+  return new THREE.CanvasTexture(canvas);
+}
+
+function makeNeonSignTexture(text, color) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#020008';
+  ctx.fillRect(0, 0, 256, 64);
+  ctx.shadowBlur = 18;
+  ctx.shadowColor = color;
+  ctx.fillStyle = color;
+  ctx.font = 'bold 28px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 128, 32);
+  return new THREE.CanvasTexture(canvas);
+}
+
+const MOVE_SPEED = 11;
+const LOOK_SPEED = 0.0024;
+const LOOK_SMOOTH = 0.22;
+const MAX_PITCH = Math.PI / 2 - 0.02;
+const HERO_COLORS = [0x00ffff, 0xff00ff, 0xffff00, 0x7c3aed, 0x4488ff];
+const WORKS = [
+  {
+    title: 'CLONEX AVATAR',
+    subtitle: 'RTFKT x NIKE - Metahumano Realista',
+    description: 'Avatar fotorrealista para experiencias inmersivas',
+    videoUrl: 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
+    color: '#ff0066'
+  },
+  {
+    title: 'DANCE MAPPING',
+    subtitle: 'Video Mapping Interactivo 360°',
+    description: 'Proyección arquitectónica sincronizada con música',
+    videoUrl: 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/0cbcd588c_Viky-EventoMayo-GoogleChrome2026-05-0811-15-57.mp4',
+    color: '#00ffff'
+  },
+  {
+    title: 'METAVERSO XR',
+    subtitle: 'Eventos Live en Realidad Extendida',
+    description: 'Espacios virtuales para conferencias y eventos',
+    videoUrl: 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
+    color: '#ffff00'
+  },
+  {
+    title: 'STUDIO 360',
+    subtitle: 'Producción Audiovisual Inmersiva',
+    description: 'Contenido 360° para experiencias VR',
+    videoUrl: 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/0cbcd588c_Viky-EventoMayo-GoogleChrome2026-05-0811-15-57.mp4',
+    color: '#ff00ff'
+  }
+];
+
+const WORKS_CAMERA_POSITION = new THREE.Vector3(0, 4.5, 15);
+const WORKS_CAMERA_TRANSITION_MS = 1000;
+const ROBOT_NO_FLY_ZONES = [
+  ...ZONES.map((zone) => ({
+    x: zone.position[0],
+    z: zone.position[2],
+    radius: (zone.buildingWidth || 8) * 1.4 + 8,
+  })),
+  { x: -18, z: -30, radius: 8 },
+  { x: 18, z: -30, radius: 8 },
+  { x: -30, z: 18, radius: 8 },
+  { x: 30, z: 18, radius: 8 },
+  { x: -34, z: -34, radius: 8 },
+  { x: 34, z: -34, radius: 8 },
+  { x: -34, z: 34, radius: 8 },
+  { x: 34, z: 34, radius: 8 },
+  { x: -46, z: -18, radius: 8 },
+  { x: 46, z: -18, radius: 8 },
+  { x: -46, z: 18, radius: 8 },
+  { x: 46, z: 18, radius: 8 },
+  { x: -12, z: -44, radius: 8 },
+  { x: 12, z: -44, radius: 8 },
+  { x: -12, z: 44, radius: 8 },
+  { x: 12, z: 44, radius: 8 },
+  { x: -58, z: -30, radius: 8 },
+  { x: -44, z: -30, radius: 8 },
+  { x: -30, z: -30, radius: 8 },
+  { x: 30, z: -30, radius: 8 },
+  { x: 44, z: -30, radius: 8 },
+  { x: 58, z: -30, radius: 8 },
+  { x: -58, z: 30, radius: 8 },
+  { x: -44, z: 30, radius: 8 },
+  { x: -30, z: 30, radius: 8 },
+  { x: 30, z: 30, radius: 8 },
+  { x: 44, z: 30, radius: 8 },
+  { x: 58, z: 30, radius: 8 },
+];
 
 export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeaveStand, onActivateStand, onOpenViky, modalOpen, plazaVideoUrl, isMobile = false, robotModelUrl = '', activeView = 'explore', activeWork = null, worksTransitionToken = 0, cameraTarget = null, postProcessingSettings = null, arcadeFocusPulse = 0 }) {
   const mountRef = useRef(null);
@@ -170,20 +647,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), performanceConfig.bloomStrength, 0.45, 0.75);
     composer.addPass(bloomPass);
 
-    const cyberPostPass = new ShaderPass({
-      uniforms: createCyberPostUniforms(),
-      vertexShader: cyberPostVertexShader,
-      fragmentShader: cyberPostFragmentShader,
-    });
-    cyberPostPass.uniforms.resolution.value.set(W, H);
-    composer.addPass(cyberPostPass);
-
-    const fxaaPass = new ShaderPass(FXAAShader);
-    fxaaPass.uniforms.resolution.value.set(1 / W, 1 / H);
-    composer.addPass(fxaaPass);
-
-    postFxStateRef.current = getAdaptivePostProcessingState(postProcessingSettings || createPostProcessingState({ tier: isMobile ? 'mobile' : 'high' }), 60);
-
     scene.add(new THREE.AmbientLight(0x3a2a68, 3.2));
     scene.add(new THREE.HemisphereLight(0x66ccff, 0x12051f, 1.0));
     const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
@@ -220,7 +683,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     let worksMediaElement = null;
     let worksMediaTexture = null;
     const cityVideos = [];
-    const worksCarousel = makeWorksCarouselScreen(WORKS);
+    const worksCarousel = makeWorksCarouselScreen();
 
     if (plazaVideoUrl) {
       plazaVideoElement = createCityVideoElement(plazaVideoUrl);
@@ -484,23 +947,66 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       const prevPos = camera.position.clone();
       frameCount++;
 
-      updateWorksCameraTransition(camera, worksTransitionRef, yawRef, pitchRef, targetYawRef, targetPitchRef);
+      yawRef.current += (targetYawRef.current - yawRef.current) * LOOK_SMOOTH;
+      pitchRef.current += (targetPitchRef.current - pitchRef.current) * LOOK_SMOOTH;
+      pitchRef.current = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, pitchRef.current));
+
+      const worksTransition = worksTransitionRef.current;
+      if (worksTransition.active && worksTransition.startPos && worksTransition.targetPos) {
+        const elapsed = performance.now() - worksTransition.startTime;
+        const progress = Math.min(elapsed / worksTransition.duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        camera.position.lerpVectors(worksTransition.startPos, worksTransition.targetPos, eased);
+        yawRef.current = worksTransition.startYaw + (worksTransition.targetYaw - worksTransition.startYaw) * eased;
+        pitchRef.current = worksTransition.startPitch + (worksTransition.targetPitch - worksTransition.startPitch) * eased;
+        targetYawRef.current = yawRef.current;
+        targetPitchRef.current = pitchRef.current;
+
+        if (progress >= 1) {
+          worksTransition.active = false;
+          camera.position.copy(worksTransition.targetPos);
+          yawRef.current = worksTransition.targetYaw;
+          pitchRef.current = worksTransition.targetPitch;
+          targetYawRef.current = worksTransition.targetYaw;
+          targetPitchRef.current = worksTransition.targetPitch;
+        }
+      }
 
       const k = keysRef.current;
       const mobileMovement = mobileMovementRef.current;
-      const moving = updateCameraMovement({
-        camera,
-        dir,
-        keys: k,
-        mobileMovement,
-        isMobileDevice,
-        activeView,
-        worksTransitionRef,
-        delta,
-      });
+      const moving = activeView === 'explore' && (
+        k['KeyW'] || k['KeyS'] || k['KeyA'] || k['KeyD'] || k['ArrowUp'] || k['ArrowDown'] || k['ArrowLeft'] || k['ArrowRight'] ||
+        (isMobileDevice && (Math.abs(mobileMovement.x) > 0.1 || Math.abs(mobileMovement.z) > 0.1))
+      );
 
-      applyCameraRotation(camera, yawRef, pitchRef, targetYawRef, targetPitchRef);
-      clampCameraPosition(camera);
+      if (moving && !worksTransitionRef.current.active) {
+        dir.set(0, 0, 0);
+
+        if (k['KeyW'] || k['ArrowUp']) dir.z = -1;
+        if (k['KeyS'] || k['ArrowDown']) dir.z = 1;
+        if (k['KeyA'] || k['ArrowLeft']) dir.x = -1;
+        if (k['KeyD'] || k['ArrowRight']) dir.x = 1;
+
+        if (isMobileDevice && (Math.abs(mobileMovement.x) > 0.1 || Math.abs(mobileMovement.z) > 0.1)) {
+          dir.x = mobileMovement.x;
+          dir.z = mobileMovement.z * -1;
+        }
+
+        if (dir.lengthSq() > 0) {
+          dir.normalize();
+          dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yawRef.current);
+          camera.position.addScaledVector(dir, 15 * delta);
+          camera.position.y = 1.7;
+        }
+      }
+
+      camera.rotation.order = 'YXZ';
+      camera.rotation.y = yawRef.current;
+      camera.rotation.x = pitchRef.current;
+
+      camera.position.x = Math.max(-70, Math.min(70, camera.position.x));
+      camera.position.z = Math.max(-70, Math.min(70, camera.position.z));
       if (activeView === 'explore') {
         checkZoneProximity(camera.position);
       }
@@ -560,12 +1066,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         camera.position.copy(posInicial);
       }
 
-      if (postFxStateRef.current) {
-        cyberPostPass.enabled = postFxStateRef.current.chromaticAberration || postFxStateRef.current.filmGrain || postFxStateRef.current.colorGrading;
-        fxaaPass.enabled = !!postFxStateRef.current.fxaa;
-        bloomPass.strength = postFxStateRef.current.bloom ? performanceConfig.bloomStrength : 0;
-        cyberPostPass.uniforms.time.value = frameCount * 0.016;
-      }
       composer.render();
       if (document.pointerLockElement && frameCount % 2 === 0) {
         const menuButton = document.querySelector('[data-agency-menu-button="true"]');
@@ -579,8 +1079,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       camera.updateProjectionMatrix();
       renderer.setSize(mount.clientWidth, mount.clientHeight);
       composer.setSize(mount.clientWidth, mount.clientHeight);
-      cyberPostPass.uniforms.resolution.value.set(mount.clientWidth, mount.clientHeight);
-      fxaaPass.uniforms.resolution.value.set(1 / mount.clientWidth, 1 / mount.clientHeight);
     };
     window.addEventListener('resize', handleResize);
 
@@ -666,8 +1164,309 @@ function colorToGlowKey(color) {
   return map[color] || 'magenta';
 }
 
+function makeWorksCarouselScreen() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1920;
+  canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+  const texture = new THREE.CanvasTexture(canvas);
+  const video = document.createElement('video');
+  video.crossOrigin = 'anonymous';
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.autoplay = true;
+  video.setAttribute('playsinline', '');
+  video.setAttribute('webkit-playsinline', '');
+  video.setAttribute('muted', '');
+  const videoTexture = new THREE.VideoTexture(video);
+  videoTexture.colorSpace = THREE.SRGBColorSpace;
+  videoTexture.minFilter = THREE.LinearFilter;
+  videoTexture.magFilter = THREE.LinearFilter;
+  videoTexture.generateMipmaps = false;
+  let activeIndex = 0;
+  let controlsVisible = true;
+  let lastAdvance = performance.now();
+
+  const loadVideo = () => {
+    const work = WORKS[activeIndex];
+    if (!work.videoUrl) return;
+    if (video.src !== work.videoUrl) {
+      video.src = work.videoUrl;
+      video.load();
+      video.play().catch(() => {});
+    }
+  };
+
+  const draw = (time = 0) => {
+    const work = WORKS[activeIndex];
+    const accent = work.color;
+    const pulse = 0.82 + Math.sin(time * 1.6) * 0.08;
+
+    const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    bg.addColorStop(0, '#03030a');
+    bg.addColorStop(0.5, '#12051f');
+    bg.addColorStop(1, '#020008');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = `${accent}22`;
+    ctx.fillRect(70, 90, 1080, 690);
+    ctx.strokeStyle = `${accent}dd`;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(70, 90, 1080, 690);
+
+    if (video.readyState >= 2) {
+      ctx.drawImage(video, 110, 130, 1000, 610);
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.fillRect(110, 130, 1000, 610);
+    } else {
+      const mediaGradient = ctx.createLinearGradient(70, 90, 1150, 780);
+      mediaGradient.addColorStop(0, `${accent}66`);
+      mediaGradient.addColorStop(1, '#ffffff12');
+      ctx.fillStyle = mediaGradient;
+      ctx.fillRect(110, 130, 1000, 610);
+    }
+
+    ctx.save();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 12;
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = 34;
+    ctx.strokeRect(110, 130, 1000, 610);
+    ctx.restore();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 44px Orbitron, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('SHOWCASE WORKS', canvas.width - 200, 100);
+
+    ctx.fillStyle = accent;
+    ctx.shadowColor = accent;
+    ctx.shadowBlur = 26;
+    ctx.font = work.title.length > 12 ? '900 66px Orbitron, monospace' : '900 76px Orbitron, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(work.title, 1230, canvas.height / 2 - 150);
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#f7f3ff';
+    ctx.font = 'bold 24px monospace';
+    wrapText(ctx, work.description, 1230, canvas.height / 2 - 50, 560, 34);
+    ctx.fillStyle = '#d7cfff';
+    ctx.font = 'bold 24px monospace';
+    wrapText(ctx, work.subtitle, 1230, canvas.height / 2 + 36, 560, 32);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 52px Rajdhani, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`PROYECTO ${activeIndex + 1} / ${WORKS.length}`, canvas.width / 2, canvas.height - 120);
+    for (let i = 0; i < WORKS.length; i++) {
+      ctx.fillStyle = i === activeIndex ? WORKS[i].color : '#ffffff33';
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2 - 63 + i * 42, 910, i === activeIndex ? 12 : 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const controlOpacity = controlsVisible ? 1 : 0.98;
+    ctx.globalAlpha = controlOpacity;
+    ctx.fillStyle = '#02020a';
+    ctx.fillRect(90, 860, 520, 120);
+    ctx.fillRect(1310, 860, 520, 120);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(90, 860, 520, 120);
+    ctx.strokeRect(1310, 860, 520, 120);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 72px Rajdhani, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('◄ ANTERIOR', 350, 940);
+    ctx.fillText('SIGUIENTE ►', 1570, 940);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#d9d9ff';
+    ctx.font = '700 24px Rajdhani, sans-serif';
+    ctx.fillText('USA ← → PARA CAMBIAR', canvas.width / 2, 990);
+    ctx.textAlign = 'left';
+
+    ctx.strokeStyle = `rgba(255,255,255,${0.08 + pulse * 0.08})`;
+    ctx.lineWidth = 2;
+    for (let y = 0; y < canvas.height; y += 6) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+
+    texture.needsUpdate = true;
+    if (video.readyState >= 2) {
+      videoTexture.needsUpdate = true;
+    }
+  };
+
+  const next = () => {
+    activeIndex = (activeIndex + 1) % WORKS.length;
+    lastAdvance = performance.now();
+    loadVideo();
+    draw(performance.now() * 0.001);
+  };
+
+  const prev = () => {
+    activeIndex = (activeIndex - 1 + WORKS.length) % WORKS.length;
+    lastAdvance = performance.now();
+    loadVideo();
+    draw(performance.now() * 0.001);
+  };
+
+  const update = (time) => {
+    if (performance.now() - lastAdvance > 8000) {
+      next();
+    } else {
+      draw(time);
+    }
+  };
+
+  const setProximity = (value) => {
+    controlsVisible = value;
+  };
+
+  loadVideo();
+  draw(0);
+
+  return { texture, next, prev, update, setProximity, dispose: () => {
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    videoTexture.dispose();
+    texture.dispose();
+  } };
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  let currentY = y;
+
+  words.forEach((word) => {
+    const testLine = `${line}${word} `;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      ctx.fillText(line.trim(), x, currentY);
+      line = `${word} `;
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  });
+
+  if (line) {
+    ctx.fillText(line.trim(), x, currentY);
+  }
+}
+
 function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, worksCarousel, farBuildingLimit = 16) {
-  buildCityScene({ scene, flicker, gt, videoTex, worksCarousel, farBuildingLimit });
+  const extraCanvases = [];
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(220, 220, 80, 80),
+    new THREE.MeshStandardMaterial({
+      color: 0x080610,
+      roughness: 0.06,
+      metalness: 0.96,
+      transparent: true,
+      opacity: 0.94,
+      envMapIntensity: 1.35,
+    })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
+
+  const groundSheen = new THREE.Mesh(
+    new THREE.PlaneGeometry(220, 220),
+    new THREE.MeshBasicMaterial({
+      color: 0x7d4dff,
+      transparent: true,
+      opacity: 0.28,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  groundSheen.rotation.x = -Math.PI / 2;
+  groundSheen.position.y = 0.015;
+  scene.add(groundSheen);
+
+  const plaza = new THREE.Mesh(
+    new THREE.CircleGeometry(32, 64),
+    new THREE.MeshBasicMaterial({ color: 0x0b0820, transparent: true, opacity: 0.22 })
+  );
+  plaza.rotation.x = -Math.PI / 2;
+  plaza.position.y = 0.012;
+  scene.add(plaza);
+
+  const carouselRotation = Math.PI;
+
+  const carouselFrame = new THREE.Mesh(
+    new THREE.BoxGeometry(13.6, 8, 0.62),
+    new THREE.MeshBasicMaterial({ color: 0x04040a })
+  );
+  carouselFrame.position.set(0, 4.25, 28);
+  carouselFrame.rotation.y = Math.PI;
+  scene.add(carouselFrame);
+
+  const carouselScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(12.7, 7.2),
+    new THREE.MeshBasicMaterial({ map: worksCarousel.texture, toneMapped: false, side: THREE.DoubleSide })
+  );
+  carouselScreen.position.set(0, 4.25, 27.67);
+  carouselScreen.rotation.y = Math.PI;
+  carouselScreen.userData.onClick = (event) => {
+    const point = event?.point;
+    if (!point) return;
+    const localPoint = carouselScreen.worldToLocal(point.clone());
+    if (localPoint.x < -1.2) worksCarousel.prev();
+    if (localPoint.x > 1.2) worksCarousel.next();
+  };
+  scene.add(carouselScreen);
+
+  const carouselGlow = new THREE.Mesh(
+    new THREE.PlaneGeometry(14.2, 7.9),
+    new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.1, side: THREE.DoubleSide })
+  );
+  carouselGlow.position.set(0, 4.25, 27.42);
+  carouselGlow.rotation.y = Math.PI;
+  scene.add(carouselGlow);
+
+  ZONES.forEach(zone => createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky));
+  STANDS.filter((stand) => stand.type === 'arcade').forEach((stand) => createArcadeMachine(scene, stand, gt));
+
+  const midPositions = [
+    [-18,-30],[18,-30],[-30,18],[30,18],
+    [-34,-34],[34,-34],[-34,34],[34,34],
+    [-46,-18],[46,-18],[-46,18],[46,18],
+    [-12,-44],[12,-44],[-12,44],[12,44],
+    [-58,-30],[-44,-30],[-30,-30],[30,-30],[44,-30],[58,-30],
+    [-58,30],[-44,30],[-30,30],[30,30],[44,30],[58,30],
+  ];
+  const neonPalette = [0x00ffff, 0xff00ff, 0xffff00, 0x4488ff, 0xff44aa];
+  midPositions.forEach(([x, z], i) => {
+    const h = 10 + (i * 4.1 % 22);
+    const w = 4 + (i * 1.7 % 6);
+    const nc = neonPalette[i % neonPalette.length];
+    createMidBuilding(scene, x, z, w, h, nc, flicker);
+  });
+
+  const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });
+  for (let i = 0; i < farBuildingLimit; i++) {
+    const angle = (i / 16) * Math.PI * 2;
+    const dist = 75 + (i % 4) * 8;
+    const h = 14 + (i % 8) * 6;
+    const w = 5 + (i % 4) * 2;
+    const bx = Math.cos(angle) * dist;
+    const bz = Math.sin(angle) * dist;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), skyMat);
+    body.position.set(bx, h / 2, bz);
+    scene.add(body);
+    const nc = neonPalette[i % neonPalette.length];
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(w, 0.4, w), new THREE.MeshBasicMaterial({ color: nc }));
+    cap.position.set(bx, h + 0.2, bz);
+    scene.add(cap);
+  }
 
   const count = 220;
   const pos = new Float32Array(count * 3);
@@ -689,8 +1488,9 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   );
   scene.add(particles);
 
-  return [];
+  return extraCanvases;
 }
+
 function createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) {
   const [x, , z] = zone.position;
   const h = zone.buildingHeight || 16;

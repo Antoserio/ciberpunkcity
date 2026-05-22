@@ -751,67 +751,9 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture, vikyTexture, onOpenViky, worksCarousel, farBuildingLimit);
     extraCanvasesRef.current = extraCanvases;
 
-    // Tri-Colonial Sector — background skyline model
-    {
-      const triLoader = new GLTFLoader();
-      triLoader.load('/tri-colonial-sector.glb', (gltf) => {
-        const model = gltf.scene;
-
-        // Scale to background skyline — keep SMALL so it reads as distant cityscape
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const targetSize = 55;            // distant backdrop — small
-        const scale = targetSize / maxDim;
-        model.scale.setScalar(scale);
-
-        // Far on the horizon — not blocking anything
-        model.position.set(0, 0, -105);
-        model.rotation.y = 0;
-        model.updateMatrixWorld(true);
-
-        // Lift base to ground level
-        const scaledBox = new THREE.Box3().setFromObject(model);
-        model.position.y = -scaledBox.min.y;
-
-        // White-silver spires like reference — fog:false so always visible
-        let meshIdx = 0;
-        model.traverse((child) => {
-          if (!child.isMesh) return;
-          const idx = (meshIdx++) % 4;
-          const baseColors  = [0xddeeff, 0xc8daf8, 0xe8f2ff, 0xb8ccee];
-          const emissColors = [0x6699ff, 0x4477ee, 0x88aaff, 0x5588dd];
-          child.material = new THREE.MeshStandardMaterial({
-            color: new THREE.Color(baseColors[idx]),
-            emissive: new THREE.Color(emissColors[idx]),
-            emissiveIntensity: 2.8,   // very bright — punches through fog
-            roughness: 0.38,
-            metalness: 0.60,
-            fog: false,               // ignore scene fog entirely
-          });
-          child.userData.noGlitch = true;
-        });
-
-        scene.add(model);
-
-        // Cool blue sky light from above
-        const skylineLight = new THREE.DirectionalLight(0x88ccff, 6.0);
-        skylineLight.position.set(0, 80, -30);
-        skylineLight.target.position.set(0, 0, -48);
-        scene.add(skylineLight);
-        scene.add(skylineLight.target);
-
-        // Golden/orange warm rim from below-front (reference sunset feel)
-        const rimLight = new THREE.PointLight(0xffbb44, 25, 180, 1.3);
-        rimLight.position.set(0, 2, -20);
-        scene.add(rimLight);
-
-        // Extra fill — warm right side
-        const fillRight = new THREE.PointLight(0xff8833, 12, 130, 1.5);
-        fillRight.position.set(60, 20, -40);
-        scene.add(fillRight);
-      });
-    }
+    // Tri-Colonial Sector — DISABLED: the model geometry creates a large opaque arch
+    // that blocks the scene. Removed until a better placement strategy is found.
+    // To re-enable: uncomment and set targetSize ≤ 40, z ≤ -120.
 
     // Populate glitch candidates — building facade meshes with canvas textures
     {
@@ -1670,16 +1612,13 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     scene.add(wetFloor);
   }
 
-  // Neon PointLights that "bounce" off the metallic surface
-  const floorGlowCyan = new THREE.PointLight(0x00aaff, 8, 58, 1.7);
-  floorGlowCyan.position.set(-10, 0.3, 0);
-  scene.add(floorGlowCyan);
-  const floorGlowMag  = new THREE.PointLight(0xff00cc, 7, 48, 1.7);
-  floorGlowMag.position.set(10, 0.3, 8);
-  scene.add(floorGlowMag);
-  const floorGlowBlue = new THREE.PointLight(0x2255ff, 10, 72, 1.5);
-  floorGlowBlue.position.set(0, 0.3, -10);
-  scene.add(floorGlowBlue);
+  // Two shared floor PointLights — enough to colour the metallic surface
+  const floorGlowA = new THREE.PointLight(0x0055ff, 10, 80, 1.6);
+  floorGlowA.position.set(-8, 0.4, -5);
+  scene.add(floorGlowA);
+  const floorGlowB = new THREE.PointLight(0xff00cc, 8, 70, 1.6);
+  floorGlowB.position.set(8, 0.4, 5);
+  scene.add(floorGlowB);
 
   const carouselRotation = Math.PI;
 
@@ -1903,11 +1842,8 @@ function addArcadePanels(scene) {
       panel.rotation.y = Math.atan2(dx, dz);
       panel.userData.noGlitch = true;
       scene.add(panel);
-
-      // Small neon light just in front of the panel
-      const pl = new THREE.PointLight(new THREE.Color(col), 4, 11, 2);
-      pl.position.set(px + dx * 1.5, py, pz + dz * 1.5);
-      scene.add(pl);
+      // No individual PointLight per panel — emissive handles the glow;
+      // per-light cost is too high with 24+ panels
     });
   });
 }
@@ -2180,14 +2116,21 @@ function placeBillboards(scene) {
     group.rotation.y = ry;
     group.userData.noGlitch = true;
     scene.add(group);
+    // No per-billboard PointLights — emissiveIntensity 2.2 handles glow
+    // 4 shared neon fills are added once after the loop (see below)
+  });
 
-    // Neon PointLights front & back
-    const lf = new THREE.PointLight(new THREE.Color(c1), 9, 16, 1.7);
-    lf.position.set(pos[0], 4 + BH / 2, pos[2] + 2.5);
-    scene.add(lf);
-    const lb = new THREE.PointLight(new THREE.Color(c2), 6, 12, 2.0);
-    lb.position.set(pos[0], 4 + BH / 2, pos[2] - 2.5);
-    scene.add(lb);
+  // 4 shared neon fills cover the whole billboard zone — cheap + effective
+  const sharedFills = [
+    { col: 0x00ffcc, x: -16, z: -22 },
+    { col: 0xff2d2d, x:  16, z: -22 },
+    { col: 0x00c8ff, x: -24, z:   4 },
+    { col: 0xffaa00, x:  24, z:   4 },
+  ];
+  sharedFills.forEach(({ col, x, z }) => {
+    const l = new THREE.PointLight(col, 6, 28, 1.8);
+    l.position.set(x, 6, z);
+    scene.add(l);
   });
 }
 

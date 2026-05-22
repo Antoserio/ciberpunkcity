@@ -58,7 +58,7 @@ export default function TopNav({ activeView, onChangeView }) {
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-        className="fixed top-4 left-1/2 z-50 -translate-x-1/2"
+        style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}
       >
         <div
           className="flex items-center gap-1 rounded-full px-2 py-1.5"

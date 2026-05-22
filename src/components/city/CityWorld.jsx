@@ -1563,7 +1563,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   // The Reflector becomes dark when the reflected scene is dark.
   // Fix: layer a semi-transparent blue plane ON TOP to tint it blue always.
   // The overlay blocks ~60% → the remaining 40% is actual live reflection.
-  const reflector = new Reflector(new THREE.CircleGeometry(30, 64), {
+  const reflector = new Reflector(new THREE.CircleGeometry(62, 64), {
     clipBias: 0.003,
     textureWidth: 512,
     textureHeight: 512,
@@ -1575,7 +1575,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
 
   // Blue overlay — tints the reflection blue and softens any dark areas
   const reflOverlay = new THREE.Mesh(
-    new THREE.CircleGeometry(30, 64),
+    new THREE.CircleGeometry(62, 64),
     new THREE.MeshBasicMaterial({
       color: 0x08183c,
       transparent: true,
@@ -1588,7 +1588,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
 
   // Faint additive neon sheen on top of the reflector (gives colour to the mirror)
   const reflSheen = new THREE.Mesh(
-    new THREE.CircleGeometry(30, 64),
+    new THREE.CircleGeometry(62, 64),
     new THREE.MeshBasicMaterial({
       color: 0x2244ff,
       transparent: true,
@@ -1660,11 +1660,11 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     createMidBuilding(scene, x, z, w, h, nc, flicker);
   });
 
-  // Far buildings — dark indigo silhouettes, NOT pure black
+  // Far buildings — dark indigo, MeshBasicMaterial (no lighting cost)
   const farBodyMats = [
-    new THREE.MeshStandardMaterial({ color: 0x0b0820, emissive: 0x0b0a22, emissiveIntensity: 0.9, roughness: 0.75, metalness: 0.25 }),
-    new THREE.MeshStandardMaterial({ color: 0x080d1e, emissive: 0x080c20, emissiveIntensity: 0.8, roughness: 0.75, metalness: 0.25 }),
-    new THREE.MeshStandardMaterial({ color: 0x0d0a1a, emissive: 0x0d0a22, emissiveIntensity: 0.85, roughness: 0.75, metalness: 0.25 }),
+    new THREE.MeshBasicMaterial({ color: 0x0e0c22 }),
+    new THREE.MeshBasicMaterial({ color: 0x0a0e1e }),
+    new THREE.MeshBasicMaterial({ color: 0x0c0a1a }),
   ];
   for (let i = 0; i < farBuildingLimit; i++) {
     const angle = (i / 16) * Math.PI * 2;
@@ -1829,14 +1829,10 @@ function addArcadePanels(scene) {
       const px = bx + dx * (halfW + 0.06);
       const pz = bz + dz * (halfW + 0.06);
 
+      // MeshBasicMaterial = always full-bright, zero lighting cost
       const panel = new THREE.Mesh(
         new THREE.PlaneGeometry(PW, PH),
-        new THREE.MeshStandardMaterial({
-          map: tex, emissiveMap: tex,
-          emissive: new THREE.Color(col),
-          emissiveIntensity: 1.8,
-          roughness: 0.22, metalness: 0.35,
-        })
+        new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })
       );
       panel.position.set(px, py, pz);
       // Rotate to face inward (toward city center)

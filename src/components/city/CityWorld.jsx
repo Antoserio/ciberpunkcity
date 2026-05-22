@@ -757,18 +757,22 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       triLoader.load('/tri-colonial-sector.glb', (gltf) => {
         const model = gltf.scene;
 
-        // Scale to fit as background skyline
+        // Scale to background skyline — keep SMALL so it reads as distant cityscape
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
-        const targetSize = 180;
+        const targetSize = 95;            // much smaller
         const scale = targetSize / maxDim;
         model.scale.setScalar(scale);
 
-        // Centre of model — align base to floor, spread wide as backdrop
-        const centreBox = new THREE.Box3().setFromObject(model);
-        model.position.set(0, -centreBox.min.y * scale, -48);
+        // Push far back so it sits on the horizon, not blocking foreground
+        model.position.set(0, 0, -78);
         model.rotation.y = 0;
+        model.updateMatrixWorld(true);
+
+        // Lift base to floor level
+        const scaledBox = new THREE.Box3().setFromObject(model);
+        model.position.y = -scaledBox.min.y;
 
         // White-silver spires like reference — fog:false so always visible
         let meshIdx = 0;
@@ -1614,33 +1618,32 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   scene.add(groundSheen);
 
   // --- Fake-reflective wet floor ---
-  // A highly metallic plane picks up every neon light and gives a mirror-like look
-  // without the black-disc Reflector artifact.
+  // Wet reflective floor — metallic but subdued; neon lights give it colour
   const wetFloor = new THREE.Mesh(
     new THREE.PlaneGeometry(140, 140),
     new THREE.MeshStandardMaterial({
-      color: 0x060e28,
-      emissive: new THREE.Color(0x0a1a50),
-      emissiveIntensity: 0.4,
-      roughness: 0.04,   // very smooth  → picks up lights like a mirror
-      metalness: 0.98,   // highly metallic
+      color: 0x08102e,
+      emissive: new THREE.Color(0x05102a),
+      emissiveIntensity: 0.12,  // subtle — doesn't overpower
+      roughness: 0.06,          // smooth → reflective sheen
+      metalness: 0.96,
       transparent: true,
-      opacity: 0.82,
+      opacity: 0.70,            // slightly less solid
     })
   );
   wetFloor.rotation.x = -Math.PI / 2;
   wetFloor.position.y = 0.025;
   scene.add(wetFloor);
 
-  // Upward neon PointLights that bounce off the metallic floor to give colour
-  const floorGlowCyan  = new THREE.PointLight(0x00ccff, 12, 60, 1.6);
-  floorGlowCyan.position.set(-10, 0.5, 0);
+  // Gentle neon PointLights at floor level — give colour to the reflective surface
+  const floorGlowCyan = new THREE.PointLight(0x00aaff, 7, 55, 1.8);
+  floorGlowCyan.position.set(-10, 0.3, 0);
   scene.add(floorGlowCyan);
-  const floorGlowMag   = new THREE.PointLight(0xff00cc, 10, 50, 1.6);
-  floorGlowMag.position.set(10, 0.5, 8);
+  const floorGlowMag  = new THREE.PointLight(0xff00cc, 6, 45, 1.8);
+  floorGlowMag.position.set(10, 0.3, 8);
   scene.add(floorGlowMag);
-  const floorGlowBlue  = new THREE.PointLight(0x2244ff, 14, 80, 1.4);
-  floorGlowBlue.position.set(0, 0.5, -10);
+  const floorGlowBlue = new THREE.PointLight(0x2255ff, 9, 70, 1.5);
+  floorGlowBlue.position.set(0, 0.3, -10);
   scene.add(floorGlowBlue);
 
   const carouselRotation = Math.PI;
@@ -1732,7 +1735,134 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   );
   scene.add(particles);
 
+  // Arcade side-panel textures spread through the city
+  addArcadePanels(scene);
+
   return extraCanvases;
+}
+
+// ── Arcade panel textures ─────────────────────────────────────────────────────
+function makeArcadePanelTex(neonColor) {
+  const W = 512, H = 512;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+
+  // Dark base — like the arcade machine sides
+  ctx.fillStyle = '#04020c';
+  ctx.fillRect(0, 0, W, H);
+
+  // Horizontal scanlines
+  for (let y = 0; y < H; y += 6) {
+    ctx.fillStyle = 'rgba(20,10,40,0.55)';
+    ctx.fillRect(0, y, W, 3);
+  }
+
+  // Circuit board traces (random L-paths in neon)
+  ctx.strokeStyle = neonColor;
+  ctx.lineWidth = 1.5;
+  ctx.shadowBlur = 8; ctx.shadowColor = neonColor;
+  const traceSeeds = [
+    [40,80,160,80,160,200],[100,40,100,140,300,140],
+    [320,60,320,180,450,180],[200,260,340,260,340,380],
+    [60,320,60,440,220,440],[380,300,380,460,480,460],
+    [240,120,240,300,420,300],[140,380,280,380,280,480],
+  ];
+  traceSeeds.forEach(([x1,y1,x2,y2,x3,y3]) => {
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.stroke();
+    // Junction dots
+    [[x1,y1],[x2,y2],[x3,y3]].forEach(([px,py]) => {
+      ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI*2); ctx.fillStyle = neonColor; ctx.fill();
+    });
+  });
+
+  // Pixel-art sprite — random 8×8 pixel block near centre
+  ctx.shadowBlur = 0;
+  const spriteX = 180, spriteY = 180, px = 16;
+  const pattern = [
+    [0,1,1,0,0,1,1,0],
+    [1,1,1,1,1,1,1,1],
+    [1,0,1,1,1,1,0,1],
+    [1,1,1,1,1,1,1,1],
+    [0,1,0,1,1,0,1,0],
+    [0,0,1,1,1,1,0,0],
+    [0,1,1,0,0,1,1,0],
+    [1,0,0,0,0,0,0,1],
+  ];
+  pattern.forEach((row, ry) =>
+    row.forEach((on, rx) => {
+      if (!on) return;
+      ctx.fillStyle = on ? neonColor : 'transparent';
+      ctx.shadowBlur = 6; ctx.shadowColor = neonColor;
+      ctx.fillRect(spriteX + rx * px, spriteY + ry * px, px - 1, px - 1);
+    })
+  );
+
+  // Neon border
+  ctx.shadowBlur = 16; ctx.shadowColor = neonColor;
+  ctx.strokeStyle = neonColor; ctx.lineWidth = 3;
+  ctx.strokeRect(6, 6, W - 12, H - 12);
+
+  // Corner accent squares
+  [[0,0],[W-20,0],[0,H-20],[W-20,H-20]].forEach(([bx,by]) => {
+    ctx.fillStyle = neonColor; ctx.fillRect(bx + 8, by + 8, 12, 12);
+  });
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.userData = { noGlitch: true };
+  return tex;
+}
+
+function addArcadePanels(scene) {
+  const palette = ['#00ffcc','#ff00cc','#ffdd00','#00bbff','#ff4488','#88ff00'];
+  // [x, y_centre, z, width, height, rotY]
+  const placements = [
+    // North wall panels (high up, visible from centre)
+    [-18, 9,  -24, 5.5, 5.5,  0],
+    [ 18, 9,  -24, 5.5, 5.5,  0],
+    [  0, 14, -26, 4.0, 4.0,  0],
+    // Left wall (facing right)
+    [-32, 7,   -8, 5.0, 5.0,  Math.PI / 2],
+    [-32, 7,   10, 5.0, 5.0,  Math.PI / 2],
+    [-32, 13,   0, 4.5, 4.5,  Math.PI / 2],
+    // Right wall (facing left)
+    [ 32, 7,   -8, 5.0, 5.0, -Math.PI / 2],
+    [ 32, 7,   10, 5.0, 5.0, -Math.PI / 2],
+    [ 32, 13,   0, 4.5, 4.5, -Math.PI / 2],
+    // Mid-city scattered panels
+    [-24, 6,    2, 4.0, 4.0,  0.6],
+    [ 24, 6,    2, 4.0, 4.0, -0.6],
+    [-14, 8,  -18, 3.5, 3.5,  0.3],
+    [ 14, 8,  -18, 3.5, 3.5, -0.3],
+    // High towers
+    [-36, 16,  -32, 4.0, 4.0,  0.4],
+    [ 36, 16,  -32, 4.0, 4.0, -0.4],
+  ];
+
+  placements.forEach(([x, y, z, w, h, ry], i) => {
+    const col = palette[i % palette.length];
+    const tex = makeArcadePanelTex(col);
+
+    // Panel face
+    const panel = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, h),
+      new THREE.MeshStandardMaterial({
+        map: tex, emissiveMap: tex,
+        emissive: new THREE.Color(col),
+        emissiveIntensity: 1.6,
+        roughness: 0.25, metalness: 0.4,
+      })
+    );
+    panel.position.set(x, y, z);
+    panel.rotation.y = ry;
+    panel.userData.noGlitch = true;
+    scene.add(panel);
+
+    // Faint neon fill light in front
+    const pl = new THREE.PointLight(new THREE.Color(col), 3.5, 10, 2);
+    pl.position.set(x, y, z + 1.2);
+    scene.add(pl);
+  });
 }
 
 function createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky) {

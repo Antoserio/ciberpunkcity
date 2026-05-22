@@ -15,7 +15,6 @@ import ArcadeGamesModal from '../components/city/ArcadeGamesModal.jsx';
 import { STANDS } from '../components/city/standsData';
 import useAmbientAudio from '../components/city/useAmbientAudio';
 import useCityAssetLoader from '../components/city/useCityAssetLoader';
-import PostProcessingStatus from '../components/city/PostProcessingStatus.jsx';
 import PostFXOverlay from '../components/city/PostFXOverlay.jsx';
 import useArcadeFocusPulse from '../components/city/useArcadeFocusPulse';
 import { createPostProcessingState } from '../components/city/postprocessing/postProcessingConfig';
@@ -214,7 +213,6 @@ export default function CyberCity() {
           >
             {audioEnabled ? 'SONIDO ON' : 'SONIDO OFF'}
           </button>
-          {postProcessingSettings && <PostProcessingStatus settings={postProcessingSettings} />}
         </>
       )}
 

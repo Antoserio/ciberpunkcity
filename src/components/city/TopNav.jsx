@@ -18,12 +18,12 @@ export default function TopNav({ activeView, onChangeView }) {
           style={{ color: 'rgba(255,80,80,0.65)' }}>
           クリエイティブシティ · ネクサス
         </p>
-        <p className="font-rajdhani text-[10px] tracking-[0.18em] uppercase mt-1"
-          style={{ color: 'rgba(255,255,255,0.45)' }}>
+        <p className="font-rajdhani text-[11px] tracking-[0.18em] uppercase mt-1"
+          style={{ color: 'rgba(255,255,255,0.82)' }}>
           Creative City Experience
         </p>
         <p className="font-rajdhani text-[10px] tracking-[0.12em] uppercase"
-          style={{ color: 'rgba(255,255,255,0.28)' }}>
+          style={{ color: 'rgba(255,255,255,0.62)' }}>
           Nexus 360 · Immersive Portfolio
         </p>
 
@@ -45,18 +45,18 @@ export default function TopNav({ activeView, onChangeView }) {
             ))}
           </div>
 
-          {/* SPACE */}
+          {/* E — interact */}
           <div className="flex items-center gap-2 mt-1">
-            <div className="px-3 py-0.5 rounded-sm font-orbitron text-[8px] tracking-[0.2em]"
+            <div className="w-4 h-4 rounded-sm flex items-center justify-center font-orbitron text-[8px]"
               style={{
                 border: '1px solid rgba(255,45,45,0.7)',
-                color: 'rgba(255,255,255,0.7)',
+                color: 'rgba(255,255,255,0.8)',
                 background: 'rgba(255,45,45,0.15)'
               }}>
-              SPACE
+              E
             </div>
             <span className="font-orbitron text-[9px] tracking-[0.2em]"
-              style={{ color: 'rgba(255,255,255,0.35)' }}>JUMP</span>
+              style={{ color: 'rgba(255,255,255,0.55)' }}>INTERACT</span>
           </div>
         </div>
       </motion.div>

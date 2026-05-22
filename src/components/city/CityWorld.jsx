@@ -23,12 +23,16 @@ const CITY_VIDEO_SOURCES = [
 ];
 
 const CITY_VIDEO_SCREEN_CONFIGS = [
-  { x: -30, y: 10.5, z: -25.4, width: 7.2, height: 4.05, rotationY: 0, frameColor: 0x00ffff, glowColor: 0x00ffff, sourceIndex: 0 },
-  { x: 30, y: 11.5, z: -25.4, width: 7.2, height: 4.05, rotationY: 0, frameColor: 0xff00ff, glowColor: 0xff00ff, sourceIndex: 1 },
-  { x: -34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: Math.PI / 2, frameColor: 0xffff00, glowColor: 0xffff00, sourceIndex: 2 },
-  { x: 34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: -Math.PI / 2, frameColor: 0x4488ff, glowColor: 0x4488ff, sourceIndex: 3 },
-  { x: 0, y: 14.5, z: -36, width: 9.6, height: 5.4, rotationY: 0, frameColor: 0x00ff88, glowColor: 0x00ff88, sourceIndex: 0 },
-  { x: -24, y: 13, z: 32, width: 8, height: 4.5, rotationY: Math.PI, frameColor: 0xff8800, glowColor: 0xff8800, sourceIndex: 1 },
+  // — Front north wall screens (visible looking forward from start) —
+  { x: -30, y: 10.5, z: -25.4, width: 7.2,  height: 4.05, rotationY: 0,              frameColor: 0x00ffff, glowColor: 0x00ffff, sourceIndex: 0 },
+  { x: 30,  y: 11.5, z: -25.4, width: 7.2,  height: 4.05, rotationY: 0,              frameColor: 0xff00ff, glowColor: 0xff00ff, sourceIndex: 1 },
+  // — Side walls —
+  { x: -34.2, y: 9.5,  z: 18,  width: 5.8,  height: 3.25, rotationY: Math.PI / 2,    frameColor: 0xffff00, glowColor: 0xffff00, sourceIndex: 2 },
+  { x: 34.2,  y: 9.5,  z: 18,  width: 5.8,  height: 3.25, rotationY: -Math.PI / 2,   frameColor: 0x4488ff, glowColor: 0x4488ff, sourceIndex: 3 },
+  // — Extra: high center-front megascreen —
+  { x: 0,    y: 18,   z: -28,  width: 10.5, height: 5.9,  rotationY: 0,              frameColor: 0x00ff88, glowColor: 0x00ff88, sourceIndex: 0 },
+  // — Extra: right diagonal building facade —
+  { x: 28,   y: 13,   z: -8,   width: 7.5,  height: 4.2,  rotationY: -Math.PI / 2,   frameColor: 0xff8800, glowColor: 0xff8800, sourceIndex: 1 },
 ];
 
 function createCityVideoElement(src) {

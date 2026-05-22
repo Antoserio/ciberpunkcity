@@ -744,6 +744,41 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture, vikyTexture, onOpenViky, worksCarousel, farBuildingLimit);
     extraCanvasesRef.current = extraCanvases;
 
+    // Tri-Colonial Sector — background skyline model
+    {
+      const triLoader = new GLTFLoader();
+      triLoader.load('/tri-colonial-sector.glb', (gltf) => {
+        const model = gltf.scene;
+
+        // Scale to fit as background skyline
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const targetSize = 160;
+        const scale = targetSize / maxDim;
+        model.scale.setScalar(scale);
+
+        // Position: behind the scene, elevated
+        model.position.set(-20, -8, -90);
+        model.rotation.y = Math.PI * 0.15;
+
+        // Tint it cyberpunk — dark purple with neon edge hint
+        model.traverse((child) => {
+          if (!child.isMesh) return;
+          child.material = new THREE.MeshStandardMaterial({
+            color: 0x0d0820,
+            emissive: new THREE.Color(0x1a0840),
+            emissiveIntensity: 0.6,
+            roughness: 0.8,
+            metalness: 0.3,
+          });
+          child.userData.noGlitch = true;
+        });
+
+        scene.add(model);
+      });
+    }
+
     // Populate glitch candidates — building facade meshes with canvas textures
     {
       const candidates = [];

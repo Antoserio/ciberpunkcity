@@ -6,7 +6,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
-// Reflector removed — replaced with emissive wet puddle to avoid dark-disc artifact
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
@@ -1559,60 +1559,48 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   groundSheen.position.y = 0.015;
   scene.add(groundSheen);
 
-  // ── Wet reflective floor ─────────────────────────────────────────────────
-  // Step 1: caustic/ripple canvas texture — gives the "puddle" look
-  {
-    const fCvs = document.createElement('canvas');
-    fCvs.width = 512; fCvs.height = 512;
-    const fCtx = fCvs.getContext('2d');
-    fCtx.fillStyle = '#06101e';
-    fCtx.fillRect(0, 0, 512, 512);
-    // Elongated light-caustic ellipses (simulate light bouncing off wet surface)
-    for (let i = 0; i < 32; i++) {
-      const cx = Math.random() * 512, cy = Math.random() * 512;
-      const rx = 18 + Math.random() * 55, ry = 6 + Math.random() * 16;
-      const angle = Math.random() * Math.PI;
-      const grad = fCtx.createRadialGradient(cx, cy, 0, cx, cy, rx);
-      grad.addColorStop(0,   'rgba(40,100,255,0.22)');
-      grad.addColorStop(0.5, 'rgba(20,60,180,0.10)');
-      grad.addColorStop(1,   'rgba(10,30,100,0)');
-      fCtx.save();
-      fCtx.translate(cx, cy); fCtx.rotate(angle); fCtx.scale(1, ry / rx); fCtx.translate(-cx, -cy);
-      fCtx.fillStyle = grad;
-      fCtx.beginPath(); fCtx.ellipse(cx, cy, rx, rx, 0, 0, Math.PI * 2); fCtx.fill();
-      fCtx.restore();
-    }
-    // Faint bright streaks
-    for (let i = 0; i < 10; i++) {
-      const y = Math.random() * 512;
-      fCtx.strokeStyle = `rgba(80,160,255,${0.04 + Math.random() * 0.06})`;
-      fCtx.lineWidth = 1 + Math.random() * 2;
-      fCtx.beginPath(); fCtx.moveTo(0, y); fCtx.lineTo(512, y + (Math.random() - 0.5) * 40); fCtx.stroke();
-    }
-    const floorCausticTex = new THREE.CanvasTexture(fCvs);
-    floorCausticTex.wrapS = floorCausticTex.wrapT = THREE.RepeatWrapping;
-    floorCausticTex.repeat.set(5, 5);
+  // ── Wet reflective floor — Reflector (real mirror) + tinted overlay ────────
+  // The Reflector becomes dark when the reflected scene is dark.
+  // Fix: layer a semi-transparent blue plane ON TOP to tint it blue always.
+  // The overlay blocks ~60% → the remaining 40% is actual live reflection.
+  const reflector = new Reflector(new THREE.CircleGeometry(30, 64), {
+    clipBias: 0.003,
+    textureWidth: 512,
+    textureHeight: 512,
+    color: new THREE.Color(0x1a3a88),   // blue tint baked into reflection
+  });
+  reflector.rotation.x = -Math.PI / 2;
+  reflector.position.y = 0.02;
+  scene.add(reflector);
 
-    // Step 2: metallic plane with caustic texture — half-transparent so grid shows through
-    const wetFloor = new THREE.Mesh(
-      new THREE.PlaneGeometry(140, 140),
-      new THREE.MeshStandardMaterial({
-        map: floorCausticTex,
-        color: 0x0a1432,
-        emissive: new THREE.Color(0x080e28),
-        emissiveIntensity: 0.18,
-        roughness: 0.08,   // smooth = picks up neon lights
-        metalness: 0.92,
-        transparent: true,
-        opacity: 0.58,     // let the grid show through = not fully solid
-      })
-    );
-    wetFloor.rotation.x = -Math.PI / 2;
-    wetFloor.position.y = 0.025;
-    scene.add(wetFloor);
-  }
+  // Blue overlay — tints the reflection blue and softens any dark areas
+  const reflOverlay = new THREE.Mesh(
+    new THREE.CircleGeometry(30, 64),
+    new THREE.MeshBasicMaterial({
+      color: 0x08183c,
+      transparent: true,
+      opacity: 0.62,
+    })
+  );
+  reflOverlay.rotation.x = -Math.PI / 2;
+  reflOverlay.position.y = 0.03;
+  scene.add(reflOverlay);
 
-  // Two shared floor PointLights — enough to colour the metallic surface
+  // Faint additive neon sheen on top of the reflector (gives colour to the mirror)
+  const reflSheen = new THREE.Mesh(
+    new THREE.CircleGeometry(30, 64),
+    new THREE.MeshBasicMaterial({
+      color: 0x2244ff,
+      transparent: true,
+      opacity: 0.08,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  reflSheen.rotation.x = -Math.PI / 2;
+  reflSheen.position.y = 0.04;
+  scene.add(reflSheen);
+
+  // Two neon fills that bounce into the reflective surface
   const floorGlowA = new THREE.PointLight(0x0055ff, 10, 80, 1.6);
   floorGlowA.position.set(-8, 0.4, -5);
   scene.add(floorGlowA);
@@ -1672,7 +1660,12 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     createMidBuilding(scene, x, z, w, h, nc, flicker);
   });
 
-  const skyMat = new THREE.MeshBasicMaterial({ color: 0x04010e });
+  // Far buildings — dark indigo silhouettes, NOT pure black
+  const farBodyMats = [
+    new THREE.MeshStandardMaterial({ color: 0x0b0820, emissive: 0x0b0a22, emissiveIntensity: 0.9, roughness: 0.75, metalness: 0.25 }),
+    new THREE.MeshStandardMaterial({ color: 0x080d1e, emissive: 0x080c20, emissiveIntensity: 0.8, roughness: 0.75, metalness: 0.25 }),
+    new THREE.MeshStandardMaterial({ color: 0x0d0a1a, emissive: 0x0d0a22, emissiveIntensity: 0.85, roughness: 0.75, metalness: 0.25 }),
+  ];
   for (let i = 0; i < farBuildingLimit; i++) {
     const angle = (i / 16) * Math.PI * 2;
     const dist = 75 + (i % 4) * 8;
@@ -1680,13 +1673,21 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
     const w = 5 + (i % 4) * 2;
     const bx = Math.cos(angle) * dist;
     const bz = Math.sin(angle) * dist;
-    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), skyMat);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), farBodyMats[i % farBodyMats.length]);
     body.position.set(bx, h / 2, bz);
     scene.add(body);
     const nc = neonPalette[i % neonPalette.length];
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(w, 0.4, w), new THREE.MeshBasicMaterial({ color: nc }));
-    cap.position.set(bx, h + 0.2, bz);
+    // Glowing neon cap + vertical emissive strip for each distant tower
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(w, 0.5, w), new THREE.MeshBasicMaterial({ color: nc }));
+    cap.position.set(bx, h + 0.25, bz);
     scene.add(cap);
+    // Small neon window strip on the building face
+    const strip = new THREE.Mesh(
+      new THREE.PlaneGeometry(w * 0.4, h * 0.55),
+      new THREE.MeshBasicMaterial({ color: nc, transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending })
+    );
+    strip.position.set(bx, h * 0.5, bz + w * 0.51);
+    scene.add(strip);
   }
 
   const count = 220;

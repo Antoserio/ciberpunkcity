@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 export default function TopNav({ activeView, onChangeView }) {
   return (
     <>
-      {/* Brand panel — top left, samsy style */}
+      {/* Brand — top left */}
       <motion.div
         initial={{ opacity: 0, x: -18 }}
         animate={{ opacity: 1, x: 0 }}
@@ -27,10 +27,9 @@ export default function TopNav({ activeView, onChangeView }) {
           Nexus 360 · Immersive Portfolio
         </p>
 
-        {/* WASD control indicator — samsy style */}
+        {/* Controls */}
         <div className="mt-7 flex flex-col gap-1.5">
           <div className="flex gap-1.5 items-center">
-            {/* top dot (W) — centered */}
             <div className="w-4" />
             <div className="w-4 h-4 rounded-sm flex items-center justify-center"
               style={{ background: 'rgba(255,45,45,0.85)', boxShadow: '0 0 8px rgba(255,45,45,0.6)' }} />
@@ -38,21 +37,14 @@ export default function TopNav({ activeView, onChangeView }) {
               style={{ color: 'rgba(255,255,255,0.35)' }}>CONTROL</span>
           </div>
           <div className="flex gap-1.5 items-center">
-            {/* ASD row */}
             {[0, 1, 2].map(i => (
               <div key={i} className="w-4 h-4 rounded-sm"
                 style={{ background: 'rgba(255,45,45,0.85)', boxShadow: '0 0 8px rgba(255,45,45,0.6)' }} />
             ))}
           </div>
-
-          {/* E — interact */}
           <div className="flex items-center gap-2 mt-1">
             <div className="w-4 h-4 rounded-sm flex items-center justify-center font-orbitron text-[8px]"
-              style={{
-                border: '1px solid rgba(255,45,45,0.7)',
-                color: 'rgba(255,255,255,0.8)',
-                background: 'rgba(255,45,45,0.15)'
-              }}>
+              style={{ border: '1px solid rgba(255,45,45,0.7)', color: 'rgba(255,255,255,0.8)', background: 'rgba(255,45,45,0.15)' }}>
               E
             </div>
             <span className="font-orbitron text-[9px] tracking-[0.2em]"
@@ -61,43 +53,48 @@ export default function TopNav({ activeView, onChangeView }) {
         </div>
       </motion.div>
 
-      {/* Center nav — EXPLORE pill + text links */}
-      <motion.div
-        initial={{ opacity: 0, y: -12 }}
+      {/* ── Centered nav bar ── */}
+      <motion.nav
+        initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-        className="fixed top-5 left-1/2 z-50 -translate-x-1/2 flex items-center gap-6"
+        className="fixed top-4 left-1/2 z-50 -translate-x-1/2"
       >
-        <button
-          onClick={() => onChangeView('explore')}
-          className="px-6 py-2 rounded-full font-orbitron text-[10px] tracking-[0.28em] text-white transition-all duration-200"
-          style={activeView === 'explore' ? {
-            background: '#e8002a',
-            boxShadow: '0 0 22px rgba(232,0,42,0.55)',
-          } : {
-            background: 'rgba(232,0,42,0.75)',
-            boxShadow: '0 0 12px rgba(232,0,42,0.3)',
+        <div
+          className="flex items-center gap-1 rounded-full px-2 py-1.5"
+          style={{
+            background: 'rgba(0,0,0,0.55)',
+            border: '1px solid rgba(255,45,45,0.22)',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 0 24px rgba(232,0,42,0.18)',
           }}
         >
-          EXPLORE
-        </button>
-
-        <button
-          onClick={() => onChangeView('works')}
-          className="font-orbitron text-[10px] tracking-[0.28em] transition-colors duration-200"
-          style={{ color: activeView === 'works' ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.55)' }}
-        >
-          WORKS
-        </button>
-
-        <button
-          onClick={() => onChangeView('about')}
-          className="font-orbitron text-[10px] tracking-[0.28em] transition-colors duration-200"
-          style={{ color: activeView === 'about' ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.55)' }}
-        >
-          ABOUT
-        </button>
-      </motion.div>
+          {[
+            { id: 'explore', label: 'EXPLORE' },
+            { id: 'works',   label: 'WORKS'   },
+            { id: 'about',   label: 'ABOUT'   },
+          ].map(({ id, label }) => {
+            const active = activeView === id;
+            return (
+              <button
+                key={id}
+                onClick={() => onChangeView(id)}
+                className="px-5 py-1.5 rounded-full font-orbitron text-[10px] tracking-[0.26em] transition-all duration-200"
+                style={active ? {
+                  background: '#e8002a',
+                  color: '#fff',
+                  boxShadow: '0 0 18px rgba(232,0,42,0.6)',
+                } : {
+                  color: 'rgba(255,255,255,0.55)',
+                  background: 'transparent',
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </motion.nav>
     </>
   );
 }

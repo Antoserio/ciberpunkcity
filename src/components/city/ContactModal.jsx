@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 
 export default function ContactModal({ isOpen, onClose, zone }) {
   const [form, setForm] = useState({ name: '', email: '', message: '', service: zone?.title || '' });
@@ -11,24 +10,13 @@ export default function ContactModal({ isOpen, onClose, zone }) {
   const color = zone?.colorHex || '#00ffff';
   const borderStyle = { borderColor: color, boxShadow: `0 0 40px ${color}30` };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      await base44.integrations.Core.SendEmail({
-        to: 'info@agency360.com',
-        subject: `[Agency360 CyberCity] Nuevo contacto - ${zone?.title}`,
-        body: `
-Nombre: ${form.name}
-Email: ${form.email}
-Servicio de interés: ${form.service}
-Mensaje: ${form.message}
-        `
-      });
-      setSent(true);
-    } catch (e) {
-      setSent(true); // Show success anyway for UX
-    }
+    const subject = encodeURIComponent(`[Agency360 CyberCity] Nuevo contacto - ${zone?.title}`);
+    const body = encodeURIComponent(`Nombre: ${form.name}\nEmail: ${form.email}\nServicio: ${form.service}\nMensaje: ${form.message}`);
+    window.open(`mailto:info@agency360.com?subject=${subject}&body=${body}`, '_blank');
+    setSent(true);
     setLoading(false);
   };
 

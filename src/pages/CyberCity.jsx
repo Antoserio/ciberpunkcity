@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
 import { AnimatePresence } from 'framer-motion';
 import CityWorld from '../components/city/CityWorld.jsx';
 import CinematicLoader from '../components/city/CinematicLoader';
@@ -60,28 +59,8 @@ export default function CyberCity() {
   }, [isMobile]);
 
   useEffect(() => {
-    const loadGlobalRobot = async () => {
-      const settings = await base44.entities.WorldSettings.filter({ key: 'global_robot_model' }, '-updated_date', 1);
-      if (settings.length > 0 && settings[0].robot_model_url) {
-        setRobotModelUrl(settings[0].robot_model_url);
-        setRobotFileName(settings[0].robot_file_name || '');
-        return;
-      }
-
-      const defaultRobotUrl = 'https://base44.app/api/apps/69fa345f1e88257c77c4e49b/files/mp/public/69fa345f1e88257c77c4e49b/3afd5ce0c_robotpequeo.glb';
-      const defaultRobotFileName = 'robotpequeño.glb';
-
-      await base44.entities.WorldSettings.create({
-        key: 'global_robot_model',
-        robot_model_url: defaultRobotUrl,
-        robot_file_name: defaultRobotFileName,
-      });
-
-      setRobotModelUrl(defaultRobotUrl);
-      setRobotFileName(defaultRobotFileName);
-    };
-
-    loadGlobalRobot();
+    setRobotModelUrl('https://base44.app/api/apps/69fa345f1e88257c77c4e49b/files/mp/public/69fa345f1e88257c77c4e49b/3afd5ce0c_robotpequeo.glb');
+    setRobotFileName('robotpequeño.glb');
   }, []);
 
   // Track pointer lock state
@@ -230,7 +209,8 @@ export default function CyberCity() {
               setHasClickedOnce(true);
               setAudioEnabled((value) => !value);
             }}
-            className="fixed bottom-28 left-4 z-[60] rounded-full border border-white/10 bg-black/60 px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white backdrop-blur-md transition hover:border-cyan-400/40 hover:text-cyan-300 sm:bottom-6 sm:left-6"
+            className="fixed bottom-28 left-4 z-[60] rounded-full px-4 py-2 font-orbitron text-[10px] tracking-[0.25em] text-white/50 transition hover:text-white/80 sm:bottom-6 sm:left-6"
+            style={{ border: '1px solid rgba(255,45,45,0.25)', background: 'rgba(0,0,0,0.4)' }}
           >
             {audioEnabled ? 'SONIDO ON' : 'SONIDO OFF'}
           </button>

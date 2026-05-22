@@ -23,20 +23,8 @@ const cameraConfig = {
 };
 
 export function initializeTheatreStudio() {
-  const studioAvailable = typeof window !== 'undefined' && import.meta.env.DEV;
-
-  if (!studioAvailable || theatreStudioInitialized) {
-    return theatreStudioModulePromise;
-  }
-
-  theatreStudioModulePromise ??= import('@theatre/studio').then(({ default: studio }) => {
-    theatreStudio = studio;
-    theatreStudio.initialize();
-    theatreStudioInitialized = true;
-    return theatreStudio;
-  });
-
-  return theatreStudioModulePromise;
+  // Studio disabled — returns immediately so scene renders without waiting
+  return Promise.resolve(null);
 }
 
 export function getTheatreSheet() {

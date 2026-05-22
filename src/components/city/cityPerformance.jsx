@@ -55,7 +55,7 @@ export function getPerformanceConfig(isMobile = false) {
     return {
       tier,
       pixelRatio: 1,
-      videoScreens: 2,
+      videoScreens: 4,
       bloomStrength: 1.15,
       bloomRadius: 0.38,
       bloomThreshold: 0.86,
@@ -70,7 +70,7 @@ export function getPerformanceConfig(isMobile = false) {
   return {
     tier,
     pixelRatio: 1.25,
-    videoScreens: 4,
+    videoScreens: 6,
     bloomStrength: 1.5,
     bloomRadius: 0.4,
     bloomThreshold: 0.85,

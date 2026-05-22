@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, Minimize2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { X, Send, Minimize2 } from 'lucide-react';
 
 const AVATAR_MESSAGES = [
   "Hola, soy VIKY. Estoy aquí para hablar contigo sobre Agency360 y ayudarte a explorar la experiencia. ¿Qué te gustaría ver?",
@@ -36,13 +35,45 @@ export default function AvatarAssistant() {
     setInput('');
     setLoading(true);
 
-    const history = [...messages, userMsg].map(m => `${m.role === 'user' ? 'Usuario' : 'VIKY'}: ${m.content}`).join('\n');
+    try {
+      const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: 'El chat no está configurado aún. Puedes contactarnos en info@agency360.com o visitar vikydj.netlify.app.'
+        }]);
+        setLoading(false);
+        return;
+      }
 
-    const response = await base44.integrations.Core.InvokeLLM({
-      prompt: `${SYSTEM_PROMPT}\n\nConversación:\n${history}\n\nVIKY:`,
-    });
+      const allMessages = [...messages, userMsg].map(m => ({
+        role: m.role,
+        content: m.content,
+      }));
 
-    setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 200,
+          system: SYSTEM_PROMPT,
+          messages: allMessages,
+        }),
+      });
+
+      const data = await res.json();
+      const reply = data.content?.[0]?.text || 'No pude procesar tu mensaje.';
+      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Error de conexión. Inténtalo de nuevo.' }]);
+    }
+
     setLoading(false);
   };
 
@@ -55,7 +86,6 @@ export default function AvatarAssistant() {
 
   return (
     <>
-      {/* Avatar button */}
       <AnimatePresence>
         {!open && (
           <motion.button
@@ -80,7 +110,6 @@ export default function AvatarAssistant() {
         )}
       </AnimatePresence>
 
-      {/* Chat window */}
       <AnimatePresence>
         {open && !minimized && (
           <motion.div
@@ -95,7 +124,6 @@ export default function AvatarAssistant() {
               boxShadow: '0 0 30px #00ffff30',
             }}
           >
-            {/* Header */}
             <div
               className="flex items-center justify-between px-4 py-3 border-b"
               style={{ borderColor: '#00ffff30', background: 'rgba(0,255,255,0.05)' }}
@@ -125,7 +153,6 @@ export default function AvatarAssistant() {
               </div>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin">
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -170,7 +197,6 @@ export default function AvatarAssistant() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
             <div
               className="flex items-center gap-2 px-3 py-2 border-t"
               style={{ borderColor: '#00ffff30' }}
@@ -194,7 +220,6 @@ export default function AvatarAssistant() {
         )}
       </AnimatePresence>
 
-      {/* Minimized state */}
       <AnimatePresence>
         {open && minimized && (
           <motion.button

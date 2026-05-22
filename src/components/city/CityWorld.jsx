@@ -12,7 +12,6 @@ import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
 import useCameraTargetTransition from './useCameraTargetTransition';
 import { createSimpleBuildingLOD, getPerformanceConfig } from './cityPerformance';
-import { initializeTheatreStudio, getTheatreSheet, createEditableCamera } from './theatreConfig';
 import { cyberPostFragmentShader, cyberPostVertexShader, createCyberPostUniforms } from './postprocessing/cyberPostShaders';
 import { createPostProcessingState, getAdaptivePostProcessingState } from './postprocessing/postProcessingConfig';
 
@@ -28,6 +27,8 @@ const CITY_VIDEO_SCREEN_CONFIGS = [
   { x: 30, y: 11.5, z: -25.4, width: 7.2, height: 4.05, rotationY: 0, frameColor: 0xff00ff, glowColor: 0xff00ff, sourceIndex: 1 },
   { x: -34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: Math.PI / 2, frameColor: 0xffff00, glowColor: 0xffff00, sourceIndex: 2 },
   { x: 34.2, y: 9.5, z: 18, width: 5.8, height: 3.25, rotationY: -Math.PI / 2, frameColor: 0x4488ff, glowColor: 0x4488ff, sourceIndex: 3 },
+  { x: 0, y: 14.5, z: -36, width: 9.6, height: 5.4, rotationY: 0, frameColor: 0x00ff88, glowColor: 0x00ff88, sourceIndex: 0 },
+  { x: -24, y: 13, z: 32, width: 8, height: 4.5, rotationY: Math.PI, frameColor: 0xff8800, glowColor: 0xff8800, sourceIndex: 1 },
 ];
 
 function createCityVideoElement(src) {
@@ -515,13 +516,14 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const nearStandRef = useRef(null);
   const clockRef = useRef(new THREE.Clock());
   const flickerObjectsRef = useRef([]);
+  const glitchMaterialsRef = useRef([]);
   const videoScreenRef = useRef(null);
   const extraCanvasesRef = useRef([]);
   const modalOpenRef = useRef(false);
   const touchStateRef = useRef({ moving: false, looking: false, moveId: null, lookId: null, moveStartX: 0, moveStartY: 0, moveX: 0, moveY: 0 });
   const mobileMovementRef = useRef({ x: 0, z: 0 });
   const cameraRef = useRef(null);
-  const [theatreReady, setTheatreReady] = useState(() => !import.meta.env.DEV);
+  const [theatreReady, setTheatreReady] = useState(true);
   const postFxStateRef = useRef(null);
   const worksTransitionRef = useRef({ active: activeView === 'works', startTime: performance.now(), duration: WORKS_CAMERA_TRANSITION_MS, startPos: new THREE.Vector3(15, 1.7, 15), targetPos: activeView === 'works' ? WORKS_CAMERA_POSITION.clone() : null, startYaw: 2.4, targetYaw: Math.PI, startPitch: -0.1, targetPitch: -0.03, token: worksTransitionToken });
 
@@ -535,13 +537,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     }
   }, [modalOpen]);
 
-  useEffect(() => {
-    if (!import.meta.env.DEV) return;
-
-    initializeTheatreStudio().then(() => {
-      setTheatreReady(true);
-    });
-  }, []);
 
   const checkZoneProximity = useCallback((pos) => {
     if (modalOpenRef.current) return;
@@ -597,13 +592,13 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const savedPitch = pitchRef.current;
 
     const scene = new THREE.Scene();
-    const fogColor = new THREE.Color(0x1a0530);
-    scene.fog = new THREE.FogExp2(0x1a0530, 0.025);
-    scene.background = fogColor;
+    scene.fog = new THREE.FogExp2(0x050e22, 0.028);
+    // Sky handled by sky sphere in buildCity — no flat background
 
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
-    const theatreSheet = getTheatreSheet();
-    const editableCamera = createEditableCamera(theatreSheet, camera);
+    camera.position.set(15, 1.7, 15);
+    camera.rotation.set(-0.1, 2.4, 0);
+    camera.updateProjectionMatrix();
     cameraRef.current = camera;
     if (savedCameraPos) {
       camera.position.copy(savedCameraPos);
@@ -631,7 +626,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, performanceConfig.pixelRatio));
     renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.6;
+    renderer.toneMappingExposure = 1.2;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
     const canvas = renderer.domElement;
@@ -644,24 +639,27 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     composer.setSize(W, H);
     const renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), performanceConfig.bloomStrength, 0.45, 0.75);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), performanceConfig.bloomStrength * 0.22, 0.55, 0.72);
     composer.addPass(bloomPass);
 
-    scene.add(new THREE.AmbientLight(0x3a2a68, 3.2));
-    scene.add(new THREE.HemisphereLight(0x66ccff, 0x12051f, 1.0));
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
+    scene.add(new THREE.AmbientLight(0x4433bb, 4.0));
+    scene.add(new THREE.HemisphereLight(0x7744ee, 0x180d35, 1.8));
+    // Warm soft overhead — amber sky glow like distant city lights
+    const warmOverhead = new THREE.HemisphereLight(0xffaa55, 0x150a30, 1.2);
+    scene.add(warmOverhead);
+    const keyLight = new THREE.DirectionalLight(0xffe8cc, 2.2);
     keyLight.position.set(24, 30, 14);
     scene.add(keyLight);
-    const fillLight = new THREE.PointLight(0xff44cc, 8, 120, 2);
+    const fillLight = new THREE.PointLight(0xff44cc, 5, 120, 2);
     fillLight.position.set(0, 22, 0);
     scene.add(fillLight);
     const cyanWash = new THREE.PointLight(0x00e5ff, 4, 90, 2);
     cyanWash.position.set(-24, 14, -8);
     scene.add(cyanWash);
-    const magentaWash = new THREE.PointLight(0xff00c8, 4.5, 100, 2);
+    const magentaWash = new THREE.PointLight(0xff00c8, 4, 100, 2);
     magentaWash.position.set(24, 16, 6);
     scene.add(magentaWash);
-    const violetWash = new THREE.PointLight(0x7c3aed, 4, 80, 2);
+    const violetWash = new THREE.PointLight(0x7c3aed, 3.5, 80, 2);
     violetWash.position.set(0, 18, -24);
     scene.add(violetWash);
 
@@ -741,6 +739,36 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
 
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture, vikyTexture, onOpenViky, worksCarousel, farBuildingLimit);
     extraCanvasesRef.current = extraCanvases;
+
+    // Populate glitch candidates — building facade meshes with canvas textures
+    {
+      const candidates = [];
+      scene.traverse((obj) => {
+        if (!obj.isMesh || !obj.material || !obj.material.map) return;
+        if (obj.userData?.noGlitch) return;
+        // Only take MeshBasicMaterial (building walls) not special surfaces
+        if (obj.material.type !== 'MeshBasicMaterial' && obj.material.type !== 'MeshStandardMaterial') return;
+        candidates.push(obj.material);
+      });
+      const glitchList = [];
+      const seenMaterials = new Set();
+      for (const mat of candidates) {
+        if (seenMaterials.has(mat)) continue;
+        seenMaterials.add(mat);
+        if (Math.random() < 0.28) {
+          glitchList.push({
+            material: mat,
+            origOffX: mat.map.offset.x,
+            origOffY: mat.map.offset.y,
+            origColor: mat.color ? mat.color.getHex() : 0xffffff,
+            glitching: false,
+            glitchEndTime: 0,
+            nextGlitchTime: Math.random() * 12,
+          });
+        }
+      }
+      glitchMaterialsRef.current = glitchList;
+    }
 
     const robotSwarm = addFlyingRobots(scene);
 
@@ -1018,6 +1046,37 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
           o.material.emissiveIntensity = o.baseIntensity + Math.sin(t * o.flickerSpeed + o.flickerOffset) * 0.2;
         }
       }
+
+      // Building screen glitch/spasm effect
+      {
+        const gt = frameCount * 0.016;
+        const GLITCH_COLORS = [0x00ffff, 0xff0033, 0x00ff99, 0xff00cc, 0xffffff];
+        for (let i = 0; i < glitchMaterialsRef.current.length; i++) {
+          const g = glitchMaterialsRef.current[i];
+          if (g.glitching) {
+            if (gt >= g.glitchEndTime) {
+              // Reset back to original
+              g.glitching = false;
+              g.material.map.offset.set(g.origOffX, g.origOffY);
+              g.material.map.needsUpdate = true;
+              if (g.material.color) g.material.color.setHex(g.origColor);
+              g.nextGlitchTime = gt + 2.5 + Math.random() * 9;
+            } else if (frameCount % 2 === 0) {
+              // Mid-spasm: random horizontal slice shift + color flash
+              const sliceShift = (Math.random() - 0.5) * 0.4;
+              g.material.map.offset.set(g.origOffX + sliceShift, g.origOffY + (Math.random() - 0.5) * 0.12);
+              g.material.map.needsUpdate = true;
+              if (g.material.color && frameCount % 3 === 0) {
+                g.material.color.setHex(GLITCH_COLORS[Math.floor(Math.random() * GLITCH_COLORS.length)]);
+              }
+            }
+          } else if (gt >= g.nextGlitchTime) {
+            g.glitching = true;
+            g.glitchEndTime = gt + 0.06 + Math.random() * 0.22;
+          }
+        }
+      }
+
       if (frameCount % 4 === 0 && videoScreenRef.current) {
         videoScreenRef.current.draw(frameCount * 0.016);
       }
@@ -1134,7 +1193,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       vignette.remove();
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
-      editableCamera?.unsubscribe?.();
       cameraRef.current = null;
     };
   }, [plazaVideoUrl, robotModelUrl, isMobile, theatreReady]);
@@ -1364,32 +1422,133 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 
 function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, worksCarousel, farBuildingLimit = 16) {
   const extraCanvases = [];
+
+  // ── Sky sphere ───────────────────────────────────────────────────────────
+  {
+    const sw = 1024, sh = 512;
+    const skyCanvas = document.createElement('canvas');
+    skyCanvas.width = sw; skyCanvas.height = sh;
+    const sk = skyCanvas.getContext('2d');
+    // Base gradient: dark navy at zenith → dark indigo at horizon
+    const grad = sk.createLinearGradient(0, 0, 0, sh);
+    grad.addColorStop(0,    '#020b1c');
+    grad.addColorStop(0.45, '#060f28');
+    grad.addColorStop(0.78, '#0c1a40');
+    grad.addColorStop(1,    '#16254e');
+    sk.fillStyle = grad;
+    sk.fillRect(0, 0, sw, sh);
+    // Subtle grey-blue cloud wisps
+    const clouds = [
+      [120, 110, 200, 38], [400, 85, 260, 45], [720, 120, 190, 36],
+      [950, 95, 170, 32],  [210, 195, 280, 50], [560, 175, 220, 42],
+      [820, 210, 260, 48], [70, 260, 180, 36],  [1000, 240, 200, 40],
+    ];
+    clouds.forEach(([cx, cy, rx, ry]) => {
+      const cg = sk.createRadialGradient(cx, cy, 0, cx, cy, rx);
+      cg.addColorStop(0, 'rgba(140,160,210,0.09)');
+      cg.addColorStop(1, 'rgba(140,160,210,0)');
+      sk.fillStyle = cg;
+      sk.beginPath(); sk.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); sk.fill();
+    });
+    // Warm city-glow haze at the very bottom edge
+    const haze = sk.createLinearGradient(0, sh * 0.8, 0, sh);
+    haze.addColorStop(0, 'rgba(40,30,90,0)');
+    haze.addColorStop(1, 'rgba(60,30,120,0.18)');
+    sk.fillStyle = haze; sk.fillRect(0, sh * 0.8, sw, sh * 0.2);
+    const skyTex = new THREE.CanvasTexture(skyCanvas);
+    const skySphere = new THREE.Mesh(
+      new THREE.SphereGeometry(195, 32, 16),
+      new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide })
+    );
+    skySphere.userData.noGlitch = true;
+    scene.add(skySphere);
+  }
+
+  // Soft moonlight-style overhead to illuminate the floor
+  const moonLight = new THREE.PointLight(0x2244aa, 12, 200, 1.4);
+  moonLight.position.set(0, 90, 0);
+  scene.add(moonLight);
+
+  // ── Ground ───────────────────────────────────────────────────────────────
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220, 80, 80),
     new THREE.MeshStandardMaterial({
-      color: 0x080610,
-      roughness: 0.06,
-      metalness: 0.96,
-      transparent: true,
-      opacity: 0.94,
-      envMapIntensity: 1.35,
+      color: 0x111a40,
+      emissive: new THREE.Color(0x0d1a3a),
+      emissiveIntensity: 1.1,
+      roughness: 0.4,
+      metalness: 0.25,
     })
   );
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
+  // Cyan grid overlay — makes floor clearly readable as a surface
+  const gridCanvas = document.createElement('canvas');
+  gridCanvas.width = 512; gridCanvas.height = 512;
+  const gcx = gridCanvas.getContext('2d');
+  gcx.clearRect(0, 0, 512, 512);
+  gcx.strokeStyle = 'rgba(0,200,255,0.55)';
+  gcx.lineWidth = 2;
+  for (let i = 0; i <= 512; i += 64) {
+    gcx.beginPath(); gcx.moveTo(i, 0); gcx.lineTo(i, 512); gcx.stroke();
+    gcx.beginPath(); gcx.moveTo(0, i); gcx.lineTo(512, i); gcx.stroke();
+  }
+  gcx.strokeStyle = 'rgba(0,255,210,0.85)';
+  gcx.lineWidth = 3;
+  for (let i = 0; i <= 512; i += 256) {
+    gcx.beginPath(); gcx.moveTo(i, 0); gcx.lineTo(i, 512); gcx.stroke();
+    gcx.beginPath(); gcx.moveTo(0, i); gcx.lineTo(512, i); gcx.stroke();
+  }
+  const gridTex = new THREE.CanvasTexture(gridCanvas);
+  gridTex.wrapS = gridTex.wrapT = THREE.RepeatWrapping;
+  gridTex.repeat.set(10, 10);
+  const groundGridMat = new THREE.MeshBasicMaterial({ map: gridTex, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+  const groundGrid = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), groundGridMat);
+  groundGrid.rotation.x = -Math.PI / 2;
+  groundGrid.position.y = 0.02;
+  groundGrid.userData.noGlitch = true;
+  scene.add(groundGrid);
+
   const groundSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(220, 220),
     new THREE.MeshBasicMaterial({
-      color: 0x7d4dff,
+      color: 0x1a33ff,
       transparent: true,
-      opacity: 0.28,
+      opacity: 0.18,
       blending: THREE.AdditiveBlending,
     })
   );
   groundSheen.rotation.x = -Math.PI / 2;
   groundSheen.position.y = 0.015;
   scene.add(groundSheen);
+
+  // Reflective wet floor — central area only for performance
+  const reflector = new Reflector(
+    new THREE.CircleGeometry(55, 64),
+    {
+      clipBias: 0.003,
+      textureWidth: 512,
+      textureHeight: 512,
+      color: new THREE.Color(0x0a1840),
+    }
+  );
+  reflector.rotation.x = -Math.PI / 2;
+  reflector.position.y = 0.03;
+  scene.add(reflector);
+
+  // Distortion overlay to make it look wet/rough, not perfect mirror
+  const wetOverlay = new THREE.Mesh(
+    new THREE.CircleGeometry(55, 64),
+    new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.04,
+    })
+  );
+  wetOverlay.rotation.x = -Math.PI / 2;
+  wetOverlay.position.y = 0.04;
+  scene.add(wetOverlay);
 
   const plaza = new THREE.Mesh(
     new THREE.CircleGeometry(32, 64),
@@ -1635,213 +1794,78 @@ function addVideoScreen(scene, bx, bz, bw, bh, videoTex, flicker, worksTex, viky
 
 function createArcadeMachine(scene, stand, gt) {
   const [x, , z] = stand.position;
-  const body = new THREE.Group();
-  const textureLoader = new THREE.TextureLoader();
 
-  const cabinetBlack = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.62, metalness: 0.18 });
-  const cabinetDark = new THREE.MeshStandardMaterial({ color: 0x0e0e12, roughness: 0.54, metalness: 0.14 });
-  const metalPanel = new THREE.MeshStandardMaterial({ color: 0x707886, roughness: 0.38, metalness: 0.82 });
-  const marqueeShell = new THREE.MeshStandardMaterial({ color: 0x111216, roughness: 0.44, metalness: 0.3 });
+  const loader = new GLTFLoader();
+  loader.load(
+    '/arcade_machine.glb',
+    (gltf) => {
+      const model = gltf.scene;
 
-  const sideArtTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/87b366af2__Burnt_U.jpg');
-  const marqueeTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/6fe794235_image.png');
-  const bezelTexture = textureLoader.load('https://media.base44.com/images/public/69fa345f1e88257c77c4e49b/15ddba126_0119_Ros.jpg');
+      // Measure raw size before any transform
+      const rawBox = new THREE.Box3().setFromObject(model);
+      const rawHeight = rawBox.max.y - rawBox.min.y;
+      const scale = rawHeight > 0 ? 4.5 / rawHeight : 1;
 
-  sideArtTexture.colorSpace = THREE.SRGBColorSpace;
-  sideArtTexture.wrapS = THREE.ClampToEdgeWrapping;
-  sideArtTexture.wrapT = THREE.ClampToEdgeWrapping;
-  sideArtTexture.offset.set(0, 0);
-  sideArtTexture.repeat.set(1, 1);
+      model.scale.setScalar(scale);
+      // Face roughly toward plaza center [0,0,0] from current position
+      model.rotation.y = Math.atan2(-x, -z);
+      model.position.set(x, 0, z);
 
-  [marqueeTexture, bezelTexture].forEach((texture) => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.wrapS = THREE.ClampToEdgeWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
-  });
+      // Force matrix update so bounding box is accurate after scale
+      model.updateMatrixWorld(true);
+      const scaledBox = new THREE.Box3().setFromObject(model);
+      // Lift model so its lowest point is at y=0
+      model.position.y = -scaledBox.min.y;
 
-  const sideArtMaterial = new THREE.MeshBasicMaterial({ map: sideArtTexture, toneMapped: false, side: THREE.FrontSide, transparent: true, alphaTest: 0.15, color: 0xffffff });
-  const marqueeMaterial = new THREE.MeshBasicMaterial({ map: marqueeTexture, toneMapped: false });
-  const bezelMaterial = new THREE.MeshBasicMaterial({ map: bezelTexture, toneMapped: false });
+      model.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = false;
+          child.receiveShadow = false;
+          if (child.material) {
+            const mat = child.material.clone();
+            mat.envMapIntensity = 1.5;
+            if (mat.emissive !== undefined) {
+              if (mat.emissiveIntensity === 0 || mat.emissiveIntensity === undefined) {
+                mat.emissive = new THREE.Color(0xff4400);
+                mat.emissiveIntensity = 0.35;
+              } else {
+                mat.emissiveIntensity = Math.max(mat.emissiveIntensity * 2.5, 0.5);
+              }
+            }
+            // Ensure arcade mesh materials are marked for no glitch
+            mat.userData = mat.userData || {};
+            mat.userData.noGlitch = true;
+            child.material = mat;
+          }
+        }
+      });
 
-  const base = new THREE.Mesh(
-    new THREE.BoxGeometry(1.55, 2.4, 1.55),
-    [cabinetBlack, cabinetBlack, cabinetDark, cabinetDark, cabinetBlack, cabinetBlack]
+      scene.add(model);
+    },
+    undefined,
+    (err) => {
+      console.warn('arcade_machine.glb not found, using fallback box', err);
+      const fallback = new THREE.Mesh(
+        new THREE.BoxGeometry(1.5, 4.5, 1.5),
+        new THREE.MeshStandardMaterial({ color: 0x111216, roughness: 0.5, metalness: 0.4 })
+      );
+      fallback.position.set(x, 2.25, z);
+      scene.add(fallback);
+    }
   );
-  base.position.set(0, 1.2, 0);
-  body.add(base);
 
-  const lowerFront = new THREE.Mesh(
-    new THREE.BoxGeometry(0.72, 0.88, 0.1),
-    metalPanel
-  );
-  lowerFront.position.set(0, 0.78, 0.83);
-  body.add(lowerFront);
+  // Dedicated lights to illuminate the arcade GLB
+  const arcadeFront = new THREE.PointLight(0xff2266, 18, 14, 1.8);
+  arcadeFront.position.set(x, 2.5, z + 2.8);
+  scene.add(arcadeFront);
 
-  const coinDoorLeft = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.34), new THREE.MeshBasicMaterial({ color: 0x2c3138 }));
-  coinDoorLeft.position.set(-0.11, 0.8, 0.885);
-  body.add(coinDoorLeft);
-  const coinDoorRight = coinDoorLeft.clone();
-  coinDoorRight.position.x = 0.11;
-  body.add(coinDoorRight);
+  const arcadeBack = new THREE.PointLight(0x9900ff, 10, 10, 1.8);
+  arcadeBack.position.set(x - 1.5, 3, z - 1.5);
+  scene.add(arcadeBack);
 
-  const controlDeck = new THREE.Mesh(
-    new THREE.BoxGeometry(1.3, 0.16, 0.86),
-    cabinetBlack
-  );
-  controlDeck.position.set(0, 2.08, 0.42);
-  controlDeck.rotation.x = -0.28;
-  body.add(controlDeck);
-
-  const controlDeckFront = new THREE.Mesh(
-    new THREE.BoxGeometry(1.3, 0.62, 0.08),
-    cabinetBlack
-  );
-  controlDeckFront.position.set(0, 1.82, 0.76);
-  controlDeckFront.rotation.x = 0.42;
-  body.add(controlDeckFront);
-
-  const monitorCabinet = new THREE.Mesh(
-    new THREE.BoxGeometry(1.36, 1.78, 1.12),
-    [cabinetBlack, cabinetBlack, cabinetDark, cabinetDark, cabinetBlack, cabinetBlack]
-  );
-  monitorCabinet.position.set(0, 3.14, -0.02);
-  body.add(monitorCabinet);
-
-  const marqueeTop = new THREE.Mesh(
-    new THREE.BoxGeometry(1.48, 0.44, 0.62),
-    marqueeShell
-  );
-  marqueeTop.position.set(0, 4.35, 0.1);
-  body.add(marqueeTop);
-
-  const marqueeFront = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.34, 0.32),
-    marqueeMaterial
-  );
-  marqueeFront.position.set(0, 4.35, 0.42);
-  body.add(marqueeFront);
-
-  const leftSideShape = new THREE.Shape();
-  leftSideShape.moveTo(-0.78, 0);
-  leftSideShape.lineTo(0.78, 0);
-  leftSideShape.lineTo(0.78, 1.4);
-  leftSideShape.lineTo(0.42, 2.1);
-  leftSideShape.lineTo(0.28, 3.12);
-  leftSideShape.lineTo(0.12, 3.95);
-  leftSideShape.lineTo(-0.18, 4.55);
-  leftSideShape.lineTo(-0.78, 4.55);
-  leftSideShape.lineTo(-0.78, 0);
-
-  const sideGeometry = new THREE.ShapeGeometry(leftSideShape);
-  sideGeometry.computeBoundingBox();
-  const sideBounds = sideGeometry.boundingBox;
-  const sideSizeX = sideBounds.max.x - sideBounds.min.x;
-  const sideSizeY = sideBounds.max.y - sideBounds.min.y;
-  const sideUv = sideGeometry.attributes.uv;
-  for (let i = 0; i < sideUv.count; i++) {
-    const x = sideGeometry.attributes.position.getX(i);
-    const y = sideGeometry.attributes.position.getY(i);
-    sideUv.setXY(i, (x - sideBounds.min.x) / sideSizeX, (y - sideBounds.min.y) / sideSizeY);
-  }
-  sideUv.needsUpdate = true;
-  const leftArt = new THREE.Mesh(sideGeometry, sideArtMaterial);
-  leftArt.position.set(-0.79, 0, 0);
-  leftArt.rotation.y = Math.PI / 2;
-  body.add(leftArt);
-
-  const rightArt = new THREE.Mesh(sideGeometry, sideArtMaterial);
-  rightArt.position.set(0.79, 0, 0);
-  rightArt.rotation.y = -Math.PI / 2;
-  body.add(rightArt);
-
-  const leftSideBorder = new THREE.Line(
-    new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-0.78, 0, 0),
-      new THREE.Vector3(0.78, 0, 0),
-      new THREE.Vector3(0.78, 1.4, 0),
-      new THREE.Vector3(0.42, 2.1, 0),
-      new THREE.Vector3(0.28, 3.12, 0),
-      new THREE.Vector3(0.12, 3.95, 0),
-      new THREE.Vector3(-0.18, 4.55, 0),
-      new THREE.Vector3(-0.78, 4.55, 0),
-      new THREE.Vector3(-0.78, 0, 0),
-    ]),
-    new THREE.LineBasicMaterial({ color: 0x050505 })
-  );
-  leftSideBorder.position.set(-0.795, 0, 0);
-  leftSideBorder.rotation.y = Math.PI / 2;
-  body.add(leftSideBorder);
-
-  const rightSideBorder = leftSideBorder.clone();
-  rightSideBorder.position.x = 0.795;
-  rightSideBorder.rotation.y = -Math.PI / 2;
-  body.add(rightSideBorder);
-
-  const screenFrame = new THREE.Mesh(
-    new THREE.BoxGeometry(1.08, 1.18, 0.08),
-    new THREE.MeshBasicMaterial({ color: 0x06070a })
-  );
-  screenFrame.position.set(0, 3.18, 0.55);
-  screenFrame.rotation.x = -0.22;
-  body.add(screenFrame);
-
-  const bezel = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.98, 1.08),
-    bezelMaterial
-  );
-  bezel.position.set(0, 3.18, 0.595);
-  bezel.rotation.x = -0.22;
-  body.add(bezel);
-
-  const screen = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.72, 0.82),
-    new THREE.MeshBasicMaterial({ color: 0x080b10, side: THREE.DoubleSide })
-  );
-  screen.position.set(0, 3.18, 0.605);
-  screen.rotation.x = -0.22;
-  body.add(screen);
-
-  const buttonColors = [0xff4f9a, 0x52d9ff, 0xffb400, 0xf4f7ff];
-  buttonColors.forEach((color, index) => {
-    const button = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.055, 0.055, 0.065, 24),
-      new THREE.MeshBasicMaterial({ color })
-    );
-    button.rotation.x = Math.PI / 2;
-    button.position.set(-0.22 + index * 0.16, 2.13, 0.76);
-    body.add(button);
-  });
-
-  const joystickBase = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.035, 0.035, 0.22, 16),
-    new THREE.MeshBasicMaterial({ color: 0xd9dbe2 })
-  );
-  joystickBase.position.set(-0.45, 2.16, 0.68);
-  body.add(joystickBase);
-
-  const joystickBall = new THREE.Mesh(
-    new THREE.SphereGeometry(0.075, 16, 16),
-    new THREE.MeshBasicMaterial({ color: 0xff3b3b })
-  );
-  joystickBall.position.set(-0.45, 2.29, 0.72);
-  body.add(joystickBall);
-
-  const marqueeGlow = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.4, 0.36),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, side: THREE.DoubleSide })
-  );
-  marqueeGlow.position.set(0, 4.35, 0.44);
-  body.add(marqueeGlow);
-
-  body.position.set(x, 0, z);
-  body.rotation.y = -2.3;
-  body.scale.setScalar(1.08);
-
-  const glowKey = colorToGlowKey(stand.colorInt || 0x00ffff);
-  addGlowSprite(scene, x, 3.7, z + 0.8, gt[glowKey], 5.8);
-  addGlowSprite(scene, x, 2.3, z + 0.9, gt[glowKey], 3.8);
-
-  scene.add(body);
+  const arcadeFill = new THREE.PointLight(0xffffff, 8, 10, 2);
+  arcadeFill.position.set(x + 1.5, 1.5, z + 1.5);
+  scene.add(arcadeFill);
 }
 
 function createMidBuilding(scene, x, z, w, h, nc, flicker) {

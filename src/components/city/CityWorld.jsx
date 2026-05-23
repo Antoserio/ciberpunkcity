@@ -823,13 +823,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const extraCanvases = buildCity(scene, flickerObjectsRef.current, gt, videoScreen.tex, worksMediaTexture, vikyTexture, onOpenViky, worksCarousel, farBuildingLimit);
     extraCanvasesRef.current = extraCanvases;
 
-    // Load arcade side-panel art and distribute to building walls that are waiting
-    new THREE.TextureLoader().load('/arcade_side.jpg', (tex) => {
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      _resolveArcadeTex([tex]);
-    });
-
     // Tri-Colonial Sector — DISABLED: the model geometry creates a large opaque arch
     // that blocks the scene. Removed until a better placement strategy is found.
     // To re-enable: uncomment and set targetSize ≤ 40, z ≤ -120.
@@ -1948,7 +1941,7 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTe
     _requestArcadeTex((srcTex) => {
       const t = srcTex.clone();
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
-      t.repeat.set(Math.max(1, Math.round(w / 3)), Math.max(1, Math.round(h / 6)));
+      t.repeat.set(Math.max(1, Math.round(w / 3)), Math.max(2, Math.round(h / 3)));
       t.needsUpdate = true;
       mat.map = t;
       mat.needsUpdate = true;
@@ -2285,7 +2278,7 @@ function createArcadeMachine(scene, stand, gt) {
       });
 
       // Share arcade textures with building walls that are waiting for them
-      // GLB textures not used for buildings — arcade_side.jpg loaded separately
+      if (extractedMaps.length) _resolveArcadeTex(extractedMaps);
 
       scene.add(model);
     },
@@ -2320,14 +2313,13 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker) {
   const hexColor = '#' + nc.toString(16).padStart(6, '0');
   const makeMidWall = (s) => new THREE.MeshBasicMaterial({ map: makeBuildingWallTexture(hexColor, s) });
 
-  // Every 3rd building: use arcade_side.jpg texture tiled on main walls
+  // Every 3rd building: use real arcade-machine texture on its main walls
   const makeArcadeWall = () => {
     const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
     _requestArcadeTex((srcTex) => {
       const t = srcTex.clone();
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
-      // Image is portrait ~1:2 ratio — tile so each panel is ~3 units wide, ~6 tall
-      t.repeat.set(Math.max(1, Math.round(w / 3)), Math.max(1, Math.round(h / 6)));
+      t.repeat.set(Math.max(1, Math.round(w / 3)), Math.max(2, Math.round(h / 3)));
       t.needsUpdate = true;
       mat.map = t;
       mat.needsUpdate = true;

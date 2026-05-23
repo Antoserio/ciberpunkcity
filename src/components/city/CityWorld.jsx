@@ -1482,13 +1482,12 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
       }
     });
 
-    // Warm golden glow bloom at horizon centre
-    const sunGlow = sk.createRadialGradient(sw * 0.55, sh * 0.90, 0, sw * 0.55, sh * 0.90, sw * 0.35);
-    sunGlow.addColorStop(0,    'rgba(255,180,60,0.30)');
-    sunGlow.addColorStop(0.35, 'rgba(220,140,40,0.14)');
-    sunGlow.addColorStop(1,    'rgba(220,140,40,0)');
-    sk.fillStyle = sunGlow;
-    sk.fillRect(0, sh * 0.55, sw, sh * 0.45);
+    // Subtle warm band at horizon — no visible blob, just colour warmth
+    const horizonWarm = sk.createLinearGradient(0, sh * 0.82, 0, sh);
+    horizonWarm.addColorStop(0, 'rgba(180,100,20,0)');
+    horizonWarm.addColorStop(1, 'rgba(160,80,10,0.12)');
+    sk.fillStyle = horizonWarm;
+    sk.fillRect(0, sh * 0.82, sw, sh * 0.18);
 
     const skyTex = new THREE.CanvasTexture(skyCanvas);
     const skySphere = new THREE.Mesh(
@@ -1563,7 +1562,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   // The Reflector becomes dark when the reflected scene is dark.
   // Fix: layer a semi-transparent blue plane ON TOP to tint it blue always.
   // The overlay blocks ~60% → the remaining 40% is actual live reflection.
-  const reflector = new Reflector(new THREE.CircleGeometry(62, 64), {
+  const reflector = new Reflector(new THREE.CircleGeometry(38, 64), {
     clipBias: 0.003,
     textureWidth: 512,
     textureHeight: 512,
@@ -1575,7 +1574,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
 
   // Blue overlay — tints the reflection blue and softens any dark areas
   const reflOverlay = new THREE.Mesh(
-    new THREE.CircleGeometry(62, 64),
+    new THREE.CircleGeometry(38, 64),
     new THREE.MeshBasicMaterial({
       color: 0x08183c,
       transparent: true,
@@ -1588,7 +1587,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
 
   // Faint additive neon sheen on top of the reflector (gives colour to the mirror)
   const reflSheen = new THREE.Mesh(
-    new THREE.CircleGeometry(62, 64),
+    new THREE.CircleGeometry(38, 64),
     new THREE.MeshBasicMaterial({
       color: 0x2244ff,
       transparent: true,

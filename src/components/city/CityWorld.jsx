@@ -15,13 +15,16 @@ import { createSimpleBuildingLOD, getPerformanceConfig } from './cityPerformance
 import { cyberPostFragmentShader, cyberPostVertexShader, createCyberPostUniforms } from './postprocessing/cyberPostShaders';
 import { createPostProcessingState, getAdaptivePostProcessingState } from './postprocessing/postProcessingConfig';
 
+const BASE44 = 'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4';
+const HERO   = '/Hero_web.mp4';
+
 const CITY_VIDEO_SOURCES = [
-  '/Hero_web.mp4',
-  '/Hero_web.mp4',
-  '/Hero_web.mp4',
-  '/Hero_web.mp4',
-  '/Hero_web.mp4',
-  '/Hero_web.mp4',
+  HERO,    // 0 — left-front screen
+  BASE44,  // 1 — right-front screen
+  HERO,    // 2
+  BASE44,  // 3
+  HERO,    // 4 — big center megascreen
+  BASE44,  // 5
 ];
 
 const CITY_VIDEO_SCREEN_CONFIGS = [

@@ -710,8 +710,8 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       plazaVideoElement.addEventListener('canplay', startVideoPlayback);
       plazaVideoElement.addEventListener('loadeddata', startVideoPlayback);
 
-      plazaVideoScreen = addPlazaVideoScreen(scene, plazaVideoTexture);
-      cityVideos.push({ video: plazaVideoElement, texture: plazaVideoTexture, group: plazaVideoScreen?.group || { position: new THREE.Vector3(-6.2, 4.9, -11.15), visible: true } });
+      // PlazaVideoScreen removed — user prefers clean walls
+      // addPlazaVideoScreen(scene, plazaVideoTexture);
     }
 
     CITY_VIDEO_SCREEN_CONFIGS.slice(0, performanceConfig.videoScreens).forEach((config) => {
@@ -1080,17 +1080,17 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
               if (g.material.color) g.material.color.setHex(g.origColor);
               g.nextGlitchTime = gt + 2.5 + Math.random() * 9;
             } else if (frameCount % 2 === 0) {
-              // Mid-spasm: random horizontal slice shift + color flash
-              const sliceShift = (Math.random() - 0.5) * 0.4;
-              g.material.map.offset.set(g.origOffX + sliceShift, g.origOffY + (Math.random() - 0.5) * 0.12);
+              // Mid-spasm: big horizontal slice + vertical jump + color flash
+              const sliceShift = (Math.random() - 0.5) * 0.65;
+              g.material.map.offset.set(g.origOffX + sliceShift, g.origOffY + (Math.random() - 0.5) * 0.22);
               g.material.map.needsUpdate = true;
-              if (g.material.color && frameCount % 3 === 0) {
+              if (g.material.color) {
                 g.material.color.setHex(GLITCH_COLORS[Math.floor(Math.random() * GLITCH_COLORS.length)]);
               }
             }
           } else if (gt >= g.nextGlitchTime) {
             g.glitching = true;
-            g.glitchEndTime = gt + 0.06 + Math.random() * 0.22;
+            g.glitchEndTime = gt + 0.08 + Math.random() * 0.32;
           }
         }
       }
@@ -1280,9 +1280,9 @@ function makeWorksCarouselScreen() {
     const pulse = 0.82 + Math.sin(time * 1.6) * 0.08;
 
     const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    bg.addColorStop(0, '#03030a');
-    bg.addColorStop(0.5, '#12051f');
-    bg.addColorStop(1, '#020008');
+    bg.addColorStop(0, '#020810');
+    bg.addColorStop(0.5, '#03101e');
+    bg.addColorStop(1, '#010608');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1325,10 +1325,10 @@ function makeWorksCarouselScreen() {
     ctx.fillText(work.title, 1230, canvas.height / 2 - 150);
     ctx.shadowBlur = 0;
 
-    ctx.fillStyle = '#f7f3ff';
+    ctx.fillStyle = '#eef4ff';
     ctx.font = 'bold 24px monospace';
     wrapText(ctx, work.description, 1230, canvas.height / 2 - 50, 560, 34);
-    ctx.fillStyle = '#d7cfff';
+    ctx.fillStyle = '#b8d4ff';
     ctx.font = 'bold 24px monospace';
     wrapText(ctx, work.subtitle, 1230, canvas.height / 2 + 36, 560, 32);
 
@@ -1359,7 +1359,7 @@ function makeWorksCarouselScreen() {
     ctx.fillText('SIGUIENTE ►', 1570, 940);
     ctx.globalAlpha = 1;
 
-    ctx.fillStyle = '#d9d9ff';
+    ctx.fillStyle = '#88ccff';
     ctx.font = '700 24px Rajdhani, sans-serif';
     ctx.fillText('USA ← → PARA CAMBIAR', canvas.width / 2, 990);
     ctx.textAlign = 'left';
@@ -1635,7 +1635,7 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
 
   const carouselGlow = new THREE.Mesh(
     new THREE.PlaneGeometry(14.2, 7.9),
-    new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.1, side: THREE.DoubleSide })
+    new THREE.MeshBasicMaterial({ color: 0x0088ff, transparent: true, opacity: 0.13, side: THREE.DoubleSide })
   );
   carouselGlow.position.set(0, 4.25, 27.42);
   carouselGlow.rotation.y = Math.PI;
@@ -1789,31 +1789,40 @@ function makeArcadePanelTex(neonColor) {
 }
 
 function addArcadePanels(scene) {
-  const palette = ['#00ffcc', '#ff00cc', '#ffdd00', '#00bbff', '#ff4488', '#88ff00'];
+  const palette = ['#00ffcc', '#ff00cc', '#ffdd00', '#00bbff', '#ff4488', '#88ff00', '#ff6600', '#00ff88', '#cc00ff', '#ffaa00'];
 
   // Each entry: building [bx, bz] + face direction.
-  // facing = which face of the building the panel goes on (toward city center).
   // halfW = half-width of that building face (to push panel flush to surface).
-  // panels at two heights: low (y≈5) and mid (y≈10).
   const buildingFaces = [
-    // Inner ring buildings — face pointing toward center
-    { bx: -18, bz: -30, halfW: 3.5, faceAngle: Math.atan2( 18,  30) }, // NW → SE face
-    { bx:  18, bz: -30, halfW: 3.5, faceAngle: Math.atan2(-18,  30) }, // NE → SW face
-    { bx: -30, bz:  18, halfW: 3.5, faceAngle: Math.atan2( 30, -18) }, // W  → E face
-    { bx:  30, bz:  18, halfW: 3.5, faceAngle: Math.atan2(-30, -18) }, // E  → W face
-    { bx: -34, bz: -34, halfW: 4.0, faceAngle: Math.atan2( 34,  34) },
-    { bx:  34, bz: -34, halfW: 4.0, faceAngle: Math.atan2(-34,  34) },
-    { bx: -34, bz:  34, halfW: 4.0, faceAngle: Math.atan2( 34, -34) },
-    { bx:  34, bz:  34, halfW: 4.0, faceAngle: Math.atan2(-34, -34) },
-    // Outer ring
-    { bx: -46, bz: -18, halfW: 4.5, faceAngle: Math.atan2( 46,  18) },
-    { bx:  46, bz: -18, halfW: 4.5, faceAngle: Math.atan2(-46,  18) },
-    { bx: -46, bz:  18, halfW: 4.5, faceAngle: Math.atan2( 46, -18) },
-    { bx:  46, bz:  18, halfW: 4.5, faceAngle: Math.atan2(-46, -18) },
+    // Inner ring — face pointing toward center
+    { bx: -18, bz: -30, halfW: 3.5 },
+    { bx:  18, bz: -30, halfW: 3.5 },
+    { bx: -30, bz:  18, halfW: 3.5 },
+    { bx:  30, bz:  18, halfW: 3.5 },
+    { bx: -34, bz: -34, halfW: 4.0 },
+    { bx:  34, bz: -34, halfW: 4.0 },
+    { bx: -34, bz:  34, halfW: 4.0 },
+    { bx:  34, bz:  34, halfW: 4.0 },
+    // Mid ring
+    { bx: -46, bz: -18, halfW: 4.5 },
+    { bx:  46, bz: -18, halfW: 4.5 },
+    { bx: -46, bz:  18, halfW: 4.5 },
+    { bx:  46, bz:  18, halfW: 4.5 },
+    { bx: -12, bz: -44, halfW: 3.5 },
+    { bx:  12, bz: -44, halfW: 3.5 },
+    { bx: -12, bz:  44, halfW: 3.5 },
+    { bx:  12, bz:  44, halfW: 3.5 },
+    // Outer ring — visible on the city skyline
+    { bx: -58, bz: -30, halfW: 5.0 },
+    { bx:  58, bz: -30, halfW: 5.0 },
+    { bx: -30, bz: -58, halfW: 5.0 },
+    { bx:  30, bz: -58, halfW: 5.0 },
+    { bx: -44, bz: -30, halfW: 4.5 },
+    { bx:  44, bz: -30, halfW: 4.5 },
   ];
 
-  const HEIGHTS = [5.5, 10.5];   // two panels per building: low and mid
-  const PW = 4.2, PH = 4.2;       // panel face size
+  const HEIGHTS = [5.0, 9.5, 14.5]; // three panels per building: low, mid, high
+  const PW = 5.8, PH = 5.8;          // bigger panels — more visible
 
   let idx = 0;
   buildingFaces.forEach(({ bx, bz, halfW, faceAngle }) => {

@@ -6,7 +6,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
-// Reflector permanently removed — causes unavoidable black disc at any angle
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { ZONES } from './cityData';
 import { STANDS } from './standsData';
 import { addPlazaVideoScreen } from './PlazaVideoScreen.jsx';
@@ -1558,36 +1558,46 @@ function buildCity(scene, flicker, gt, videoTex, worksTex, vikyTex, onOpenViky, 
   groundSheen.position.y = 0.015;
   scene.add(groundSheen);
 
-  // ── Wet-look floor — NO Reflector (always creates black disc artifact) ──────
-  // Instead: ultra-metallic dark plane + additive neon sheen layers.
-  // The PointLights above bounce off the high-metalness surface like a mirror.
-  const wetFloor = new THREE.Mesh(
-    new THREE.PlaneGeometry(130, 130),
-    new THREE.MeshStandardMaterial({
-      color: 0x060e26,
-      roughness: 0.05,   // nearly perfect mirror surface
-      metalness: 0.97,
+  // ── Wet reflective floor — Reflector (real mirror) + tinted overlay ────────
+  // The Reflector becomes dark when the reflected scene is dark.
+  // Fix: layer a semi-transparent blue plane ON TOP to tint it blue always.
+  // The overlay blocks ~60% → the remaining 40% is actual live reflection.
+  const reflector = new Reflector(new THREE.CircleGeometry(38, 64), {
+    clipBias: 0.003,
+    textureWidth: 512,
+    textureHeight: 512,
+    color: new THREE.Color(0x1a3a88),   // blue tint baked into reflection
+  });
+  reflector.rotation.x = -Math.PI / 2;
+  reflector.position.y = 0.02;
+  scene.add(reflector);
+
+  // Blue overlay — tints the reflection blue and softens any dark areas
+  const reflOverlay = new THREE.Mesh(
+    new THREE.CircleGeometry(38, 64),
+    new THREE.MeshBasicMaterial({
+      color: 0x08183c,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.62,
     })
   );
-  wetFloor.rotation.x = -Math.PI / 2;
-  wetFloor.position.y = 0.02;
-  scene.add(wetFloor);
+  reflOverlay.rotation.x = -Math.PI / 2;
+  reflOverlay.position.y = 0.03;
+  scene.add(reflOverlay);
 
-  // Thin blue additive sheen — gives the "wet/neon-soaked" look
-  const floorSheen = new THREE.Mesh(
-    new THREE.PlaneGeometry(130, 130),
+  // Faint additive neon sheen on top of the reflector (gives colour to the mirror)
+  const reflSheen = new THREE.Mesh(
+    new THREE.CircleGeometry(38, 64),
     new THREE.MeshBasicMaterial({
-      color: 0x1133cc,
+      color: 0x2244ff,
       transparent: true,
-      opacity: 0.07,
+      opacity: 0.08,
       blending: THREE.AdditiveBlending,
     })
   );
-  floorSheen.rotation.x = -Math.PI / 2;
-  floorSheen.position.y = 0.03;
-  scene.add(floorSheen);
+  reflSheen.rotation.x = -Math.PI / 2;
+  reflSheen.position.y = 0.04;
+  scene.add(reflSheen);
 
   // Two neon fills that bounce into the reflective surface
   const floorGlowA = new THREE.PointLight(0x0055ff, 10, 80, 1.6);

@@ -16,14 +16,12 @@ import { cyberPostFragmentShader, cyberPostVertexShader, createCyberPostUniforms
 import { createPostProcessingState, getAdaptivePostProcessingState } from './postprocessing/postProcessingConfig';
 
 const CITY_VIDEO_SOURCES = [
-  // Drive video 1 — pantalla izquierda delantera
-  'https://drive.google.com/uc?export=download&id=1cavAPSpd7OhMqfUroTdoDrmyLjskjg5f',
-  // Drive video 2 — pantalla derecha delantera
-  'https://drive.google.com/uc?export=download&id=1NzwqlJdLu--yJGxo7uscMbRoF71JFC1K',
-  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
-  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
-  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
-  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
+  '/Hero_web.mp4',
+  '/Hero_web.mp4',
+  '/Hero_web.mp4',
+  '/Hero_web.mp4',
+  '/Hero_web.mp4',
+  '/Hero_web.mp4',
 ];
 
 const CITY_VIDEO_SCREEN_CONFIGS = [
@@ -104,6 +102,62 @@ function createCityVideoScreen(scene, config, texture) {
   group.rotation.y = config.rotationY || 0;
   group.userData.screen = screen;
   scene.add(group);
+
+  // ── Structural support ─────────────────────────────────────────────────────
+  // A support group anchored at ground (y=0) rotated the same as the screen,
+  // so the arms spread along the screen's width direction automatically.
+  const poleH = Math.max(0, config.y - config.height / 2 - 0.05);
+  if (poleH > 0.8) {
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x0b0b1c, metalness: 0.94, roughness: 0.16 });
+    const sg = new THREE.Group();
+    sg.position.set(config.x, 0, config.z);
+    sg.rotation.y = config.rotationY || 0;
+
+    // ── Main vertical mast ────────────────────────────────────────────────
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.19, poleH, 8), poleMat);
+    mast.position.set(0, poleH / 2, 0);
+    sg.add(mast);
+
+    // ── Diagonal arms spreading along screen width ────────────────────────
+    const armSpread = Math.min(config.width * 0.28, 2.4);
+    const armDrop   = Math.min(poleH * 0.42, 3.5);
+    const armLen    = Math.hypot(armSpread, armDrop);
+    const armAngle  = Math.atan2(armSpread, armDrop);
+    const armTopY   = poleH; // top of mast = bottom of screen in local coords
+
+    [-1, 1].forEach(side => {
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, armLen, 6), poleMat);
+      arm.position.set(side * armSpread / 2, armTopY - armDrop / 2, 0);
+      arm.rotation.z = side * armAngle;
+      sg.add(arm);
+    });
+
+    // ── Horizontal cross-beam just below the screen frame ─────────────────
+    const beam = new THREE.Mesh(
+      new THREE.BoxGeometry(config.width * 0.52, 0.13, 0.13),
+      poleMat
+    );
+    beam.position.set(0, armTopY + 0.05, 0);
+    sg.add(beam);
+
+    // ── Second cross-bar midway up the mast ───────────────────────────────
+    if (poleH > 5) {
+      const midBar = new THREE.Mesh(
+        new THREE.BoxGeometry(armSpread * 1.2, 0.10, 0.10),
+        poleMat
+      );
+      midBar.position.set(0, poleH * 0.55, 0);
+      sg.add(midBar);
+    }
+
+    // ── Ground base plate ─────────────────────────────────────────────────
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.65, 0.16, 8), poleMat);
+    base.position.set(0, 0.08, 0);
+    sg.add(base);
+
+    scene.add(sg);
+  }
+
   return group;
 }
 

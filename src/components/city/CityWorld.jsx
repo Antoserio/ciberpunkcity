@@ -16,11 +16,12 @@ import { cyberPostFragmentShader, cyberPostVertexShader, createCyberPostUniforms
 import { createPostProcessingState, getAdaptivePostProcessingState } from './postprocessing/postProcessingConfig';
 
 const CITY_VIDEO_SOURCES = [
+  // Drive video 1 — pantalla izquierda delantera
+  'https://drive.google.com/uc?export=download&id=1cavAPSpd7OhMqfUroTdoDrmyLjskjg5f',
+  // Drive video 2 — pantalla derecha delantera
+  'https://drive.google.com/uc?export=download&id=1NzwqlJdLu--yJGxo7uscMbRoF71JFC1K',
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
-  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
-  'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
-  // Video mapping showcase
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
   'https://media.base44.com/videos/public/69fa345f1e88257c77c4e49b/d7be97890_294244748911.mp4',
 ];
@@ -535,10 +536,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const touchStateRef = useRef({ moving: false, looking: false, moveId: null, lookId: null, moveStartX: 0, moveStartY: 0, moveX: 0, moveY: 0 });
   const mobileMovementRef = useRef({ x: 0, z: 0 });
   const cameraRef = useRef(null);
-  const ytIframeRef = useRef(null);
-  const drive1IframeRef = useRef(null);
-  const drive2IframeRef = useRef(null);
-  const iframeOverlayDataRef = useRef([]);
   const [theatreReady, setTheatreReady] = useState(true);
   const postFxStateRef = useRef(null);
   const worksTransitionRef = useRef({ active: activeView === 'works', startTime: performance.now(), duration: WORKS_CAMERA_TRANSITION_MS, startPos: new THREE.Vector3(15, 1.7, 15), targetPos: activeView === 'works' ? WORKS_CAMERA_POSITION.clone() : null, startYaw: 2.4, targetYaw: Math.PI, startPitch: -0.1, targetPitch: -0.03, token: worksTransitionToken });
@@ -602,13 +599,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     const mount = mountRef.current;
     const W = mount.clientWidth;
     const H = mount.clientHeight;
-
-    // Link iframe elements to their 3D screen configs (indices into CITY_VIDEO_SCREEN_CONFIGS)
-    iframeOverlayDataRef.current = [
-      { el: ytIframeRef.current,     cfg: CITY_VIDEO_SCREEN_CONFIGS[4] }, // big megascreen
-      { el: drive1IframeRef.current, cfg: CITY_VIDEO_SCREEN_CONFIGS[0] }, // left front
-      { el: drive2IframeRef.current, cfg: CITY_VIDEO_SCREEN_CONFIGS[1] }, // right front
-    ];
 
     const savedCameraPos = null;
     const savedYaw = yawRef.current;
@@ -1153,37 +1143,6 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
         camera.position.copy(posInicial);
       }
 
-      // ── Iframe overlay: project 3-D screen positions → 2-D CSS ──────────
-      {
-        const cW = mount.clientWidth;
-        const cH = mount.clientHeight;
-        iframeOverlayDataRef.current.forEach(({ el, cfg }) => {
-          if (!el) return;
-          const { x, y, z, width, height, rotationY = 0 } = cfg;
-          const center = new THREE.Vector3(x, y, z);
-          const proj = center.clone().project(camera);
-          if (proj.z >= 1) { el.style.display = 'none'; return; }
-          const cx = (proj.x + 1) / 2 * cW;
-          const cy = (-proj.y + 1) / 2 * cH;
-          const topProj = new THREE.Vector3(x, y + height / 2, z).project(camera);
-          const ty = (-topProj.y + 1) / 2 * cH;
-          const pxH = Math.abs(cy - ty) * 2;
-          const pxW = pxH * (width / height);
-          // Visibility: screen normal must face camera
-          const nx = Math.sin(rotationY), nz = Math.cos(rotationY);
-          const dot = nx * (camera.position.x - x) + nz * (camera.position.z - z);
-          const dist = camera.position.distanceTo(center);
-          const visible = dot > 0.5 && dist < 72 && pxW > 40;
-          el.style.display = visible ? 'block' : 'none';
-          if (visible) {
-            el.style.left   = `${cx - pxW / 2}px`;
-            el.style.top    = `${cy - pxH / 2}px`;
-            el.style.width  = `${pxW}px`;
-            el.style.height = `${pxH}px`;
-          }
-        });
-      }
-
       composer.render();
       if (document.pointerLockElement && frameCount % 2 === 0) {
         const menuButton = document.querySelector('[data-agency-menu-button="true"]');
@@ -1256,38 +1215,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     };
   }, [plazaVideoUrl, robotModelUrl, isMobile, theatreReady]);
 
-  return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <div ref={mountRef} data-city-world="true" className="w-full h-full cursor-crosshair" />
-      {/* ── Iframe video overlays — repositioned each frame via 3-D projection ── */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        {/* YouTube — big center megascreen (CITY_VIDEO_SCREEN_CONFIGS[4]) */}
-        <iframe
-          ref={ytIframeRef}
-          src="https://www.youtube.com/embed/h7LhhrhjvAE?autoplay=1&mute=1&loop=1&playlist=h7LhhrhjvAE&controls=1&modestbranding=1&rel=0"
-          title="YouTube screen"
-          allow="autoplay; encrypted-media"
-          style={{ position: 'absolute', border: 'none', pointerEvents: 'auto', display: 'none', borderRadius: 3, background: '#000' }}
-        />
-        {/* Google Drive video 1 — left front screen (CITY_VIDEO_SCREEN_CONFIGS[0]) */}
-        <iframe
-          ref={drive1IframeRef}
-          src="https://drive.google.com/file/d/1cavAPSpd7OhMqfUroTdoDrmyLjskjg5f/preview"
-          title="Drive screen 1"
-          allow="autoplay"
-          style={{ position: 'absolute', border: 'none', pointerEvents: 'auto', display: 'none', borderRadius: 3, background: '#000' }}
-        />
-        {/* Google Drive video 2 — right front screen (CITY_VIDEO_SCREEN_CONFIGS[1]) */}
-        <iframe
-          ref={drive2IframeRef}
-          src="https://drive.google.com/file/d/1NzwqlJdLu--yJGxo7uscMbRoF71JFC1K/preview"
-          title="Drive screen 2"
-          allow="autoplay"
-          style={{ position: 'absolute', border: 'none', pointerEvents: 'auto', display: 'none', borderRadius: 3, background: '#000' }}
-        />
-      </div>
-    </div>
-  );
+  return <div ref={mountRef} data-city-world="true" className="w-full h-full cursor-crosshair" />;
 }
 
 function basicMat(params) {

@@ -27,12 +27,12 @@ export function addPlazaVideoScreen(scene, videoTexture) {
 
   const border = new THREE.LineSegments(
     new THREE.EdgesGeometry(new THREE.BoxGeometry(width + 0.14, height + 0.14, 0.06)),
-    new THREE.LineBasicMaterial({ color: 0x00ffff })
+    new THREE.LineBasicMaterial({ color: 0x4488ff })
   );
 
   const glow = new THREE.Mesh(
     new THREE.PlaneGeometry(width + 0.8, height + 0.8),
-    new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
+    new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
   );
   glow.position.set(x, y, z + 0.02);
   group.add(glow);

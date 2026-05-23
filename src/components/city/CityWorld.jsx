@@ -45,20 +45,6 @@ const CITY_VIDEO_SCREEN_CONFIGS = [
   { x: 18,   y: 12.5, z: 28,   width: 7.0,  height: 3.9,  rotationY: Math.PI,        frameColor: 0xff6600, glowColor: 0xff6600, sourceIndex: 3 },
 ];
 
-// ── Arcade machine texture pool ───────────────────────────────────────────────
-// Populated async when arcade_machine.glb finishes loading;
-// building-wall callbacks receive the real texture once it's ready.
-const _arcadeTex = { maps: [], pending: [] };
-function _requestArcadeTex(cb) {
-  if (_arcadeTex.maps.length) cb(_arcadeTex.maps[0]);
-  else _arcadeTex.pending.push(cb);
-}
-function _resolveArcadeTex(maps) {
-  _arcadeTex.maps = maps;
-  _arcadeTex.pending.forEach(cb => cb(maps[0]));
-  _arcadeTex.pending = [];
-}
-
 function createCityVideoElement(src) {
   const video = document.createElement('video');
   video.src = src;
@@ -1934,29 +1920,13 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTe
 
   const baseSeed = Math.abs(Math.round(x * 7 + z * 13)) % 100;
   const makeWall = (s) => new THREE.MeshBasicMaterial({ map: makeBuildingWallTexture(zone.colorHex, s) });
-
-  // Every other zone building: real arcade texture on two main faces
-  const makeArcadeZoneWall = () => {
-    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
-    _requestArcadeTex((srcTex) => {
-      const t = srcTex.clone();
-      t.wrapS = t.wrapT = THREE.RepeatWrapping;
-      t.repeat.set(Math.max(1, Math.round(w / 3)), Math.max(2, Math.round(h / 3)));
-      t.needsUpdate = true;
-      mat.map = t;
-      mat.needsUpdate = true;
-    });
-    return mat;
-  };
-
-  const useArcadeZone = baseSeed % 2 === 0;
   const bodyMats = [
     makeWall(baseSeed),
     makeWall(baseSeed + 1),
     new THREE.MeshStandardMaterial({ color: 0x0a000f, roughness: 0.2, metalness: 0.95 }),
     new THREE.MeshStandardMaterial({ color: 0x0a000f, roughness: 0.2, metalness: 0.95 }),
-    useArcadeZone ? makeArcadeZoneWall() : makeWall(baseSeed + 2),
-    useArcadeZone ? makeArcadeZoneWall() : makeWall(baseSeed + 3),
+    makeWall(baseSeed + 2),
+    makeWall(baseSeed + 3),
   ];
   const body = createSimpleBuildingLOD(w, h, w, bodyMats);
   body.position.set(x, h / 2, z);
@@ -2252,7 +2222,6 @@ function createArcadeMachine(scene, stand, gt) {
       // Lift model so its lowest point is at y=0
       model.position.y = -scaledBox.min.y;
 
-      const extractedMaps = [];
       model.traverse((child) => {
         if (child.isMesh) {
           child.castShadow = false;
@@ -2268,17 +2237,13 @@ function createArcadeMachine(scene, stand, gt) {
                 mat.emissiveIntensity = Math.max(mat.emissiveIntensity * 2.5, 0.5);
               }
             }
+            // Ensure arcade mesh materials are marked for no glitch
             mat.userData = mat.userData || {};
             mat.userData.noGlitch = true;
             child.material = mat;
-            // Collect unique textures for building-wall reuse
-            if (mat.map && !extractedMaps.includes(mat.map)) extractedMaps.push(mat.map);
           }
         }
       });
-
-      // Share arcade textures with building walls that are waiting for them
-      if (extractedMaps.length) _resolveArcadeTex(extractedMaps);
 
       scene.add(model);
     },
@@ -2312,27 +2277,12 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker) {
   const baseSeed = Math.abs(Math.round(x * 5 + z * 11)) % 100;
   const hexColor = '#' + nc.toString(16).padStart(6, '0');
   const makeMidWall = (s) => new THREE.MeshBasicMaterial({ map: makeBuildingWallTexture(hexColor, s) });
-
-  // Every 3rd building: use real arcade-machine texture on its main walls
-  const makeArcadeWall = () => {
-    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
-    _requestArcadeTex((srcTex) => {
-      const t = srcTex.clone();
-      t.wrapS = t.wrapT = THREE.RepeatWrapping;
-      t.repeat.set(Math.max(1, Math.round(w / 3)), Math.max(2, Math.round(h / 3)));
-      t.needsUpdate = true;
-      mat.map = t;
-      mat.needsUpdate = true;
-    });
-    return mat;
-  };
-
-  const useArcade = baseSeed % 3 === 0;
-  const mats = useArcade
-    ? [makeArcadeWall(), makeMidWall(baseSeed+1), new THREE.MeshBasicMaterial({color:0x0a000f}), new THREE.MeshBasicMaterial({color:0x0a000f}), makeArcadeWall(), makeMidWall(baseSeed+3)]
-    : [makeMidWall(baseSeed), makeMidWall(baseSeed+1), new THREE.MeshBasicMaterial({color:0x0a000f}), new THREE.MeshBasicMaterial({color:0x0a000f}), makeMidWall(baseSeed+2), makeMidWall(baseSeed+3)];
-
-  const body = createSimpleBuildingLOD(w, h, w * 0.9, mats);
+  const body = createSimpleBuildingLOD(
+    w,
+    h,
+    w * 0.9,
+    [makeMidWall(baseSeed), makeMidWall(baseSeed+1), new THREE.MeshBasicMaterial({color:0x0a000f}), new THREE.MeshBasicMaterial({color:0x0a000f}), makeMidWall(baseSeed+2), makeMidWall(baseSeed+3)]
+  );
   body.position.set(x, h / 2, z);
   scene.add(body);
 

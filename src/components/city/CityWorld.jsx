@@ -1920,21 +1920,13 @@ function createZoneBuilding(scene, zone, flicker, gt, videoTex, worksTex, vikyTe
 
   const baseSeed = Math.abs(Math.round(x * 7 + z * 13)) % 100;
   const makeWall = (s) => new THREE.MeshBasicMaterial({ map: makeBuildingWallTexture(zone.colorHex, s) });
-  const makeArcadeZoneWall = () => {
-    const tex = makeArcadePanelTex(zone.color);
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(Math.max(1, Math.round(w / 4)), Math.max(2, Math.round(h / 4)));
-    return new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
-  };
-  // Every other zone building gets arcade texture on its two most-visible faces
-  const useArcadeZone = baseSeed % 2 === 0;
   const bodyMats = [
     makeWall(baseSeed),
     makeWall(baseSeed + 1),
     new THREE.MeshStandardMaterial({ color: 0x0a000f, roughness: 0.2, metalness: 0.95 }),
     new THREE.MeshStandardMaterial({ color: 0x0a000f, roughness: 0.2, metalness: 0.95 }),
-    useArcadeZone ? makeArcadeZoneWall() : makeWall(baseSeed + 2),
-    useArcadeZone ? makeArcadeZoneWall() : makeWall(baseSeed + 3),
+    makeWall(baseSeed + 2),
+    makeWall(baseSeed + 3),
   ];
   const body = createSimpleBuildingLOD(w, h, w, bodyMats);
   body.position.set(x, h / 2, z);
@@ -2285,29 +2277,12 @@ function createMidBuilding(scene, x, z, w, h, nc, flicker) {
   const baseSeed = Math.abs(Math.round(x * 5 + z * 11)) % 100;
   const hexColor = '#' + nc.toString(16).padStart(6, '0');
   const makeMidWall = (s) => new THREE.MeshBasicMaterial({ map: makeBuildingWallTexture(hexColor, s) });
-
-  // Every ~3rd building gets arcade circuit-board walls
-  const arcadeVariant = baseSeed % 3;
-  const makeArcadeWall = () => {
-    const tex = makeArcadePanelTex(hexColor);
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(Math.max(1, Math.round(w / 4)), Math.max(2, Math.round(h / 4)));
-    return new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
-  };
-
-  let mats;
-  if (arcadeVariant === 0) {
-    // Full arcade — all visible walls
-    mats = [makeArcadeWall(), makeArcadeWall(), new THREE.MeshBasicMaterial({color:0x0a000f}), new THREE.MeshBasicMaterial({color:0x0a000f}), makeArcadeWall(), makeArcadeWall()];
-  } else if (arcadeVariant === 1) {
-    // Mixed — front/back arcade, sides normal
-    mats = [makeMidWall(baseSeed), makeMidWall(baseSeed+1), new THREE.MeshBasicMaterial({color:0x0a000f}), new THREE.MeshBasicMaterial({color:0x0a000f}), makeArcadeWall(), makeArcadeWall()];
-  } else {
-    // Normal walls
-    mats = [makeMidWall(baseSeed), makeMidWall(baseSeed+1), new THREE.MeshBasicMaterial({color:0x0a000f}), new THREE.MeshBasicMaterial({color:0x0a000f}), makeMidWall(baseSeed+2), makeMidWall(baseSeed+3)];
-  }
-
-  const body = createSimpleBuildingLOD(w, h, w * 0.9, mats);
+  const body = createSimpleBuildingLOD(
+    w,
+    h,
+    w * 0.9,
+    [makeMidWall(baseSeed), makeMidWall(baseSeed+1), new THREE.MeshBasicMaterial({color:0x0a000f}), new THREE.MeshBasicMaterial({color:0x0a000f}), makeMidWall(baseSeed+2), makeMidWall(baseSeed+3)]
+  );
   body.position.set(x, h / 2, z);
   scene.add(body);
 

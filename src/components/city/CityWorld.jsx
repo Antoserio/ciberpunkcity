@@ -595,7 +595,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
   const cameraRef = useRef(null);
   const [theatreReady, setTheatreReady] = useState(true);
   const postFxStateRef = useRef(null);
-  const worksTransitionRef = useRef({ active: activeView === 'works', startTime: performance.now(), duration: WORKS_CAMERA_TRANSITION_MS, startPos: new THREE.Vector3(15, 1.7, 15), targetPos: activeView === 'works' ? WORKS_CAMERA_POSITION.clone() : null, startYaw: 2.4, targetYaw: Math.PI, startPitch: -0.1, targetPitch: -0.03, token: worksTransitionToken });
+  const worksTransitionRef = useRef({ active: activeView === 'works', startTime: performance.now(), duration: WORKS_CAMERA_TRANSITION_MS, startPos: new THREE.Vector3(15, 2.3, 15), targetPos: activeView === 'works' ? WORKS_CAMERA_POSITION.clone() : null, startYaw: 2.4, targetYaw: Math.PI, startPitch: -0.1, targetPitch: -0.03, token: worksTransitionToken });
 
   useCameraTargetTransition({ cameraTarget, worksTransitionRef, yawRef, pitchRef, cameraRef });
 
@@ -666,7 +666,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
     // Sky handled by sky sphere in buildCity — no flat background
 
     const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 180);
-    camera.position.set(15, 1.7, 15);
+    camera.position.set(15, 2.3, 15);
     camera.rotation.set(-0.1, 2.4, 0);
     camera.updateProjectionMatrix();
     cameraRef.current = camera;
@@ -677,7 +677,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
       targetPitchRef.current = savedPitch;
       pitchRef.current = savedPitch;
     } else {
-      camera.position.set(15, 1.7, 15);
+      camera.position.set(15, 2.3, 15);
       targetYawRef.current = 2.4;
       yawRef.current = 2.4;
       targetPitchRef.current = -0.1;
@@ -1100,7 +1100,7 @@ export default function CityWorld({ onEnterZone, onExitZone, onNearStand, onLeav
           dir.normalize();
           dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yawRef.current);
           camera.position.addScaledVector(dir, 15 * delta);
-          camera.position.y = 1.7;
+          camera.position.y = 2.3;
         }
       }
 

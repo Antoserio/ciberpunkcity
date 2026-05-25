@@ -1,101 +1,170 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail } from 'lucide-react';
+import { X, Mail, Zap, Globe, Cpu, Layers } from 'lucide-react';
 import AboutLanguageToggle from './AboutLanguageToggle';
 import { ABOUT_CONTENT } from './aboutContent';
 
+const SERVICES_ES = [
+  { icon: Zap,    label: 'SHOWS EN VIVO',   desc: 'Danza, violín y efectos digitales en directo' },
+  { icon: Globe,  label: 'EVENTOS 360°',     desc: 'Producción audiovisual inmersiva completa'    },
+  { icon: Cpu,    label: 'TECH INTERACTIVA', desc: 'LiDAR, IA, avatares y xR de última gen.'      },
+  { icon: Layers, label: 'VIDEO MAPPING',    desc: 'Escenografía digital de alto impacto'          },
+];
+const SERVICES_EN = [
+  { icon: Zap,    label: 'LIVE SHOWS',       desc: 'Dance, violin and digital FX live on stage'   },
+  { icon: Globe,  label: '360° EVENTS',      desc: 'Full immersive audiovisual production'         },
+  { icon: Cpu,    label: 'INTERACTIVE TECH', desc: 'LiDAR, AI, avatars and next-gen xR'           },
+  { icon: Layers, label: 'VIDEO MAPPING',    desc: 'High-impact digital scenography'               },
+];
+
+const STATS = [
+  { value: '57',   label: 'IDIOMAS · AI' },
+  { value: '360°', label: 'PRODUCCIÓN'   },
+  { value: '100+', label: 'EVENTOS'      },
+];
+
 export default function AboutOverlay({ open, onClose }) {
   const [language, setLanguage] = useState('es');
-  const content = useMemo(() => ABOUT_CONTENT[language], [language]);
+  const content  = useMemo(() => ABOUT_CONTENT[language], [language]);
+  const services = language === 'es' ? SERVICES_ES : SERVICES_EN;
+
   return (
     <AnimatePresence>
       {open && (
         <motion.div
+          key="about-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 p-3 backdrop-blur-md sm:p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
+          style={{ background: 'rgba(0,3,15,0.92)', backdropFilter: 'blur(20px)' }}
+          onClick={onClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            className="max-h-[92vh] w-[min(96vw,1200px)] overflow-y-auto rounded-[2rem] border border-white/8 bg-[rgba(3,6,15,0.14)] p-5 sm:p-8 shadow-[0_0_80px_rgba(0,255,255,0.06)]"
+            initial={{ scale: 0.88, y: 32, opacity: 0 }}
+            animate={{ scale: 1,    y: 0,  opacity: 1 }}
+            exit={{   scale: 0.9,   y: 20, opacity: 0 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+            className="relative w-full max-h-[92vh] overflow-y-auto rounded-[28px] border border-cyan-400/22"
+            style={{
+              maxWidth: '960px',
+              background: 'linear-gradient(140deg, rgba(3,6,22,0.99) 0%, rgba(0,8,20,0.97) 60%, rgba(6,2,22,0.97) 100%)',
+              boxShadow: '0 0 80px rgba(0,255,255,0.1), 0 0 160px rgba(0,200,255,0.05)',
+            }}
+            onClick={e => e.stopPropagation()}
           >
-            <div className="mb-6 flex items-start justify-between gap-4">
+            {/* Scanlines */}
+            <div
+              className="pointer-events-none absolute inset-0 z-0 opacity-[0.032]"
+              style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 2px,#fff 2px,#fff 4px)' }}
+            />
+            {/* Top accent line */}
+            <div className="absolute left-0 right-0 top-0 h-[2px] rounded-t-[28px]"
+              style={{ background: 'linear-gradient(90deg,transparent,rgba(0,255,255,0.6),rgba(200,0,255,0.4),transparent)' }}
+            />
+
+            {/* ── Header ─────────────────────────────────────────────── */}
+            <div className="relative z-10 flex items-center justify-between border-b border-white/8 px-6 py-5 sm:px-8">
               <div>
-                <p className="font-rajdhani text-[11px] font-bold uppercase tracking-[0.5em] text-cyan-200/70">AGENCY360 / ABOUT</p>
+                <p className="font-rajdhani text-[10px] font-bold uppercase tracking-[0.5em] text-cyan-400/70">
+                  AGENCY360 · PORTFOLIO
+                </p>
+                <h1
+                  className="font-orbitron text-2xl font-black uppercase tracking-[0.18em] text-white sm:text-3xl"
+                  style={{ textShadow: '0 0 24px rgba(0,255,255,0.35)' }}
+                >
+                  ABOUT
+                </h1>
               </div>
               <div className="flex items-center gap-3">
                 <AboutLanguageToggle language={language} onChange={setLanguage} />
                 <button
                   onClick={onClose}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/20 text-white transition hover:border-cyan-400/50 hover:text-cyan-300"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 transition hover:border-cyan-400/40 hover:text-cyan-300"
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-[32px] border border-white/8 bg-[radial-gradient(circle_at_25%_20%,rgba(0,255,255,0.08),transparent_28%),radial-gradient(circle_at_75%_30%,rgba(255,0,255,0.08),transparent_28%),rgba(5,8,18,0.12)] p-6 sm:p-10 backdrop-blur-[10px]">
-              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.04),transparent_18%,transparent_82%,rgba(255,255,255,0.03))]" />
+            {/* ── Body ───────────────────────────────────────────────── */}
+            <div className="relative z-10 grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
 
-              <div className="relative grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
-                <div className="max-w-2xl">
-                  <p className="mb-3 font-rajdhani text-sm font-bold uppercase tracking-[0.45em] text-fuchsia-300/85">{content.eyebrow}</p>
-                  <h2 className="max-w-[8ch] font-rajdhani text-6xl font-bold uppercase leading-[0.88] tracking-[-0.04em] text-white sm:text-8xl lg:text-[7rem]">
-                    {content.title}
-                  </h2>
-                  <p className="mt-6 max-w-xl font-rajdhani text-2xl font-bold uppercase leading-[1.05] tracking-[-0.03em] text-cyan-100/92 sm:text-3xl lg:text-4xl">
+              {/* Left col — text */}
+              <div className="flex flex-col justify-between gap-6">
+                <div>
+                  <p className="mb-3 font-orbitron text-[10px] font-bold uppercase tracking-[0.45em]"
+                    style={{ color: 'rgba(200,80,255,0.9)' }}>
+                    {content.eyebrow}
+                  </p>
+                  <p className="font-rajdhani text-xl font-bold uppercase leading-[1.15] tracking-[0.03em] text-cyan-100/95 sm:text-2xl lg:text-3xl">
                     {content.lead}
                   </p>
-                  <p className="mt-6 max-w-xl font-rajdhani text-lg font-bold uppercase leading-[1.25] tracking-[0.02em] text-white/78 sm:text-xl lg:text-2xl">
+                  <p className="mt-5 font-rajdhani text-base font-bold uppercase leading-[1.3] tracking-[0.02em] text-white/65 sm:text-lg">
                     {content.body}
                   </p>
                 </div>
 
-                <div className="relative flex min-h-[340px] items-center justify-center lg:min-h-[560px]">
-                  <div className="absolute inset-x-[18%] bottom-10 h-24 rounded-full bg-cyan-300/20 blur-3xl" />
-                  <motion.div
-                    animate={{ y: [0, -18, 0], x: [0, 6, 0, -6, 0], rotateZ: [0, 2, 0, -2, 0] }}
-                    transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-                    className="relative h-[260px] w-[260px] sm:h-[320px] sm:w-[320px] lg:h-[380px] lg:w-[380px]"
-                  >
-                    <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-200/40 bg-[radial-gradient(circle_at_35%_35%,rgba(255,255,255,0.9),rgba(0,255,255,0.2)_45%,rgba(3,8,20,0.9)_70%)] shadow-[0_0_35px_rgba(0,255,255,0.24)] sm:h-28 sm:w-28 lg:h-32 lg:w-32" />
-                    <div className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 shadow-[0_0_20px_rgba(255,255,255,0.12)]" />
-                    <div className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-200 shadow-[0_0_14px_rgba(0,255,255,0.9)]" />
-
-                    <div className="absolute left-[8%] top-1/2 h-2.5 w-[32%] -translate-y-1/2 rounded-full bg-cyan-200/75 shadow-[0_0_24px_rgba(0,255,255,0.45)]" />
-                    <div className="absolute right-[8%] top-1/2 h-2.5 w-[32%] -translate-y-1/2 rounded-full bg-fuchsia-300/75 shadow-[0_0_24px_rgba(255,0,255,0.4)]" />
-                    <div className="absolute left-1/2 top-[10%] h-[32%] w-2.5 -translate-x-1/2 rounded-full bg-cyan-100/75 shadow-[0_0_20px_rgba(255,255,255,0.18)]" />
-                    <div className="absolute left-1/2 bottom-[10%] h-[32%] w-2.5 -translate-x-1/2 rounded-full bg-cyan-100/75 shadow-[0_0_20px_rgba(255,255,255,0.18)]" />
-
-                    <div className="absolute left-[6%] top-1/2 h-12 w-12 -translate-y-1/2 rounded-full border border-cyan-200/40 bg-cyan-100/10 shadow-[0_0_30px_rgba(0,255,255,0.24)] sm:h-14 sm:w-14 lg:h-16 lg:w-16" />
-                    <div className="absolute right-[6%] top-1/2 h-12 w-12 -translate-y-1/2 rounded-full border border-fuchsia-300/40 bg-fuchsia-200/10 shadow-[0_0_30px_rgba(255,0,255,0.22)] sm:h-14 sm:w-14 lg:h-16 lg:w-16" />
-                    <div className="absolute left-1/2 top-[6%] h-12 w-12 -translate-x-1/2 rounded-full border border-cyan-200/35 bg-cyan-100/10 shadow-[0_0_30px_rgba(0,255,255,0.18)] sm:h-14 sm:w-14 lg:h-16 lg:w-16" />
-                    <div className="absolute bottom-[6%] left-1/2 h-12 w-12 -translate-x-1/2 rounded-full border border-white/20 bg-white/5 shadow-[0_0_28px_rgba(255,255,255,0.14)] sm:h-14 sm:w-14 lg:h-16 lg:w-16" />
-
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-                      className="absolute inset-[13%] rounded-full border border-cyan-300/15"
-                    />
-                  </motion.div>
+                {/* Stats row */}
+                <div className="flex flex-wrap gap-4">
+                  {STATS.map(s => (
+                    <div
+                      key={s.value}
+                      className="flex-1 min-w-[90px] rounded-2xl border border-white/8 bg-white/4 px-4 py-3 text-center backdrop-blur-sm"
+                    >
+                      <p className="font-orbitron text-2xl font-black text-white" style={{ textShadow: '0 0 16px rgba(0,255,255,0.5)' }}>
+                        {s.value}
+                      </p>
+                      <p className="mt-1 font-rajdhani text-[10px] font-bold uppercase tracking-[0.3em] text-white/45">
+                        {s.label}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              </div>
 
-              <div className="relative mt-14 flex justify-start pb-2">
+                {/* Contact button */}
                 <button
                   type="button"
                   onClick={() => {
                     window.location.href = language === 'es' ? 'mailto:info@immerso.live' : 'mailto:info@girasomnis.com';
                   }}
-                  className="inline-flex items-center gap-3 rounded-full border border-white/12 bg-black/35 px-6 py-4 font-rajdhani text-sm font-bold uppercase tracking-[0.28em] text-white transition hover:border-cyan-300/50 hover:text-cyan-200"
+                  className="inline-flex w-fit items-center gap-3 rounded-full border border-cyan-400/25 bg-black/30 px-6 py-3.5 font-orbitron text-xs font-bold uppercase tracking-[0.3em] text-white transition hover:border-cyan-300/50 hover:text-cyan-200"
+                  style={{ boxShadow: '0 0 20px rgba(0,255,255,0.08)' }}
                 >
-                  <Mail size={16} className="text-cyan-200" />
+                  <Mail size={14} className="text-cyan-400" />
                   {content.contact}
                 </button>
               </div>
+
+              {/* Right col — services grid */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                {services.map(({ icon: Icon, label, desc }) => (
+                  <motion.div
+                    key={label}
+                    whileHover={{ scale: 1.02 }}
+                    className="flex items-start gap-4 rounded-2xl border border-white/8 bg-white/4 p-4 backdrop-blur-sm transition-colors hover:border-cyan-400/25"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/8">
+                      <Icon size={18} className="text-cyan-400" />
+                    </div>
+                    <div>
+                      <p className="font-orbitron text-[10px] font-bold uppercase tracking-[0.3em] text-white">
+                        {label}
+                      </p>
+                      <p className="mt-1 font-rajdhani text-sm font-bold uppercase leading-[1.3] tracking-[0.02em] text-white/50">
+                        {desc}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom tag line */}
+            <div className="relative z-10 border-t border-white/6 px-8 py-4 text-center">
+              <p className="font-orbitron text-[9px] tracking-[0.5em] text-white/25 uppercase">
+                IMMERSO · GIRASOMNIS · AGENCY360 · CREATIVE CITY EXPERIENCE
+              </p>
             </div>
           </motion.div>
         </motion.div>
